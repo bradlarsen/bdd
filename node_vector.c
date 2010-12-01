@@ -11,7 +11,7 @@ node_vector_create ()
     node_vector_t *vec = (node_vector_t *) malloc (sizeof(node_vector_t));
     vec->store = (node_t *) malloc (INITIAL_CAPACITY * sizeof(node_t));
     vec->capacity = INITIAL_CAPACITY;
-    vec->size = 0;
+    vec->num_elems = 0;
     node_vector_check_invariants (vec);
     return vec;
 }
@@ -27,10 +27,10 @@ node_vector_destroy (node_vector_t *vec)
 }
 
 unsigned
-node_vector_get_size (node_vector_t *vec)
+node_vector_get_num_elems (node_vector_t *vec)
 {
     node_vector_check_invariants (vec);
-    return vec->size;
+    return vec->num_elems;
 }
 
 static void
@@ -48,9 +48,9 @@ void
 node_vector_push_back (node_vector_t *vec, node_t node)
 {
     node_vector_check_invariants (vec);
-    if (vec->size == vec->capacity)
+    if (vec->num_elems == vec->capacity)
         double_vector_size (vec);
-    vec->size += 1;
-    node_vector_set (vec, vec->size, node);
+    vec->num_elems += 1;
+    node_vector_set (vec, vec->num_elems, node);
     node_vector_check_invariants (vec);
 }

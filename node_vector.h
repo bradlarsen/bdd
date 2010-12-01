@@ -11,18 +11,15 @@ typedef struct
 {
     node_t *store;        /* memory for elements */
     unsigned capacity;    /* total number of allocated elements */
-    unsigned size;        /* number of used elements,
+    unsigned num_elems;   /* number of used elements,
                              i.e., index of first free element */
-
-    /* invariant: capacity >= used */
-    /* invariant: store != NULL */
 } node_vector_t;
 
 inline void
 node_vector_check_invariants (node_vector_t *vec)
 {
     assert (vec);
-    assert (vec->capacity > vec->size);
+    assert (vec->capacity > vec->num_elems);
     assert (vec->store != NULL);
 }
 
@@ -37,7 +34,7 @@ node_vector_destroy (node_vector_t *vec);
 
 /* Gets the number of used elements in the vector. */
 extern unsigned
-node_vector_get_size (node_vector_t *vec);
+node_vector_get_num_elems (node_vector_t *vec);
 
 /* Gets the element at the specified index.  The index must be less
  * than the number of used elements of the vector. */
@@ -45,7 +42,7 @@ inline node_t
 node_vector_get (node_vector_t *vec, unsigned idx)
 {
     node_vector_check_invariants (vec);
-    assert (idx < vec->size);
+    assert (idx < vec->num_elems);
     return vec->store[idx];
 }
 
@@ -56,12 +53,12 @@ inline void
 node_vector_set (node_vector_t *vec, unsigned idx, node_t node)
 {
     node_vector_check_invariants (vec);
-    assert (idx < vec->size);
+    assert (idx < vec->num_elems);
     vec->store[idx] = node;
 }
 
 /* Appends the given node to the vector, doubling the size of the
-   vector if there are not enough elements. */
+   vector if it is not large enough. */
 extern void
 node_vector_push_back (node_vector_t *vec, node_t node);
 
