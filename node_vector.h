@@ -10,7 +10,7 @@
 typedef struct
 {
     node_t *store;        /* memory for elements */
-    unsigned capacity;    /* total number of elements */
+    unsigned capacity;    /* total number of allocated elements */
     unsigned size;        /* number of used elements,
                              i.e., index of first free element */
 
@@ -50,5 +50,10 @@ node_vector_set (node_vector_t *vec, unsigned idx, node_t node)
     assert (idx < vec->size);
     vec->store[idx] = node;
 }
+
+/* Appends the given node to the vector, doubling the size of the
+   vector if there are not enough elements. */
+extern void
+node_vector_push_back (node_vector_t *vec, node_t node);
 
 #endif /* NODE_VECTOR_INCLUDED */
