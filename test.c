@@ -3,7 +3,8 @@
 int
 main (int argc, char *argv[])
 {
-    struct bdd_triple_vector *vec;
-    bdd_triple_vector_create(vec);
+    bdd_manager *mgr = bdd_manager_create ();
+    bdd_manager_destroy (mgr);
+
     return 0;
 }
