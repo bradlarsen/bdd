@@ -1,7 +1,5 @@
 CC = g++
-CPP = g++
-CFLAGS = -Wall -Wextra -O -std=c99
-CPPFLAGS = -Wall -Wextra -O
+CFLAGS = -Wall -Wextra -O
 
 test: test.o bdd.o
 
