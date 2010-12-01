@@ -12,8 +12,11 @@ bdd_manager_destroy (bdd_manager_t *mgr);
 extern unsigned
 bdd_manager_get_num_vars (bdd_manager_t *mgr);
 
+extern unsigned
+bdd_manager_get_num_nodes (bdd_manager_t *mgr);
 
-typedef int bdd;
+
+typedef unsigned bdd;
 
 /* typedef enum {BDD_AND, BDD_OR, BDD_EQUIV} bdd_binop; */
 
