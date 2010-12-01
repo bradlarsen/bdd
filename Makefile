@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Wextra -O
+CFLAGS = -Wall -Wextra -pedantic -O
 
 test: test.o bdd.o
 
