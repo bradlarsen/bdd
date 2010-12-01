@@ -15,7 +15,16 @@ typedef struct
                              i.e., index of first free element */
 
     /* invariant: capacity >= used */
+    /* invariant: store != NULL */
 } node_vector_t;
+
+inline void
+node_vector_check_invariants (node_vector_t *vec)
+{
+    assert (vec);
+    assert (vec->capacity > vec->size);
+    assert (vec->store != NULL);
+}
 
 /* Creates and returns a new node_vector_t. */
 extern node_vector_t *
@@ -35,7 +44,7 @@ node_vector_get_size (node_vector_t *vec);
 inline node_t
 node_vector_get (node_vector_t *vec, unsigned idx)
 {
-    assert (vec != NULL);
+    node_vector_check_invariants (vec);
     assert (idx < vec->size);
     return vec->store[idx];
 }
@@ -46,7 +55,7 @@ node_vector_get (node_vector_t *vec, unsigned idx)
 inline void
 node_vector_set (node_vector_t *vec, unsigned idx, node_t node)
 {
-    assert (vec != NULL);
+    node_vector_check_invariants (vec);
     assert (idx < vec->size);
     vec->store[idx] = node;
 }
