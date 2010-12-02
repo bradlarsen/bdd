@@ -128,14 +128,14 @@ bdd_manager_get_num_nodes (bdd_manager_t *mgr)
 static inline node_t
 get_true_node (bdd_manager_t *mgr)
 {
-    node_t t = {mgr->num_vars, 0, 1};
+    node_t t = {mgr->num_vars, bdd_false, bdd_true};
     return t;
 }
 
 static inline node_t
 get_false_node (bdd_manager_t *mgr)
 {
-    node_t f = {mgr->num_vars, 1, 0};
+    node_t f = {mgr->num_vars, bdd_true, bdd_false};
     return f;
 }
 
