@@ -13,9 +13,13 @@ double_hash_table_num_buckets (node_hash_table_t *tab)
         tab->buckets[i] = NULL;
     tab->num_entries = 0;
 
-    for (unsigned i = 0; i < old_num_buckets; i += 1)
-        for (ht_bucket_t *p = old_buckets[i]; p != NULL; p = p->next)
+    for (unsigned i = 0; i < old_num_buckets; i += 1) {
+        for (ht_bucket_t *p = old_buckets[i]; p != NULL; p = p->next) {
             node_hash_table_insert (tab, p->key, p->value);
+        }
+        ht_bucket_free (old_buckets[i]);
+    }
+    free (old_buckets);
 
     node_hash_table_check_invariants (tab);
 }
