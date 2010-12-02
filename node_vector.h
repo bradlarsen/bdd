@@ -20,7 +20,7 @@ typedef struct
 inline void
 node_vector_check_invariants (node_vector_t *vec)
 {
-    assert (vec);
+    assert (vec != NULL);
     assert (vec->capacity > vec->num_elems);
     assert (vec->store != NULL);
 }
