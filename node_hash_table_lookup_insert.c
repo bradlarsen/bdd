@@ -1,29 +1,5 @@
 #include "node_hash_table_impl.h"
 
-/* The pair hash function from Andersen's ``An introduction to binary
- * decision diagrams''. */
-static inline unsigned
-hash_pair (unsigned i, unsigned j)
-{
-    return ((i + j) * (i + j + 1) / 2) + i;
-}
-
-/* The node hash function h from Andersen's ``An introduction to
- * binary decision diagrams''. */
-static inline unsigned
-hash_node (node_t node)
-{
-    return hash_pair(node.var, hash_pair(node.low, node.high)) % 15485863;
-}
-
-/* Function h' from Andersen's ``An introduction to binary decision
- * diagrams''.  Gets the bucket index for the given key. */
-static inline unsigned
-get_hash_index (node_hash_table_t *tab, node_t key)
-{
-    return hash_node (key) % tab->num_buckets;
-}
-
 bool
 node_hash_table_has_key (node_hash_table_t *tab, node_t key)
 {
