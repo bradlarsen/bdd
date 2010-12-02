@@ -22,7 +22,7 @@ bdd_manager_check_invariants (bdd_manager_t *mgr)
     assert (mgr->nodes_by_idx != NULL);
     assert (mgr->idxs_by_node != NULL);
     assert (node_vector_get_num_elems(mgr->nodes_by_idx) ==
-            node_hash_table_get_num_elems(mgr->idxs_by_node));
+            node_hash_table_get_num_entries(mgr->idxs_by_node));
 }
 
 
