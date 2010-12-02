@@ -1,17 +1,16 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99 -g
 
-test: test.o bdd.o node_vector.o node_hash_table.o node.o
+NODE_HASH_TABLE_OBJECTS =			\
+	node_hash_table_create_destroy.o	\
+	node_hash_table_bucket.o		\
+	node_hash_table_accessors.o		\
+	node_hash_table_lookup_insert.o
 
-test.o: test.c bdd.h
+NODE_VECTOR_OBJECTS =				\
+	node_vector.o
 
-bdd.o: bdd.c bdd.h node_vector.h node_hash_table.h node.h
-
-node_vector.o: node_vector.c node_vector.h bdd.h node.h
-
-node_hash_table.o: node_hash_table.c node_hash_table.h bdd.h node.h
-
-node.o : node.c node.h bdd.h
+test: test.o bdd.o node.o $(NODE_HASH_TABLE_OBJECTS) $(NODE_VECTOR_OBJECTS)
 
 .PHONY: clean
 clean:

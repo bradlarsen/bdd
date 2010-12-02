@@ -30,6 +30,11 @@ node_hash_table_get_num_entries (node_hash_table_t *tab);
 extern unsigned
 node_hash_table_get_num_buckets (node_hash_table_t *tab);
 
+/* Return the hash table load, defined as the number of entries
+ * divided by the number of buckets. */
+extern float
+node_hash_table_get_load (node_hash_table_t *tab);
+
 /* Indicates if there is an entry for the given key in the hash table. */
 extern bool
 node_hash_table_has_key (node_hash_table_t *tab, node_t key);
