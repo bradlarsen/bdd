@@ -1,4 +1,4 @@
-#include "node_hash_table_def.h"
+#include "node_hash_table_impl.h"
 
 static unsigned
 up_to_next_power_of_two (unsigned n)

@@ -1,4 +1,4 @@
-#include "node_hash_table_def.h"
+#include "node_hash_table_impl.h"
 
 unsigned
 node_hash_table_get_num_entries (node_hash_table_t *tab)

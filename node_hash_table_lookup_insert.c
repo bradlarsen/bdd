@@ -1,4 +1,4 @@
-#include "node_hash_table_def.h"
+#include "node_hash_table_impl.h"
 
 /* The pair hash function from Andersen's ``An introduction to binary
  * decision diagrams''. */

@@ -1,4 +1,4 @@
-#include "node_hash_table_def.h"
+#include "node_hash_table_impl.h"
 
 ht_bucket_t *
 ht_bucket_create (node_t key, unsigned value, ht_bucket_t *next)
