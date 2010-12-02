@@ -43,12 +43,18 @@ struct node_hash_table
         assert (tab != NULL);                   \
         assert (tab->buckets != NULL);          \
         assert (proper_hash_values(tab));       \
+        assert (no_duplicate_keys(tab));        \
     } while (0)
 
 /* Returns true if and only if every entry in a bucket hashes to that
  * bucket. */
 extern bool
 proper_hash_values (node_hash_table_t *tab);
+
+/* Returns true if and only if there are no two distinct entries with
+ * the same key. */
+extern bool
+no_duplicate_keys (node_hash_table_t *tab);
 
 
 /* HASHING FUNCTIONS */
