@@ -9,10 +9,12 @@
 
 typedef struct
 {
-    node_t *store;        /* memory for elements */
-    unsigned capacity;    /* total number of allocated elements */
-    unsigned num_elems;   /* number of used elements,
-                             i.e., index of first free element */
+    /* memory for elements */
+    node_t *store;
+    /* total number of allocated elements */
+    unsigned capacity;
+    /* number of used elements, i.e., index of first free element */
+    unsigned num_elems;
 } node_vector_t;
 
 inline void
@@ -50,16 +52,16 @@ node_vector_get (node_vector_t *vec, unsigned idx)
  * index must be less than the number of used elements of the
  * vector. */
 inline void
-node_vector_set (node_vector_t *vec, unsigned idx, node_t node)
+node_vector_set (node_vector_t *vec, unsigned idx, node_t val)
 {
     node_vector_check_invariants (vec);
     assert (idx < vec->num_elems);
-    vec->store[idx] = node;
+    vec->store[idx] = val;
 }
 
-/* Appends the given node to the vector, doubling the size of the
+/* Appends the given node_t to the vector, doubling the size of the
    vector if it is not large enough. */
 extern void
-node_vector_push_back (node_vector_t *vec, node_t node);
+node_vector_push_back (node_vector_t *vec, node_t val);
 
 #endif /* NODE_VECTOR_INCLUDED */
