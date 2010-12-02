@@ -3,7 +3,17 @@
 #include <assert.h>
 #include <stdlib.h>
 
-static const unsigned INITIAL_CAPACITY = 512;
+static const unsigned INITIAL_CAPACITY = 32;
+
+extern inline void
+node_vector_check_invariants (node_vector_t *vec);
+
+extern inline node_t
+node_vector_get (node_vector_t *vec, unsigned idx);
+
+extern inline void
+node_vector_set (node_vector_t *vec, unsigned idx, node_t val);
+
 
 node_vector_t *
 node_vector_create ()
@@ -50,7 +60,8 @@ node_vector_push_back (node_vector_t *vec, node_t node)
     node_vector_check_invariants (vec);
     if (vec->num_elems == vec->capacity)
         double_vector_size (vec);
+    const unsigned idx = vec->num_elems;
     vec->num_elems += 1;
-    node_vector_set (vec, vec->num_elems, node);
+    node_vector_set (vec, idx, node);
     node_vector_check_invariants (vec);
 }

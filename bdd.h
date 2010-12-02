@@ -3,6 +3,11 @@
 
 typedef struct bdd_manager bdd_manager_t;
 
+typedef unsigned bdd;
+
+extern const bdd bdd_false;
+extern const bdd bdd_true;
+
 extern bdd_manager_t *
 bdd_manager_create (unsigned num_vars);
 
@@ -15,8 +20,8 @@ bdd_manager_get_num_vars (bdd_manager_t *mgr);
 extern unsigned
 bdd_manager_get_num_nodes (bdd_manager_t *mgr);
 
-
-typedef unsigned bdd;
+extern bdd
+bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i);
 
 /* typedef enum {BDD_AND, BDD_OR, BDD_EQUIV} bdd_binop; */
 
