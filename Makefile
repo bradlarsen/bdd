@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c99 -g
+CFLAGS = -Wall -Wextra -pedantic -std=c99
 
 NODE_HASH_TABLE_OBJECTS =			\
 	node_hash_table_create_destroy.o	\
@@ -12,8 +12,23 @@ NODE_HASH_TABLE_OBJECTS =			\
 NODE_VECTOR_OBJECTS =				\
 	node_vector.o
 
-test: test.o bdd.o node.o $(NODE_HASH_TABLE_OBJECTS) $(NODE_VECTOR_OBJECTS)
+BDD_OBJECTS =					\
+	bdd_create_destroy.o			\
+	bdd_accessors.o				\
+	bdd_ops.o				\
+	bdd_impl.o				\
+	node.o
+
+test: test.o $(BDD_OBJECTS) $(NODE_HASH_TABLE_OBJECTS) $(NODE_VECTOR_OBJECTS)
+
+.PHONY: debug
+debug:
+	$(CC) $(CFLAGS) -g *.c -o test_debug
+
+.PHONY: release
+release:
+	$(CC) $(CFLAGS) -O2 -DNDEBUG *.c -o test_release
 
 .PHONY: clean
 clean:
-	rm -f *.o test
+	rm -f *.o test test_debug test_release
