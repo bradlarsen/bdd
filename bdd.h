@@ -1,8 +1,9 @@
 #ifndef BDD_INCLUDED
 #define BDD_INCLUDED
 
-/* A manager of the state used to implement BDDs.  A manager
- * represents multiple BDDs, stored in the same graph. */
+#include <stdbool.h>
+
+/* A manager of BDDs.  A manager represents multiple BDDs. */
 typedef struct bdd_manager bdd_manager_t;
 
 /* BDDs are represented by the index of a node.  Ideally, this type
@@ -29,7 +30,8 @@ bdd_manager_get_num_vars (bdd_manager_t *mgr);
 extern unsigned
 bdd_manager_get_num_nodes (bdd_manager_t *mgr);
 
-/* Returns a BDD representing the given variable. */
+/* Returns a BDD representing the given variable.  The variable must
+ * be less than the number of variables in the manager. */
 extern bdd
 bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i);
 
@@ -37,9 +39,14 @@ bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i);
 /* Binary operations on BDDs to be used with bdd_apply. */
 typedef enum {BDD_AND, BDD_OR, BDD_EQUIV} bdd_apply_binop;
 
-/* Apply a binary operation to the two given BDDs. */
+/* Apply a binary operation to the two given BDDs, which must be valid
+ * BDDs for the given manager. */
 extern bdd
 bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd b1, bdd b2);
 
+/* Restricts the given BDD by assigning a value to a variable.  The
+   variable must be valid for the manager. */
+extern bdd
+bdd_restrict_var (bdd_manager_t *mgr, bdd b, unsigned var, bool val);
 
 #endif  /* BDD_INCLUDED */

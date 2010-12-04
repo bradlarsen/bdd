@@ -112,3 +112,32 @@ bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd b1, bdd b2)
     bdd_manager_check_invariants (mgr);
     return result;
 }
+
+
+/* This is the naive implementation from Andersen's ``An Introduction
+ * to Binary Decision Diagrams''.  This implementation has worst-case
+ * exponential time complexity due to the two recursive calls in the
+ * second case.  This can be improved by memoization / dynamic
+ * programming. */
+static bdd
+bdd_res_rec (bdd_manager_t *mgr, const unsigned var, const bool val, bdd b)
+{
+    const node_t n = node_vector_get (mgr->nodes_by_idx, b);
+    if (n.var > var)
+        return b;
+    else if (n.var < var) {
+        const bdd low = bdd_res_rec (mgr, var, val, n.low);
+        const bdd high = bdd_res_rec (mgr, var, val, n.high);
+        return make_node_from_parts (mgr, n.var, low, high);
+    }
+    else if (!val)
+        return bdd_res_rec (mgr, var, val, n.low);
+    else
+        return bdd_res_rec (mgr, var, val, n.high);
+}
+
+bdd
+bdd_restrict_var (bdd_manager_t *mgr, bdd b, unsigned var, bool val)
+{
+    return bdd_res_rec (mgr, var, val, b);
+}

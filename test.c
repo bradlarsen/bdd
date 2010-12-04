@@ -35,6 +35,8 @@ main (int argc, char *argv[])
     printf ("var 5 has index %u, and index %u when disjoined with itself\n",
             var5, var5_or_var5);
     assert (var5 == var5_or_var5);
+    assert (bdd_restrict_var (mgr, var5, 5, true) == bdd_true);
+    assert (bdd_restrict_var (mgr, var5, 5, false) == bdd_false);
     bdd_manager_destroy (mgr);
 
     return 0;
