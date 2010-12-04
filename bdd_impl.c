@@ -38,12 +38,18 @@ make_node_from_parts (bdd_manager_t *mgr, unsigned var, bdd low, bdd high);
 unsigned
 make_node (bdd_manager_t *mgr, node_t node)
 {
-    if (node.low == node.high) return node.low;
-    const unsigned *existing_idx =
-        node_hash_table_lookup (mgr->idxs_by_node, node);
-    if (existing_idx != NULL) return *existing_idx;
-    node_vector_push_back (mgr->nodes_by_idx, node);
-    const unsigned idx = node_vector_get_num_elems (mgr->nodes_by_idx);
-    node_hash_table_insert (mgr->idxs_by_node, node, idx);
-    return idx;
+    if (node.low == node.high)
+        return node.low;
+    else {
+        const unsigned *existing_idx =
+            node_hash_table_lookup (mgr->idxs_by_node, node);
+        if (existing_idx != NULL)
+            return *existing_idx;
+        else {
+            node_vector_push_back (mgr->nodes_by_idx, node);
+            const unsigned idx = node_vector_get_num_elems (mgr->nodes_by_idx) - 1;
+            node_hash_table_insert (mgr->idxs_by_node, node, idx);
+            return idx;
+        }
+    }
 }

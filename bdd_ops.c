@@ -10,6 +10,7 @@ bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i)
     const node_t node = {i, bdd_false, bdd_true};
     const bdd ith_var = make_node (mgr, node);
     bdd_manager_check_invariants (mgr);
+    assert (node_equal (node, node_vector_get (mgr->nodes_by_idx, ith_var)));
     return ith_var;
 }
 
@@ -19,16 +20,24 @@ bdd_eval_op_on_terminals (bdd_apply_binop op, bdd b1, bdd b2)
     assert (b1 <= 1);
     assert (b2 <= 1);
 
+    bool result;
+
     switch (op) {
     case BDD_AND:
-        return b1 && b2;
+        result = b1 && b2;
+        break;
     case BDD_OR:
-        return b1 || b2;
+        result = b1 || b2;
+        break;
     case BDD_EQUIV:
-        return (b1 && b2) || (!b1 && !b2);
+        result = (b1 && b2) || (!b1 && !b2);
+        break;
     default:
         abort ();
+        break;
     }
+
+    return result ? bdd_true : bdd_false;
 }
 
 static bdd
@@ -38,16 +47,18 @@ bdd_apply_rec (bdd_manager_t *mgr,
                bdd_pair_t p)
 {
     const unsigned *cache_val = bdd_pair_hash_table_lookup (cache, p);
-    if (cache_val != NULL)
+    if (cache_val != NULL) {
         return *cache_val;
+    }
     else {
         const bdd b1 = p.first;
         const node_t n1 = node_vector_get(mgr->nodes_by_idx, b1);
         const bdd b2 = p.second;
         const node_t n2 = node_vector_get(mgr->nodes_by_idx, b2);
         bdd result;
-        if (b1 <= 1 && b2 <= 1)
+        if (b1 <= 1 && b2 <= 1) {
             result = bdd_eval_op_on_terminals (op, b1, b2);
+        }
         else {
             bdd_pair_t p1, p2;
             unsigned var;
@@ -73,11 +84,14 @@ bdd_apply_rec (bdd_manager_t *mgr,
                 p2.first = b1;
                 p2.second = n2.high;
             }
+            const bdd low = bdd_apply_rec (mgr, cache, op, p1);
+            const bdd high = bdd_apply_rec (mgr, cache, op, p2);
+
             result = make_node_from_parts (
                 mgr,
                 var,
-                bdd_apply_rec (mgr, cache, op, p1),
-                bdd_apply_rec (mgr, cache, op, p2)
+                low,
+                high
                 );
         }
         bdd_pair_hash_table_insert (cache, p, result);
@@ -89,6 +103,8 @@ bdd
 bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd b1, bdd b2)
 {
     bdd_manager_check_invariants (mgr);
+    assert (b1 < bdd_manager_get_num_nodes(mgr));
+    assert (b2 < bdd_manager_get_num_nodes(mgr));
     bdd_pair_hash_table_t *cache = bdd_pair_hash_table_create ();
     const bdd_pair_t p = {b1, b2};
     const bdd result = bdd_apply_rec (mgr, cache, op, p);
