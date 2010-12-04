@@ -24,6 +24,11 @@ main (int argc, char *argv[])
     const unsigned new_num_nodes = bdd_manager_get_num_nodes(mgr);
     printf ("%u nodes\n", new_num_nodes);
     assert (old_num_nodes == new_num_nodes);
+    const bdd var5 = bdd_manager_get_ith_var (mgr, 5);
+    bdd var5_and_var5 = bdd_apply (mgr, BDD_AND, var5, var5);
+    printf ("var 5 has index %u, and index %u when conjoined with itself\n",
+            var5, var5_and_var5);
+    assert (var5 == var5_and_var5);
     bdd_manager_destroy (mgr);
 
     return 0;
