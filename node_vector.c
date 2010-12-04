@@ -5,9 +5,6 @@
 
 static const unsigned INITIAL_CAPACITY = 32;
 
-extern inline void
-node_vector_check_invariants (node_vector_t *vec);
-
 extern inline node_t
 node_vector_get (node_vector_t *vec, unsigned idx);
 

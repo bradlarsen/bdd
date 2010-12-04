@@ -17,13 +17,12 @@ typedef struct
     unsigned num_elems;
 } node_vector_t;
 
-inline void
-node_vector_check_invariants (node_vector_t *vec)
-{
-    assert (vec != NULL);
-    assert (vec->capacity >= vec->num_elems);
-    assert (vec->store != NULL);
-}
+#define node_vector_check_invariants(vec)               \
+    do {                                                \
+        assert (vec != NULL);                           \
+        assert (vec->capacity >= vec->num_elems);       \
+        assert (vec->store != NULL);                    \
+    } while (0)
 
 /* Creates and returns a new node_vector_t. */
 extern node_vector_t *
