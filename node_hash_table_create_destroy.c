@@ -23,7 +23,7 @@ node_hash_table_create_with_hint (unsigned num_buckets_hint)
     const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
     tab->num_buckets = num_buckets;
     tab->buckets =
-        (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
+        (node_bucket_t **) malloc (num_buckets * sizeof(node_bucket_t *));
     for (unsigned i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
     node_hash_table_check_invariants (tab);
@@ -35,7 +35,7 @@ node_hash_table_destroy (node_hash_table_t *tab)
 {
     node_hash_table_check_invariants (tab);
     for (unsigned i = 0; i < tab->num_buckets; i += 1)
-        ht_bucket_free (tab->buckets[i]);
+        node_bucket_free (tab->buckets[i]);
     free (tab->buckets);
     free (tab);
 }

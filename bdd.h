@@ -10,8 +10,7 @@ typedef struct bdd_manager bdd_manager_t;
 typedef unsigned bdd;
 
 /* True and false literals. */
-extern const bdd bdd_true;
-extern const bdd bdd_false;
+enum {bdd_false = 0, bdd_true = 1};
 
 /* Creates and initializes a new BDD manager with the given number of
  * variables. */

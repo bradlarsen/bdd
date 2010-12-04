@@ -1,8 +1,5 @@
 #include "bdd_impl.h"
 
-const bdd bdd_false = 0;
-const bdd bdd_true = 1;
-
 extern node_t
 get_true_node (bdd_manager_t *mgr);
 
@@ -34,6 +31,9 @@ is_robdd (bdd_manager_t *mgr)
 
     return true;
 }
+
+extern unsigned
+make_node_from_parts (bdd_manager_t *mgr, unsigned var, bdd low, bdd high);
 
 unsigned
 make_node (bdd_manager_t *mgr, node_t node)

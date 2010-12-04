@@ -1,10 +1,7 @@
 #include "node_hash_table_impl.h"
 
 extern unsigned
-hash_pair (unsigned i, unsigned j);
+node_hash_table_hash_node (node_t node);
 
 extern unsigned
-hash_node (node_t node);
-
-extern unsigned
-get_hash_index (node_hash_table_t *tab, node_t key);
+node_hash_table_get_hash_index (node_hash_table_t *tab, node_t key);

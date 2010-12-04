@@ -64,5 +64,12 @@ get_false_node (bdd_manager_t *mgr)
 extern unsigned
 make_node (bdd_manager_t *mgr, node_t node);
 
+inline unsigned
+make_node_from_parts (bdd_manager_t *mgr, unsigned var, bdd low, bdd high)
+{
+    node_t n = {var, low, high};
+    return make_node (mgr, n);
+}
+
 
 #endif /* BDD_IMPL_INCLUDED */
