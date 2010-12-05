@@ -1,45 +1,45 @@
 /* This module provides a hash table from ${key_type} to ${value_type}
  * implemented using separate chaining. */
 
-#ifndef ${guard_name}
-#define ${guard_name}
+#ifndef ${include_guard_name}
+#define ${include_guard_name}
 
 ${local_includes}
 
 /* A hash table implemented using separate chaining. */
-typedef struct ${hash_table_type} ${hash_table_typedef};
+typedef struct ${hash_table_type} ${hash_table_type}_t;
 
 /* Creates and returns a new hash table with a default number of buckets. */
-extern ${hash_table_typedef} *
+extern ${hash_table_type}_t *
 ${prefix}_create ();
 
 /* Creates and returns a new hash table with a suggested number of buckets. */
-extern ${hash_table_typedef} *
+extern ${hash_table_type}_t *
 ${prefix}_create_with_hint (unsigned num_buckets_hint);
 
 /* Frees the memory used by the given hash table.  It is an error
  * to call this procedure more than once on a hash table. */
 extern void
-${prefix}_destroy (${hash_table_typedef} *tab);
+${prefix}_destroy (${hash_table_type}_t *tab);
 
 /* Gets the number of entries in the hash table. */
 extern unsigned
-${prefix}_get_num_entries (${hash_table_typedef} *tab);
+${prefix}_get_num_entries (${hash_table_type}_t *tab);
 
 /* Gets the number of buckets in the hash table. */
 extern unsigned
-${prefix}_get_num_buckets (${hash_table_typedef} *tab);
+${prefix}_get_num_buckets (${hash_table_type}_t *tab);
 
 /* Return the hash table load, defined as the number of entries
  * divided by the number of buckets. */
 extern float
-${prefix}_get_load (${hash_table_typedef} *tab);
+${prefix}_get_load (${hash_table_type}_t *tab);
 
 /* Inserts a binding for the given key and value into the hash table.
  * If there is already an entry with the given key, its value is
  * replaced. */
 extern void
-${prefix}_insert (${hash_table_typedef} *tab,
+${prefix}_insert (${hash_table_type}_t *tab,
                   ${key_type} key,
                   ${value_type} val);
 
@@ -48,6 +48,6 @@ ${prefix}_insert (${hash_table_typedef} *tab,
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
 extern ${value_type} *
-${prefix}_lookup (${hash_table_typedef} *tab, ${key_type} key);
+${prefix}_lookup (${hash_table_type}_t *tab, ${key_type} key);
 
-#endif /* ${guard_name} */
+#endif /* ${include_guard_name} */
