@@ -1,0 +1,246 @@
+/* The definition of a separate-chaining hash table from ${key_type}
+ * to ${value_type}. */
+
+#include "${header_name}"
+
+#include <assert.h>
+#include <stdlib.h>
+
+/***********************************************************************/
+/* HASH TABLE BUCKETS                                                  */
+/***********************************************************************/
+typedef struct ${prefix}_bucket
+{
+    ${key_type} key;
+    ${value_type} value;
+    struct ${prefix}_bucket *next;
+} ${prefix}_bucket_t;
+
+/* Allocates and initializes a bucket with the given parameters. */
+static ${prefix}_bucket_t *
+${prefix}_bucket_create (${key_type} key,
+                         ${value_type} value,
+                         ${prefix}_bucket_t *next)
+{
+    ${prefix}_bucket_t * bucket =
+        (${prefix}_bucket_t *) malloc (sizeof(${prefix}_bucket_t));
+    bucket->key = key;
+    bucket->value = value;
+    bucket->next = next;
+    return bucket;
+}
+
+/* Frees the memory used by the list rooted by the bucket. */
+static void
+${prefix}_bucket_free (${prefix}_bucket_t *bucket)
+{
+    if (bucket == NULL)
+        return;
+
+    ${prefix}_bucket_t *p = bucket;
+    while (p != NULL) {
+        ${prefix}_bucket_t *prev = p;
+        p = p->next;
+        free (prev);
+    }
+}
+
+/* Performs a linear search down a bucket list for the given key.  A
+ * pointer to the bucket with the matching key is returned if one
+ * exists, and NULL returned otherwise. */
+static ${prefix}_bucket_t *
+${prefix}_bucket_search (${prefix}_bucket_t *bucket, ${key_type} key)
+{
+    ${prefix}_bucket_t *p = bucket;
+    while (p != NULL) {
+        if (${key_equal_func}(p->key, key))
+            break;
+        p = p->next;
+    }
+    return p;
+}
+
+/***********************************************************************/
+/* HASH TABLE STRUCT                                                   */
+/***********************************************************************/
+struct ${hash_table_type}
+{
+    /* the number of entries in the table */
+    unsigned num_entries;
+    /* the number of elems in the buckets array */
+    unsigned num_buckets;
+    /* the array of buckets */
+    ${prefix}_bucket_t **buckets;
+};
+
+/***********************************************************************/
+/* HASH TABLE STRUCT INVARIANTS CHECKING                               */
+/***********************************************************************/
+#define ${prefix}_check_invariants(tab)                 \
+    do {                                                \
+        assert (tab != NULL);                           \
+        assert (tab->buckets != NULL);                  \
+        assert (${prefix}_proper_hash_values(tab));     \
+        assert (${prefix}_no_duplicate_keys(tab));      \
+    } while (0)
+
+/* Returns true if and only if every entry in a bucket hashes to that
+ * bucket. */
+static bool
+${prefix}_proper_hash_values (${hash_table_typedef} *tab)
+{
+    for (unsigned i = 0; i < tab->num_buckets; i += 1)
+        for (${prefix}_bucket_t *p = tab->buckets[i]; p != NULL; p = p->next)
+            if (${prefix}_get_hash_index(tab, p->key) != i)
+                return false;
+    return true;
+}
+
+/* Returns true if and only if there are no two distinct entries with
+ * the same key. */
+static bool
+${prefix}_no_duplicate_keys (${hash_table_typedef} *tab)
+{
+    unsigned num_buckets = tab->num_buckets;
+    ${prefix}_bucket_t **buckets = tab->buckets;
+
+    for (unsigned i = 0; i < num_buckets; i += 1)
+        for (${prefix}_bucket_t *p = buckets[i]; p != NULL; p = p->next)
+            for (unsigned j = i; j < num_buckets; j += 1)
+                for (${prefix}_bucket_t *q = buckets[j]; q != NULL; q = q->next)
+                    if (p != q && ${key_equal_func}(p->key, q->key))
+                        return false;
+    return true;
+}
+
+/***********************************************************************/
+/* HASH TABLE CREATION AND DESTRUCTION                                 */
+/***********************************************************************/
+static unsigned
+up_to_next_power_of_two (unsigned n)
+{
+    unsigned i;
+    for (i = 1; i <= n; i *= 2);
+    return i;
+}
+
+/* Creates and returns a new hash table with a default number of buckets. */
+${hash_table_typedef} *
+${prefix}_create ()
+{
+    return ${prefix}_create_with_hint (32);
+}
+
+/* Creates and returns a new hash table with a suggested number of buckets. */
+${hash_table_typedef} *
+${prefix}_create_with_hint (unsigned num_buckets_hint)
+{
+    ${hash_table_typedef} *tab =
+        (${hash_table_typedef} *) malloc (sizeof(${hash_table_typedef}));
+    tab->num_entries = 0;
+    const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
+    tab->num_buckets = num_buckets;
+    tab->buckets =
+        (${prefix}_bucket_t **) malloc (num_buckets * sizeof(${prefix}_bucket_t *));
+    for (unsigned i = 0; i < num_buckets; i += 1)
+        tab->buckets[i] = NULL;
+    ${prefix}_check_invariants (tab);
+    return tab;
+}
+
+/* Frees the memory used by the given hash table.  It is an error
+ * to call this procedure more than once on a hash table. */
+void
+${prefix}_destroy (${hash_table_typedef} *tab)
+{
+    ${prefix}_check_invariants (tab);
+    for (unsigned i = 0; i < tab->num_buckets; i += 1)
+        ${prefix}_bucket_free (tab->buckets[i]);
+    free (tab->buckets);
+    free (tab);
+}
+
+/* Gets the number of entries in the hash table. */
+unsigned
+${prefix}_get_num_entries (${hash_table_typedef} *tab)
+{
+    ${prefix}_check_invariants (tab);
+    return tab->num_entries;
+}
+
+/* Gets the number of buckets in the hash table. */
+unsigned
+${prefix}_get_num_buckets (${hash_table_typedef} *tab)
+{
+    ${prefix}_check_invariants (tab);
+    return tab->num_buckets;
+}
+
+/* Return the hash table load, defined as the number of entries
+ * divided by the number of buckets. */
+float
+${prefix}_get_load (${hash_table_typedef} *tab)
+{
+    ${prefix}_check_invariants (tab);
+    return
+        (float) ${prefix}_get_num_entries (tab) /
+        (float) ${prefix}_get_num_buckets (tab);
+}
+
+static void
+double_hash_table_num_buckets (${hash_table_typedef} *tab)
+{
+    const unsigned old_num_buckets = tab->num_buckets;
+    ${prefix}_bucket_t **old_buckets = tab->buckets;
+
+    tab->num_buckets *= 2;
+    tab->buckets =
+        (${prefix}_bucket_t **) malloc (tab->num_buckets * sizeof(${prefix}_bucket_t *));
+    for (unsigned i = 0; i < tab->num_buckets; i += 1)
+        tab->buckets[i] = NULL;
+    tab->num_entries = 0;
+
+    for (unsigned i = 0; i < old_num_buckets; i += 1) {
+        for (${prefix}_bucket_t *p = old_buckets[i]; p != NULL; p = p->next) {
+            ${prefix}_insert (tab, p->key, p->value);
+        }
+        ${prefix}_bucket_free (old_buckets[i]);
+    }
+    free (old_buckets);
+
+    ${prefix}_check_invariants (tab);
+}
+
+/* Inserts a binding for the given key and value into the hash table.
+ * If there is already an entry with the given key, its value is
+ * replaced. */
+void
+${prefix}_insert (${hash_table_typedef} *tab,
+                  ${key_type} key,
+                  ${value_type} val)
+{
+    ${prefix}_check_invariants (tab);
+    if (${prefix}_get_load(tab) > 0.70f)
+        double_hash_table_num_buckets (tab);
+    const unsigned b_idx = ${prefix}_get_hash_index (tab, key);
+    ${prefix}_bucket_t *b = ${prefix}_bucket_search (tab->buckets[b_idx], key);
+    if (b == NULL) {
+        tab->buckets[b_idx] = ${prefix}_bucket_create (key, val, tab->buckets[b_idx]);
+        tab->num_entries += 1;
+    }
+    else
+        b->value = val;
+}
+
+/* Retrieves a pointer to the value bound to the specified key.  If no
+ * such entry exists, NULL is returned.  When any modifying hash table
+ * operations are performed upon the table, it is an error to
+ * dereference the pointer returned by this function. */
+${value_type} *
+${prefix}_lookup (${hash_table_typedef} *tab, ${key_type} key)
+{
+    ${prefix}_check_invariants (tab);
+    const unsigned b_idx = ${prefix}_get_hash_index (tab, key);
+    ${prefix}_bucket_t *b = ${prefix}_bucket_search (tab->buckets[b_idx], key);
+    return b != NULL ? &b->value : NULL;
+}
