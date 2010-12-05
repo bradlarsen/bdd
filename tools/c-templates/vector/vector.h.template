@@ -1,0 +1,76 @@
+#ifndef ${include_guard_name}
+#define ${include_guard_name}
+
+${local_includes}
+
+#include <assert.h>
+#include <stdlib.h>
+
+typedef struct
+{
+    /* memory for elements */
+    ${element_type} *store;
+    /* total number of allocated elements */
+    unsigned capacity;
+    /* number of used elements, i.e., index of first free element */
+    unsigned num_elems;
+} ${vector_type};
+
+inline void
+${namespace_prefix}_check_invariants (${vector_type} *vec)
+{
+    assert (vec);
+    assert (vec->capacity > 0);
+    assert (vec->capacity >= vec->num_elems);
+    assert (vec->store != NULL);
+}
+
+/* Creates and returns a new ${vector_type}. */
+extern ${vector_type} *
+${namespace_prefix}_create ();
+
+/* Creates and returns a new ${vector_type} with the given maximum
+ * number of elements. */
+extern ${vector_type} *
+${namespace_prefix}_create_with_capacity (unsigned num_elems);
+
+/* Frees the memory used by the given ${vector_type}.  It is an error
+ * to call this procedure more than once on a ${vector_type}. */
+extern void
+${namespace_prefix}_destroy (${vector_type} *vec);
+
+/* Gets the number of used elements in the vector. */
+extern unsigned
+${namespace_prefix}_get_num_elems (${vector_type} *vec);
+
+/* Gets the maximum number of elements in the vector. */
+extern unsigned
+${namespace_prefix}_get_max_num_elems (${vector_type} *vec);
+
+/* Gets the element at the specified index.  The index must be less
+ * than the number of used elements of the vector. */
+inline ${element_type}
+${namespace_prefix}_get (${vector_type} *vec, unsigned idx)
+{
+    ${namespace_prefix}_check_invariants (vec);
+    assert (idx < vec->num_elems);
+    return vec->store[idx];
+}
+
+/* Sets the element at the specified index to the given value.  The
+ * index must be less than the number of used elements of the
+ * vector. */
+inline void
+${namespace_prefix}_set (${vector_type} *vec, unsigned idx, ${element_type} val)
+{
+    ${namespace_prefix}_check_invariants (vec);
+    assert (idx < vec->num_elems);
+    vec->store[idx] = val;
+}
+
+/* Appends the given ${element_type} to the vector, doubling the size of the
+   vector if it is not large enough. */
+extern void
+${namespace_prefix}_push_back (${vector_type} *vec, ${element_type} val);
+
+#endif /* ${include_guard_name} */
