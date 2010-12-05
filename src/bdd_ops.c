@@ -3,13 +3,13 @@
 #include "bdd_pair_hash_table.h"
 
 bdd_t
-bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i)
+bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
-    bdd_manager_check_invariants (mgr);
+    bdd_mgr_check_invariants (mgr);
     assert (i < mgr->num_vars);
     const node_t node = {i, bdd_false, bdd_true};
     const bdd_t ith_var = make_node (mgr, node);
-    bdd_manager_check_invariants (mgr);
+    bdd_mgr_check_invariants (mgr);
     assert (node_equal (node, node_vector_get (mgr->nodes_by_idx, ith_var)));
     return ith_var;
 }
@@ -41,7 +41,7 @@ bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
 }
 
 static bdd_t
-bdd_apply_rec (bdd_manager_t *mgr,
+bdd_apply_rec (bdd_mgr_t *mgr,
                bdd_pair_hash_table_t *cache,
                bdd_apply_binop op,
                bdd_pair_t p)
@@ -100,16 +100,16 @@ bdd_apply_rec (bdd_manager_t *mgr,
 }
 
 bdd_t
-bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
+bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
 {
-    bdd_manager_check_invariants (mgr);
-    assert (b1 < bdd_manager_get_num_nodes(mgr));
-    assert (b2 < bdd_manager_get_num_nodes(mgr));
+    bdd_mgr_check_invariants (mgr);
+    assert (b1 < bdd_mgr_get_num_nodes(mgr));
+    assert (b2 < bdd_mgr_get_num_nodes(mgr));
     bdd_pair_hash_table_t *cache = bdd_pair_hash_table_create ();
     const bdd_pair_t p = {b1, b2};
     const bdd_t result = bdd_apply_rec (mgr, cache, op, p);
     bdd_pair_hash_table_destroy (cache);
-    bdd_manager_check_invariants (mgr);
+    bdd_mgr_check_invariants (mgr);
     return result;
 }
 
@@ -120,7 +120,7 @@ bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
  * second case.  This can be improved by memoization / dynamic
  * programming. */
 static bdd_t
-bdd_res_rec (bdd_manager_t *mgr, const unsigned var, const bool val, bdd_t b)
+bdd_res_rec (bdd_mgr_t *mgr, const unsigned var, const bool val, bdd_t b)
 {
     const node_t n = node_vector_get (mgr->nodes_by_idx, b);
     if (n.var > var)
@@ -137,7 +137,7 @@ bdd_res_rec (bdd_manager_t *mgr, const unsigned var, const bool val, bdd_t b)
 }
 
 bdd_t
-bdd_restrict_var (bdd_manager_t *mgr, bdd_t b, unsigned var, bool val)
+bdd_restrict_var (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val)
 {
     return bdd_res_rec (mgr, var, val, b);
 }

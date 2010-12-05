@@ -9,7 +9,7 @@
 #include "node_vector.h"
 #include "node_hash_table.h"
 
-struct bdd_manager
+struct bdd_mgr
 {
     /* The number of variables. */
     unsigned num_vars;
@@ -21,7 +21,7 @@ struct bdd_manager
     node_hash_table_t *idxs_by_node;
 };
 
-#define bdd_manager_check_invariants(mgr)                               \
+#define bdd_mgr_check_invariants(mgr)                               \
     do {                                                                \
         assert (mgr != NULL);                                           \
         assert (mgr->nodes_by_idx != NULL);                             \
@@ -41,11 +41,11 @@ struct bdd_manager
 /* Answers whether the BDDs represented by the manager are reduced and
  * ordered. */
 extern bool
-is_robdd (bdd_manager_t *mgr);
+is_robdd (bdd_mgr_t *mgr);
 
 /* Gets the node representing T for the given manager. */
 inline node_t
-get_true_node (bdd_manager_t *mgr)
+get_true_node (bdd_mgr_t *mgr)
 {
     node_t t = {mgr->num_vars, bdd_false, bdd_true};
     return t;
@@ -53,7 +53,7 @@ get_true_node (bdd_manager_t *mgr)
 
 /* Gets the node representing F for the given manager. */
 inline node_t
-get_false_node (bdd_manager_t *mgr)
+get_false_node (bdd_mgr_t *mgr)
 {
     node_t f = {mgr->num_vars, bdd_true, bdd_false};
     return f;
@@ -62,10 +62,10 @@ get_false_node (bdd_manager_t *mgr)
 /* Retrieves an existing node equal to the given one, otherwise creates
  * a new node. */
 extern unsigned
-make_node (bdd_manager_t *mgr, node_t node);
+make_node (bdd_mgr_t *mgr, node_t node);
 
 inline unsigned
-make_node_from_parts (bdd_manager_t *mgr, unsigned var, bdd_t low, bdd_t high)
+make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high)
 {
     node_t n = {var, low, high};
     return make_node (mgr, n);

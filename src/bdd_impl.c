@@ -1,13 +1,13 @@
 #include "bdd_impl.h"
 
 extern node_t
-get_true_node (bdd_manager_t *mgr);
+get_true_node (bdd_mgr_t *mgr);
 
 extern node_t
-get_false_node (bdd_manager_t *mgr);
+get_false_node (bdd_mgr_t *mgr);
 
 bool
-is_robdd (bdd_manager_t *mgr)
+is_robdd (bdd_mgr_t *mgr)
 {
     const unsigned vec_len = node_vector_get_num_elems(mgr->nodes_by_idx);
 
@@ -33,10 +33,10 @@ is_robdd (bdd_manager_t *mgr)
 }
 
 extern unsigned
-make_node_from_parts (bdd_manager_t *mgr, unsigned var, bdd_t low, bdd_t high);
+make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high);
 
 unsigned
-make_node (bdd_manager_t *mgr, node_t node)
+make_node (bdd_mgr_t *mgr, node_t node)
 {
     if (node.low == node.high)
         return node.low;
