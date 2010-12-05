@@ -20,14 +20,14 @@ def _interpolate (template, params):
                  template)
 
 
-def make_vector (params):
+def make_vector (**params):
    """
    Creates a vector with the given parameters map, which should
    map strings to strings.  The following parameters must be defined:
 
        include_guard_name       the name for the guard in the header
        local_includes           local C include statements needed in the header
-       namespace_prefix         the prefix to give all exported functions
+       prefix                   the prefix to give all exported functions
 
        vector_type              the name for the generated vector type
        element_type             the name of the vector's element type
@@ -46,7 +46,7 @@ def make_vector (params):
       code.write(_interpolate(_get_template("vector/vector.c"), params))
 
 
-def make_hash_table (params):
+def make_hash_table (**params):
    """
    Creates a hash table with the given parameters map, which should
    map strings to strings.  The following parameters must be defined:

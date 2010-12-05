@@ -73,6 +73,17 @@ struct ${hash_table_type}
 };
 
 /***********************************************************************/
+/* HASHING FUNCTIONS                                                   */
+/***********************************************************************/
+/* Hashes the given key and computes the corresponding index for
+ * it. */
+static unsigned
+${prefix}_get_hash_index (${hash_table_type} *tab, ${key_type} key)
+{
+    return ${key_hash_func} (key) % tab->num_buckets;
+}
+
+/***********************************************************************/
 /* HASH TABLE STRUCT INVARIANTS CHECKING                               */
 /***********************************************************************/
 #define ${prefix}_check_invariants(tab)                 \
@@ -86,7 +97,7 @@ struct ${hash_table_type}
 /* Returns true if and only if every entry in a bucket hashes to that
  * bucket. */
 static bool
-${prefix}_proper_hash_values (${hash_table_type}_t *tab)
+${prefix}_proper_hash_values (${hash_table_type} *tab)
 {
     for (unsigned i = 0; i < tab->num_buckets; i += 1)
         for (ht_bucket_t *p = tab->buckets[i]; p != NULL; p = p->next)
@@ -98,7 +109,7 @@ ${prefix}_proper_hash_values (${hash_table_type}_t *tab)
 /* Returns true if and only if there are no two distinct entries with
  * the same key. */
 static bool
-${prefix}_no_duplicate_keys (${hash_table_type}_t *tab)
+${prefix}_no_duplicate_keys (${hash_table_type} *tab)
 {
     unsigned num_buckets = tab->num_buckets;
     ht_bucket_t **buckets = tab->buckets;
@@ -124,18 +135,18 @@ up_to_next_power_of_two (unsigned n)
 }
 
 /* Creates and returns a new hash table with a default number of buckets. */
-${hash_table_type}_t *
+${hash_table_type} *
 ${prefix}_create ()
 {
     return ${prefix}_create_with_hint (32);
 }
 
 /* Creates and returns a new hash table with a suggested number of buckets. */
-${hash_table_type}_t *
+${hash_table_type} *
 ${prefix}_create_with_hint (unsigned num_buckets_hint)
 {
-    ${hash_table_type}_t *tab =
-        (${hash_table_type}_t *) malloc (sizeof(${hash_table_type}_t));
+    ${hash_table_type} *tab =
+        (${hash_table_type} *) malloc (sizeof(${hash_table_type}));
     tab->num_entries = 0;
     const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
     tab->num_buckets = num_buckets;
@@ -150,7 +161,7 @@ ${prefix}_create_with_hint (unsigned num_buckets_hint)
 /* Frees the memory used by the given hash table.  It is an error
  * to call this procedure more than once on a hash table. */
 void
-${prefix}_destroy (${hash_table_type}_t *tab)
+${prefix}_destroy (${hash_table_type} *tab)
 {
     ${prefix}_check_invariants (tab);
     for (unsigned i = 0; i < tab->num_buckets; i += 1)
@@ -164,7 +175,7 @@ ${prefix}_destroy (${hash_table_type}_t *tab)
 /***********************************************************************/
 /* Gets the number of entries in the hash table. */
 unsigned
-${prefix}_get_num_entries (${hash_table_type}_t *tab)
+${prefix}_get_num_entries (${hash_table_type} *tab)
 {
     ${prefix}_check_invariants (tab);
     return tab->num_entries;
@@ -172,7 +183,7 @@ ${prefix}_get_num_entries (${hash_table_type}_t *tab)
 
 /* Gets the number of buckets in the hash table. */
 unsigned
-${prefix}_get_num_buckets (${hash_table_type}_t *tab)
+${prefix}_get_num_buckets (${hash_table_type} *tab)
 {
     ${prefix}_check_invariants (tab);
     return tab->num_buckets;
@@ -181,7 +192,7 @@ ${prefix}_get_num_buckets (${hash_table_type}_t *tab)
 /* Return the hash table load, defined as the number of entries
  * divided by the number of buckets. */
 float
-${prefix}_get_load (${hash_table_type}_t *tab)
+${prefix}_get_load (${hash_table_type} *tab)
 {
     ${prefix}_check_invariants (tab);
     return
@@ -189,17 +200,9 @@ ${prefix}_get_load (${hash_table_type}_t *tab)
         (float) ${prefix}_get_num_buckets (tab);
 }
 
-/* Hashes the given key and computes the corresponding index for
- * it. */
-static unsigned
-${prefix}_get_hash_index (${hash_table_type}_t *tab, ${key_type} key)
-{
-    return ${key_hash_func} (key) % tab->num_buckets;
-}
-
 /* Double the number of buckets in the hash table. */
 static void
-double_hash_table_num_buckets (${hash_table_type}_t *tab)
+double_hash_table_num_buckets (${hash_table_type} *tab)
 {
     const unsigned old_num_buckets = tab->num_buckets;
     ht_bucket_t **old_buckets = tab->buckets;
@@ -226,7 +229,7 @@ double_hash_table_num_buckets (${hash_table_type}_t *tab)
  * If there is already an entry with the given key, its value is
  * replaced. */
 void
-${prefix}_insert (${hash_table_type}_t *tab,
+${prefix}_insert (${hash_table_type} *tab,
                   ${key_type} key,
                   ${value_type} val)
 {
@@ -248,7 +251,7 @@ ${prefix}_insert (${hash_table_type}_t *tab,
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
 ${value_type} *
-${prefix}_lookup (${hash_table_type}_t *tab, ${key_type} key)
+${prefix}_lookup (${hash_table_type} *tab, ${key_type} key)
 {
     ${prefix}_check_invariants (tab);
     const unsigned b_idx = ${prefix}_get_hash_index (tab, key);
