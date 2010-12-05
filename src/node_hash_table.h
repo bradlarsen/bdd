@@ -1,13 +1,13 @@
+/* This module provides a hash table from node_t to bdd
+ * implemented using separate chaining. */
+
 #ifndef NODE_HASH_TABLE_INCLUDED
 #define NODE_HASH_TABLE_INCLUDED
 
 #include "node.h"
 
-#include <stdbool.h>
-
-/* A hash table from nodes to indexes, implemented using separate
- * chaining. */
-typedef struct node_hash_table node_hash_table_t;
+/* A hash table implemented using separate chaining. */
+typedef struct node_hash_table_t node_hash_table_t;
 
 /* Creates and returns a new hash table with a default number of buckets. */
 extern node_hash_table_t *
@@ -35,23 +35,24 @@ node_hash_table_get_num_buckets (node_hash_table_t *tab);
 extern float
 node_hash_table_get_load (node_hash_table_t *tab);
 
-/* Indicates if there is an entry for the given key in the hash table. */
-extern bool
-node_hash_table_has_key (node_hash_table_t *tab, node_t key);
-
 /* Inserts a binding for the given key and value into the hash table.
  * If there is already an entry with the given key, its value is
  * replaced. */
 extern void
-node_hash_table_insert (node_hash_table_t *tab,
-                        node_t key,
-                        unsigned val);
+node_hash_table_insert (
+    node_hash_table_t *tab,
+    node_t key,
+    bdd val
+    );
 
 /* Retrieves a pointer to the value bound to the specified key.  If no
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-extern unsigned *
-node_hash_table_lookup (node_hash_table_t *tab, node_t key);
+extern bdd *
+node_hash_table_lookup (
+    node_hash_table_t *tab,
+    node_t key
+    );
 
 #endif /* NODE_HASH_TABLE_INCLUDED */

@@ -12,7 +12,7 @@ make_vector(
 
 make_hash_table(
     include_guard_name='NODE_HASH_TABLE_INCLUDED',
-    local_includes='#include "node.h"\n#include "bdd.h"',
+    local_includes='#include "node.h"',
     prefix='node_hash_table',
     hash_table_type='node_hash_table_t',
     key_type='node_t',
@@ -21,4 +21,17 @@ make_hash_table(
     value_type='bdd',
     header_name='node_hash_table.h',
     code_name='node_hash_table.c'
+    )
+
+make_hash_table(
+    include_guard_name='BDD_PAIR_HASH_TABLE_INCLUDED',
+    local_includes='#include "bdd_pair.h"',
+    prefix='bdd_pair_hash_table',
+    hash_table_type='bdd_pair_hash_table_t',
+    key_type='bdd_pair_t',
+    key_equal_func='bdd_pair_equal',
+    key_hash_func='bdd_pair_hash',
+    value_type='bdd',
+    header_name='bdd_pair_hash_table.h',
+    code_name='bdd_pair_hash_table.c'
     )

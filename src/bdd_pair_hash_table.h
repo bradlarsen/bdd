@@ -1,13 +1,13 @@
+/* This module provides a hash table from bdd_pair_t to bdd
+ * implemented using separate chaining. */
+
 #ifndef BDD_PAIR_HASH_TABLE_INCLUDED
 #define BDD_PAIR_HASH_TABLE_INCLUDED
 
 #include "bdd_pair.h"
 
-#include <stdbool.h>
-
-/* A hash table from bdd_pairs to indexes, implemented using separate
- * chaining. */
-typedef struct bdd_pair_hash_table bdd_pair_hash_table_t;
+/* A hash table implemented using separate chaining. */
+typedef struct bdd_pair_hash_table_t bdd_pair_hash_table_t;
 
 /* Creates and returns a new hash table with a default number of buckets. */
 extern bdd_pair_hash_table_t *
@@ -35,23 +35,24 @@ bdd_pair_hash_table_get_num_buckets (bdd_pair_hash_table_t *tab);
 extern float
 bdd_pair_hash_table_get_load (bdd_pair_hash_table_t *tab);
 
-/* Indicates if there is an entry for the given key in the hash table. */
-extern bool
-bdd_pair_hash_table_has_key (bdd_pair_hash_table_t *tab, bdd_pair_t key);
-
 /* Inserts a binding for the given key and value into the hash table.
  * If there is already an entry with the given key, its value is
  * replaced. */
 extern void
-bdd_pair_hash_table_insert (bdd_pair_hash_table_t *tab,
-                            bdd_pair_t key,
-                            unsigned val);
+bdd_pair_hash_table_insert (
+    bdd_pair_hash_table_t *tab,
+    bdd_pair_t key,
+    bdd val
+    );
 
 /* Retrieves a pointer to the value bound to the specified key.  If no
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-extern unsigned *
-bdd_pair_hash_table_lookup (bdd_pair_hash_table_t *tab, bdd_pair_t key);
+extern bdd *
+bdd_pair_hash_table_lookup (
+    bdd_pair_hash_table_t *tab,
+    bdd_pair_t key
+    );
 
 #endif /* BDD_PAIR_HASH_TABLE_INCLUDED */

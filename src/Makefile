@@ -1,45 +1,42 @@
+BDD_LIB_SOURCES =				\
+	bdd_accessors.c				\
+	bdd_create_destroy.c			\
+	bdd_impl.c				\
+	bdd_ops.c				\
+	bdd_pair.c				\
+	bdd_pair_hash_table.c			\
+	hash_pair.c				\
+	node.c					\
+	node_hash_table.c			\
+	node_vector.c
+
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99
+DEBUGFLAGS = -g
+RELEASEFLAGS = -O2 -DNDEBUG
 
-BDD_PAIR_HASH_TABLE_OBJECTS =			\
-	bdd_pair_hash_table_create_destroy.o	\
-	bdd_pair_hash_table_bucket.o		\
-	bdd_pair_hash_table_accessors.o		\
-	bdd_pair_hash_table_lookup_insert.o	\
-	bdd_pair_hash_table_hash.o		\
-	bdd_pair_hash_table_invariant_check.o	\
-	bdd_pair.o				\
-	hash_pair.o
+%.debug.o: %.c
+	$(CC) $(CFLAGS) $(DEBUGFLAGS) -c -o $@ $<
 
-NODE_HASH_TABLE_OBJECTS =			\
-	node_hash_table_create_destroy.o	\
-	node_hash_table_bucket.o		\
-	node_hash_table_accessors.o		\
-	node_hash_table_lookup_insert.o         \
-	node_hash_table_hash.o                  \
-	node_hash_table_invariant_check.o	\
-	node.o					\
-	hash_pair.o
+%.o: %.c
+	$(CC) $(CFLAGS) $(RELEASEFLAGS) -c -o $@ $<
 
-NODE_VECTOR_OBJECTS =				\
-	node_vector.o
+BDD_LIB_OBJECTS = $(BDD_LIB_SOURCES:.c=.o)
+BDD_DEBUG_LIB_OBJECTS = $(BDD_LIB_SOURCES:.c=.debug.o)
 
-BDD_OBJECTS =					\
-	bdd_create_destroy.o			\
-	bdd_accessors.o				\
-	bdd_ops.o				\
-	bdd_impl.o
+.PHONY: all
+all: test test.debug bdd.a bdd.debug.a
 
-test: test.o $(BDD_OBJECTS) $(BDD_PAIR_HASH_TABLE_OBJECTS) $(NODE_HASH_TABLE_OBJECTS) $(NODE_VECTOR_OBJECTS)
+test: test.o bdd.a
 
-.PHONY: debug
-debug:
-	$(CC) $(CFLAGS) -g *.c -o test_debug
+test.debug: test.debug.o bdd.debug.a
 
-.PHONY: release
-release:
-	$(CC) $(CFLAGS) -O2 -DNDEBUG *.c -o test_release
+bdd.a: $(BDD_LIB_OBJECTS)
+	$(AR) rcs $@ $^
+
+bdd.debug.a: $(BDD_DEBUG_LIB_OBJECTS)
+	$(AR) rcs $@ $^
 
 .PHONY: clean
 clean:
-	rm -f *.o test test_debug test_release
+	rm -f *.o *.a test test.debug
