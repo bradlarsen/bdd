@@ -1,5 +1,5 @@
 /* The definition of a separate-chaining hash table from bdd_pair_t
- * to bdd. */
+ * to bdd_t. */
 
 #include "bdd_pair_hash_table.h"
 
@@ -12,14 +12,14 @@
 typedef struct ht_bucket
 {
     bdd_pair_t key;
-    bdd value;
+    bdd_t value;
     struct ht_bucket *next;
 } ht_bucket_t;
 
 /* Allocates and initializes a bucket with the given parameters. */
 static ht_bucket_t *
 ht_bucket_create (bdd_pair_t key,
-                  bdd value,
+                  bdd_t value,
                   ht_bucket_t *next)
 {
     ht_bucket_t * bucket = (ht_bucket_t *) malloc (sizeof(ht_bucket_t));
@@ -233,7 +233,7 @@ double_hash_table_num_buckets (bdd_pair_hash_table_t *tab)
 void
 bdd_pair_hash_table_insert (bdd_pair_hash_table_t *tab,
                   bdd_pair_t key,
-                  bdd val)
+                  bdd_t val)
 {
     bdd_pair_hash_table_check_invariants (tab);
     if (bdd_pair_hash_table_get_load(tab) > 0.70f)
@@ -252,7 +252,7 @@ bdd_pair_hash_table_insert (bdd_pair_hash_table_t *tab,
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-bdd *
+bdd_t *
 bdd_pair_hash_table_lookup (bdd_pair_hash_table_t *tab, bdd_pair_t key)
 {
     bdd_pair_hash_table_check_invariants (tab);

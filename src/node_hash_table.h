@@ -1,4 +1,4 @@
-/* This module provides a hash table from node_t to bdd
+/* This module provides a hash table from node_t to bdd_t
  * implemented using separate chaining. */
 
 #ifndef NODE_HASH_TABLE_INCLUDED
@@ -42,14 +42,14 @@ extern void
 node_hash_table_insert (
     node_hash_table_t *tab,
     node_t key,
-    bdd val
+    bdd_t val
     );
 
 /* Retrieves a pointer to the value bound to the specified key.  If no
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-extern bdd *
+extern bdd_t *
 node_hash_table_lookup (
     node_hash_table_t *tab,
     node_t key

@@ -8,7 +8,7 @@ typedef struct bdd_manager bdd_manager_t;
 
 /* BDDs are represented by the index of a node.  Ideally, this type
  * would be abstract. */
-typedef unsigned bdd;
+typedef unsigned bdd_t;
 
 /* True and false literals. */
 enum {bdd_false = 0, bdd_true = 1};
@@ -32,7 +32,7 @@ bdd_manager_get_num_nodes (bdd_manager_t *mgr);
 
 /* Returns a BDD representing the given variable.  The variable must
  * be less than the number of variables in the manager. */
-extern bdd
+extern bdd_t
 bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i);
 
 
@@ -41,12 +41,12 @@ typedef enum {BDD_AND, BDD_OR, BDD_EQUIV} bdd_apply_binop;
 
 /* Apply a binary operation to the two given BDDs, which must be valid
  * BDDs for the given manager. */
-extern bdd
-bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd b1, bdd b2);
+extern bdd_t
+bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
 
 /* Restricts the given BDD by assigning a value to a variable.  The
    variable must be valid for the manager. */
-extern bdd
-bdd_restrict_var (bdd_manager_t *mgr, bdd b, unsigned var, bool val);
+extern bdd_t
+bdd_restrict_var (bdd_manager_t *mgr, bdd_t b, unsigned var, bool val);
 
 #endif  /* BDD_INCLUDED */

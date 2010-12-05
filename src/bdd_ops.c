@@ -2,20 +2,20 @@
 #include "bdd_pair.h"
 #include "bdd_pair_hash_table.h"
 
-bdd
+bdd_t
 bdd_manager_get_ith_var (bdd_manager_t *mgr, unsigned i)
 {
     bdd_manager_check_invariants (mgr);
     assert (i < mgr->num_vars);
     const node_t node = {i, bdd_false, bdd_true};
-    const bdd ith_var = make_node (mgr, node);
+    const bdd_t ith_var = make_node (mgr, node);
     bdd_manager_check_invariants (mgr);
     assert (node_equal (node, node_vector_get (mgr->nodes_by_idx, ith_var)));
     return ith_var;
 }
 
-static bdd
-bdd_eval_op_on_terminals (bdd_apply_binop op, bdd b1, bdd b2)
+static bdd_t
+bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
 {
     assert (b1 <= 1);
     assert (b2 <= 1);
@@ -40,7 +40,7 @@ bdd_eval_op_on_terminals (bdd_apply_binop op, bdd b1, bdd b2)
     return result ? bdd_true : bdd_false;
 }
 
-static bdd
+static bdd_t
 bdd_apply_rec (bdd_manager_t *mgr,
                bdd_pair_hash_table_t *cache,
                bdd_apply_binop op,
@@ -51,11 +51,11 @@ bdd_apply_rec (bdd_manager_t *mgr,
         return *cache_val;
     }
     else {
-        const bdd b1 = p.first;
+        const bdd_t b1 = p.first;
         const node_t n1 = node_vector_get(mgr->nodes_by_idx, b1);
-        const bdd b2 = p.second;
+        const bdd_t b2 = p.second;
         const node_t n2 = node_vector_get(mgr->nodes_by_idx, b2);
-        bdd result;
+        bdd_t result;
         if (b1 <= 1 && b2 <= 1) {
             result = bdd_eval_op_on_terminals (op, b1, b2);
         }
@@ -84,8 +84,8 @@ bdd_apply_rec (bdd_manager_t *mgr,
                 p2.first = b1;
                 p2.second = n2.high;
             }
-            const bdd low = bdd_apply_rec (mgr, cache, op, p1);
-            const bdd high = bdd_apply_rec (mgr, cache, op, p2);
+            const bdd_t low = bdd_apply_rec (mgr, cache, op, p1);
+            const bdd_t high = bdd_apply_rec (mgr, cache, op, p2);
 
             result = make_node_from_parts (
                 mgr,
@@ -99,15 +99,15 @@ bdd_apply_rec (bdd_manager_t *mgr,
     }
 }
 
-bdd
-bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd b1, bdd b2)
+bdd_t
+bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
 {
     bdd_manager_check_invariants (mgr);
     assert (b1 < bdd_manager_get_num_nodes(mgr));
     assert (b2 < bdd_manager_get_num_nodes(mgr));
     bdd_pair_hash_table_t *cache = bdd_pair_hash_table_create ();
     const bdd_pair_t p = {b1, b2};
-    const bdd result = bdd_apply_rec (mgr, cache, op, p);
+    const bdd_t result = bdd_apply_rec (mgr, cache, op, p);
     bdd_pair_hash_table_destroy (cache);
     bdd_manager_check_invariants (mgr);
     return result;
@@ -119,15 +119,15 @@ bdd_apply (bdd_manager_t *mgr, bdd_apply_binop op, bdd b1, bdd b2)
  * exponential time complexity due to the two recursive calls in the
  * second case.  This can be improved by memoization / dynamic
  * programming. */
-static bdd
-bdd_res_rec (bdd_manager_t *mgr, const unsigned var, const bool val, bdd b)
+static bdd_t
+bdd_res_rec (bdd_manager_t *mgr, const unsigned var, const bool val, bdd_t b)
 {
     const node_t n = node_vector_get (mgr->nodes_by_idx, b);
     if (n.var > var)
         return b;
     else if (n.var < var) {
-        const bdd low = bdd_res_rec (mgr, var, val, n.low);
-        const bdd high = bdd_res_rec (mgr, var, val, n.high);
+        const bdd_t low = bdd_res_rec (mgr, var, val, n.low);
+        const bdd_t high = bdd_res_rec (mgr, var, val, n.high);
         return make_node_from_parts (mgr, n.var, low, high);
     }
     else if (!val)
@@ -136,8 +136,8 @@ bdd_res_rec (bdd_manager_t *mgr, const unsigned var, const bool val, bdd b)
         return bdd_res_rec (mgr, var, val, n.high);
 }
 
-bdd
-bdd_restrict_var (bdd_manager_t *mgr, bdd b, unsigned var, bool val)
+bdd_t
+bdd_restrict_var (bdd_manager_t *mgr, bdd_t b, unsigned var, bool val)
 {
     return bdd_res_rec (mgr, var, val, b);
 }

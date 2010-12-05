@@ -18,7 +18,7 @@ make_hash_table(
     key_type='node_t',
     key_equal_func='node_equal',
     key_hash_func='node_hash',
-    value_type='bdd',
+    value_type='bdd_t',
     header_name='node_hash_table.h',
     code_name='node_hash_table.c'
     )
@@ -31,7 +31,7 @@ make_hash_table(
     key_type='bdd_pair_t',
     key_equal_func='bdd_pair_equal',
     key_hash_func='bdd_pair_hash',
-    value_type='bdd',
+    value_type='bdd_t',
     header_name='bdd_pair_hash_table.h',
     code_name='bdd_pair_hash_table.c'
     )

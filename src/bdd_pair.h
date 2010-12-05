@@ -7,8 +7,8 @@
 
 typedef struct bdd_pair
 {
-    bdd first;
-    bdd second;
+    bdd_t first;
+    bdd_t second;
 } bdd_pair_t;
 
 inline bool

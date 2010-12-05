@@ -1,5 +1,5 @@
 /* The definition of a separate-chaining hash table from node_t
- * to bdd. */
+ * to bdd_t. */
 
 #include "node_hash_table.h"
 
@@ -12,14 +12,14 @@
 typedef struct ht_bucket
 {
     node_t key;
-    bdd value;
+    bdd_t value;
     struct ht_bucket *next;
 } ht_bucket_t;
 
 /* Allocates and initializes a bucket with the given parameters. */
 static ht_bucket_t *
 ht_bucket_create (node_t key,
-                  bdd value,
+                  bdd_t value,
                   ht_bucket_t *next)
 {
     ht_bucket_t * bucket = (ht_bucket_t *) malloc (sizeof(ht_bucket_t));
@@ -233,7 +233,7 @@ double_hash_table_num_buckets (node_hash_table_t *tab)
 void
 node_hash_table_insert (node_hash_table_t *tab,
                   node_t key,
-                  bdd val)
+                  bdd_t val)
 {
     node_hash_table_check_invariants (tab);
     if (node_hash_table_get_load(tab) > 0.70f)
@@ -252,7 +252,7 @@ node_hash_table_insert (node_hash_table_t *tab,
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-bdd *
+bdd_t *
 node_hash_table_lookup (node_hash_table_t *tab, node_t key)
 {
     node_hash_table_check_invariants (tab);

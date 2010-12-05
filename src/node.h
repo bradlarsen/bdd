@@ -8,8 +8,8 @@
 typedef struct
 {
     unsigned var;             /* the variable index of the node */
-    bdd low;                  /* the value if the var is false */
-    bdd high;                 /* the value if the var is true */
+    bdd_t low;                /* the value if the var is false */
+    bdd_t high;               /* the value if the var is true */
 
     /* invariant: low != high */
 } node_t;
