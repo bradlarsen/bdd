@@ -59,4 +59,9 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
 extern bdd_t
 bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
 
+/* Performs existential quantification on the given variable and
+ * BDD. */
+extern bdd_t
+bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b);
+
 #endif  /* BDD_INCLUDED */

@@ -165,3 +165,11 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val)
 {
     return bdd_res_rec (mgr, var, val, b);
 }
+
+bdd_t
+bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b)
+{
+    return bdd_apply (mgr, BDD_OR,
+                      bdd_restrict (mgr, b, var, false),
+                      bdd_restrict (mgr, b, var, true));
+}
