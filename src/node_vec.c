@@ -1,3 +1,6 @@
+/* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
+TO THE TEMPLATE INSTEAD. */
+
 #include "node_vec.h"
 
 #include <assert.h>

@@ -1,3 +1,6 @@
+/* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
+TO THE TEMPLATE INSTEAD. */
+
 #include "${header_name}"
 
 #include <assert.h>

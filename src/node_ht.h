@@ -1,3 +1,6 @@
+/* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
+TO THE TEMPLATE INSTEAD. */
+
 /* This module provides a hash table from node_t to bdd_t
  * implemented using separate chaining. */
 

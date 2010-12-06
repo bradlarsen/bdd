@@ -1,3 +1,6 @@
+/* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
+TO THE TEMPLATE INSTEAD. */
+
 /* The definition of a separate-chaining hash table from bdd_pair_t
  * to bdd_t. */
 
