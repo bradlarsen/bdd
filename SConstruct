@@ -1,12 +1,14 @@
 import os.path as path
 
 environments = {
-    'opt' : Environment(CC = 'gcc', 
-                        CFLAGS = Split('-std=c99 -O2 -DNDEBUG'),
-                        ),
-    'dbg' : Environment(CC = 'gcc', 
-                        CFLAGS = Split('-std=c99 -g'),
-                        )
+    'opt' : Environment(
+        CC = 'gcc', 
+        CFLAGS = Split('-std=c99 -Wall -Wextra -pedantic -O2 -DNDEBUG'),
+        ),
+    'dbg' : Environment(
+        CC = 'gcc', 
+        CFLAGS = Split('-std=c99 -Wall -Wextra -pedantic -g'),
+        )
     }
 
 for env_name, env in environments.items():
