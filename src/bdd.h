@@ -55,6 +55,34 @@ typedef enum {
 extern bdd_t
 bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
 
+/* Computes the logical AND of the two BDDs. */
+extern bdd_t
+bdd_and (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
+/* Computes the logical OR of the two BDDs. */
+extern bdd_t
+bdd_or (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
+/* Computes the logical XOR of the two BDDs. */
+extern bdd_t
+bdd_xor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
+/* Computes the logical EQUIV of the two BDDs. */
+extern bdd_t
+bdd_equiv (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
+/* Computes the logical NAND of the two BDDs. */
+extern bdd_t
+bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
+/* Computes the logical NOR of the two BDDs. */
+extern bdd_t
+bdd_nor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
+/* Computes the logical IMPLIES of the two BDDs. */
+extern bdd_t
+bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
+
 /* Negates the given BDD. */
 extern bdd_t
 bdd_not (bdd_mgr_t *mgr, bdd_t b);

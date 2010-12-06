@@ -137,6 +137,48 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
     return result;
 }
 
+bdd_t
+bdd_and (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_AND, b1, b2);
+}
+
+bdd_t
+bdd_or (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_OR, b1, b2);
+}
+
+extern bdd_t
+bdd_xor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_XOR, b1, b2);
+}
+
+bdd_t
+bdd_equiv (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_EQUIV, b1, b2);
+}
+
+bdd_t
+bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_NAND, b1, b2);
+}
+
+bdd_t
+bdd_nor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_NOR, b1, b2);
+}
+
+bdd_t
+bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+{
+    return bdd_apply (mgr, BDD_IMPLIES, b1, b2);
+}
+
 /* Negation of a BDD is implemented by traversing it and switching
  * terminal links.  This should be improved with dynamic
  * programming. */
