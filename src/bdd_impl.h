@@ -17,7 +17,7 @@ struct bdd_mgr
      * terminal. */
     node_vec_t *nodes_by_idx;
     /* A hash table from nodes to index.  This field and nodes_by_idx
-     * should form a one-to-one mapping. */
+     * form a one-to-one mapping. */
     node_ht_t *idxs_by_node;
 };
 
