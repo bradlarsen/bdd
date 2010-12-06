@@ -8,14 +8,6 @@ TO THE TEMPLATE INSTEAD. */
 
 static const unsigned INITIAL_CAPACITY = 32;
 
-/* The following two declarations are necessary to avoid linker errors
-   when the node_vec_get and node_vec_set functions are not
-   inlined. */
-extern inline node_t
-node_vec_get (node_vec_t *vec, unsigned idx);
-extern inline void
-node_vec_set (node_vec_t *vec, unsigned idx, node_t val);
-
 node_vec_t *
 node_vec_create ()
 {

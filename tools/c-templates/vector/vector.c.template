@@ -8,14 +8,6 @@ TO THE TEMPLATE INSTEAD. */
 
 static const unsigned INITIAL_CAPACITY = 32;
 
-/* The following two declarations are necessary to avoid linker errors
-   when the ${prefix}_get and ${prefix}_set functions are not
-   inlined. */
-extern inline ${element_type}
-${prefix}_get (${vector_type} *vec, unsigned idx);
-extern inline void
-${prefix}_set (${vector_type} *vec, unsigned idx, ${element_type} val);
-
 ${vector_type} *
 ${prefix}_create ()
 {

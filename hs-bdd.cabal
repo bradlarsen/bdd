@@ -73,10 +73,7 @@ Library
                        src/bdd_create_destroy.c
                        src/bdd_impl.c
                        src/bdd_ops.c
-                       src/bdd_pair.c
                        src/bdd_pair_ht.c
-                       src/hash_pair.c
-                       src/node.c
                        src/node_ht.c
                        src/node_vec.c
 
