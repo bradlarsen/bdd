@@ -5,7 +5,7 @@
 static const unsigned NUM_VARS = 100;
 
 int
-main (int argc, char *argv[])
+main ()
 {
     bdd_mgr_t *mgr = bdd_mgr_create (NUM_VARS);
     printf ("%u variables\n", bdd_mgr_get_num_vars(mgr));
