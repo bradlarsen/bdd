@@ -35,6 +35,11 @@ bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 extern bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i);
 
+/* Returns a BDD representing the negation of the given variable.  The
+ * variable must be less than the number of variables in the
+ * manager. */
+extern bdd_t
+bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i);
 
 /* Binary operations on BDDs to be used with bdd_apply. */
 typedef enum {

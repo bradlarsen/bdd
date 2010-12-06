@@ -1,5 +1,5 @@
 Import ('env', 'libbdd_dir')
-env.Program('test', 'test.c',
+env.Program('test', ['test.c', 'bool_expr.c'],
             LIBS='bdd', LIBPATH='#' + libbdd_dir,
             CPPPATH='#/src'
             )

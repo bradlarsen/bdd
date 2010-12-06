@@ -14,6 +14,18 @@ bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
     return ith_var;
 }
 
+bdd_t
+bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i)
+{
+    bdd_mgr_check_invariants (mgr);
+    assert (i < mgr->num_vars);
+    const node_t node = {i, bdd_true, bdd_false};
+    const bdd_t ith_var = make_node (mgr, node);
+    bdd_mgr_check_invariants (mgr);
+    assert (node_equal (node, node_vector_get (mgr->nodes_by_idx, ith_var)));
+    return ith_var;
+}
+
 static bdd_t
 bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
 {

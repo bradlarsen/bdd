@@ -1,38 +1,13 @@
-/* Whitebox tests for the BDD library. */
-#include "bdd.h"
+/**********************************************************************/
+/* White-box tests for the BDD library.                               */
+/**********************************************************************/
 #include <stdio.h>
 #include <stdlib.h>
 
-/**********************************************************************/
-/* TEST INFRASTRUCTURE                                                */
-/**********************************************************************/
-static char *test_name = NULL;
-static unsigned num_tests = 0;
+#include "bdd.h"
+#include "test_infrastructure.h"
+#include "bool_expr.h"
 
-#define ASSERT(cond)                                            \
-    do {                                                        \
-        if (!cond) {                                            \
-            fprintf (stderr, "FAIL\n"                           \
-                             "At %s:%u, the condition\n\n"      \
-                             "\t%s\n\n"                         \
-                             "failed.\n",                       \
-                     __FILE__, __LINE__, #cond);                \
-            exit(EXIT_FAILURE);                                 \
-        }                                                       \
-    } while (0)
-
-#define TEST_NAME(str)                          \
-    do {                                        \
-        if (test_name != NULL)                  \
-            fprintf (stderr, "PASS\n");         \
-        fprintf (stderr, "%s: ", str);          \
-        test_name = str;                        \
-        num_tests += 1;                         \
-    } while (0)
-
-/**********************************************************************/
-/* ENTRY POINT                                                        */
-/**********************************************************************/
 int
 main ()
 {
@@ -73,6 +48,36 @@ main ()
     TEST_NAME ("variable restriction");
     ASSERT (bdd_restrict_var (mgr, var5, 5, true) == bdd_true);
     ASSERT (bdd_restrict_var (mgr, var5, 5, false) == bdd_false);
+
+    TEST_NAME ("expression correctness of x0");
+    bool_expr_t *expr = new_bool_expr_t (1);
+    bool_expr_print (stderr, expr);
+    tt_equal (expr, mgr);
+    delete_bool_expr_t (expr);
+
+    TEST_NAME ("expression correctness of (x0 AND x1)");
+    expr = new_bool_expr_t (2);
+    expr->connectives[0] = BDD_AND;
+    bool_expr_print (stderr, expr);
+    tt_equal (expr, mgr);
+    delete_bool_expr_t (expr);
+
+    TEST_NAME ("expression correctness of ((x0 AND x1) OR x2)");
+    expr = new_bool_expr_t (3);
+    expr->connectives[0] = BDD_AND;
+    expr->connectives[1] = BDD_OR;
+    bool_expr_print (stderr, expr);
+    tt_equal (expr, mgr);
+    delete_bool_expr_t (expr);
+
+    TEST_NAME ("expression correctness of (((x0 AND x1) OR x2) AND x3)");
+    expr = new_bool_expr_t (4);
+    expr->connectives[0] = BDD_AND;
+    expr->connectives[1] = BDD_OR;
+    expr->connectives[2] = BDD_AND;
+    bool_expr_print (stderr, expr);
+    tt_equal (expr, mgr);
+    delete_bool_expr_t (expr);
 
     bdd_mgr_destroy (mgr);
 
