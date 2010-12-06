@@ -42,13 +42,14 @@ main ()
 
     TEST_NAME ("proper number of variables");
     ASSERT(bdd_mgr_get_num_vars(mgr) == NUM_VARS);
+
     TEST_NAME ("proper number of starting nodes");
     ASSERT(bdd_mgr_get_num_nodes(mgr) == 2);
 
     TEST_NAME ("proper variable indexes");
     for (unsigned i = 0; i < NUM_VARS; i += 1) {
         const bdd_t ivar = bdd_mgr_get_ith_var (mgr, i);
-        ASSERT (i + 3 == ivar);
+        ASSERT (i + 2 == ivar);
     }
     const unsigned old_num_nodes = bdd_mgr_get_num_nodes(mgr);
     for (unsigned i = 0; i < NUM_VARS; i += 1) {
@@ -75,6 +76,7 @@ main ()
 
     bdd_mgr_destroy (mgr);
 
-    fprintf (stderr, "%u tests passed\n", num_tests);
+    fprintf (stderr, "PASS\n");
+    fprintf (stderr, "\n%u tests passed\n", num_tests);
     exit(EXIT_SUCCESS);
 }
