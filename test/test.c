@@ -46,8 +46,8 @@ main ()
     ASSERT (var5 == var5_or_var5);
 
     TEST_NAME ("variable restriction");
-    ASSERT (bdd_restrict_var (mgr, var5, 5, true) == bdd_true);
-    ASSERT (bdd_restrict_var (mgr, var5, 5, false) == bdd_false);
+    ASSERT (bdd_restrict (mgr, var5, 5, true) == bdd_true);
+    ASSERT (bdd_restrict (mgr, var5, 5, false) == bdd_false);
 
     TEST_NAME ("expression correctness of x0");
     bool_expr_t *expr = new_bool_expr_t (1);

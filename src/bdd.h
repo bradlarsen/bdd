@@ -6,8 +6,8 @@
 /* A manager of BDDs.  A manager represents multiple BDDs. */
 typedef struct bdd_mgr bdd_mgr_t;
 
-/* BDDs are represented by the index of a node.  Ideally, this type
- * would be abstract. */
+/* A BDD is represented by its corresponding node index.  Ideally,
+ * this type would be abstract. */
 typedef unsigned bdd_t;
 
 /* True and false literals. */
@@ -60,6 +60,6 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
 /* Restricts the given BDD by assigning a value to a variable.  The
    variable must be valid for the manager. */
 extern bdd_t
-bdd_restrict_var (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
+bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
 
 #endif  /* BDD_INCLUDED */

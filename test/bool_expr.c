@@ -70,16 +70,16 @@ bool_expr_eval_bdd (bool_expr_t *expr, bdd_mgr_t *mgr)
     if (expr->num_variables == 0)
         return bdd_true;
 
-    bdd_t result = bdd_restrict_var (mgr,
-                                     bdd_mgr_get_ith_var (mgr, 0),
-                                     0,
-                                     expr->variables[0]);
+    bdd_t result = bdd_restrict (mgr,
+                                 bdd_mgr_get_ith_var (mgr, 0),
+                                 0,
+                                 expr->variables[0]);
 
     for (unsigned i = 0; i < expr->num_variables-1; i += 1) {
-        const bdd_t nextvar = bdd_restrict_var (mgr,
-                                                bdd_mgr_get_ith_var (mgr, i+1),
-                                                i+1,
-                                                expr->variables[i+1]);
+        const bdd_t nextvar = bdd_restrict (mgr,
+                                            bdd_mgr_get_ith_var (mgr, i+1),
+                                            i+1,
+                                            expr->variables[i+1]);
         result = bdd_apply (mgr,
                             expr->connectives[i],
                             result,

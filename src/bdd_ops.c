@@ -161,7 +161,7 @@ bdd_res_rec (bdd_mgr_t *mgr, const unsigned var, const bool val, bdd_t b)
 }
 
 bdd_t
-bdd_restrict_var (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val)
+bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val)
 {
     return bdd_res_rec (mgr, var, val, b);
 }
