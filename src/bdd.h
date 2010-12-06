@@ -64,4 +64,9 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
 extern bdd_t
 bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b);
 
+/* Performs universal quantification on the given variable and
+ * BDD. */
+extern bdd_t
+bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b);
+
 #endif  /* BDD_INCLUDED */

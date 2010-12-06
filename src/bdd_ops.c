@@ -173,3 +173,11 @@ bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b)
                       bdd_restrict (mgr, b, var, false),
                       bdd_restrict (mgr, b, var, true));
 }
+
+bdd_t
+bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b)
+{
+    return bdd_apply (mgr, BDD_AND,
+                      bdd_restrict (mgr, b, var, false),
+                      bdd_restrict (mgr, b, var, true));
+}
