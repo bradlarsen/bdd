@@ -3,7 +3,7 @@
 
 #include <stdbool.h>
 
-/* A manager of BDDs.  A manager represents multiple BDDs. */
+/* A manager of the state for multiple BDDs. */
 typedef struct bdd_mgr bdd_mgr_t;
 
 /* A BDD is represented by its corresponding node index.  Ideally,
@@ -31,17 +31,16 @@ extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 
 /* Returns a BDD representing the given variable.  The variable must
- * be less than the number of variables in the manager. */
+ * exist in the manager. */
 extern bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i);
 
 /* Returns a BDD representing the negation of the given variable.  The
- * variable must be less than the number of variables in the
- * manager. */
+ * variable must exist in the manager. */
 extern bdd_t
 bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i);
 
-/* Binary operations on BDDs to be used with bdd_apply. */
+/* Binary operations to be used with bdd_apply. */
 typedef enum {
     BDD_AND,
     BDD_OR,
@@ -52,13 +51,11 @@ typedef enum {
     BDD_IMPLIES
 } bdd_apply_binop;
 
-/* Apply a binary operation to the two given BDDs, which must be valid
- * BDDs for the given manager. */
+/* Applies a binary operation to the two given BDDs. */
 extern bdd_t
 bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
 
-/* Restricts the given BDD by assigning a value to a variable.  The
-   variable must be valid for the manager. */
+/* Restricts the given BDD by assigning a value to a variable. */
 extern bdd_t
 bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
 
