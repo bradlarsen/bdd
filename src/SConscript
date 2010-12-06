@@ -1,0 +1,16 @@
+Import ('env')
+
+src_files = [
+    'bdd_accessors.c',
+    'bdd_create_destroy.c',
+    'bdd_impl.c',
+    'bdd_ops.c',
+    'bdd_pair.c',
+    'bdd_pair_hash_table.c',
+    'hash_pair.c',
+    'node.c',
+    'node_hash_table.c',
+    'node_vector.c',
+    ]
+
+env.StaticLibrary ('bdd', src_files)
