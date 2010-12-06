@@ -29,8 +29,20 @@ bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
     case BDD_OR:
         result = b1 || b2;
         break;
+    case BDD_XOR:
+        result = (b1 && !b2) || (!b1 && b2);
+        break;
     case BDD_EQUIV:
         result = (b1 && b2) || (!b1 && !b2);
+        break;
+    case BDD_NAND:
+        result = !(b1 && b2);
+        break;
+    case BDD_NOR:
+        result = !(b1 || b2);
+        break;
+    case BDD_IMPLIES:
+        result = !b1 || b2;
         break;
     default:
         abort ();

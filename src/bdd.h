@@ -37,7 +37,15 @@ bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i);
 
 
 /* Binary operations on BDDs to be used with bdd_apply. */
-typedef enum {BDD_AND, BDD_OR, BDD_EQUIV} bdd_apply_binop;
+typedef enum {
+    BDD_AND,
+    BDD_OR,
+    BDD_XOR,
+    BDD_EQUIV,
+    BDD_NAND,
+    BDD_NOR,
+    BDD_IMPLIES
+} bdd_apply_binop;
 
 /* Apply a binary operation to the two given BDDs, which must be valid
  * BDDs for the given manager. */
