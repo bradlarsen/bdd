@@ -55,6 +55,10 @@ typedef enum {
 extern bdd_t
 bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
 
+/* Negates the given BDD. */
+extern bdd_t
+bdd_not (bdd_mgr_t *mgr, bdd_t b);
+
 /* Restricts the given BDD by assigning a value to a variable. */
 extern bdd_t
 bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
@@ -68,5 +72,10 @@ bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b);
  * BDD. */
 extern bdd_t
 bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b);
+
+/* Composes two BDDs f and g on variable x, yielding f with x replaced
+ * by g. */
+extern bdd_t
+bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g);
 
 #endif  /* BDD_INCLUDED */

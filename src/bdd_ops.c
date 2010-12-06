@@ -137,6 +137,24 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
     return result;
 }
 
+/* Negation of a BDD is implemented by traversing it and switching
+ * terminal links.  This should be improved with dynamic
+ * programming. */
+bdd_t
+bdd_not (bdd_mgr_t *mgr, bdd_t b)
+{
+    if (b == bdd_true)
+        return bdd_false;
+    else if (b == bdd_false)
+        return bdd_true;
+    else {
+        const node_t n = node_vec_get (mgr->nodes_by_idx, b);
+        return make_node_from_parts (mgr,
+                                     n.var,
+                                     bdd_not (mgr, n.low),
+                                     bdd_not (mgr, n.high));
+    }
+}
 
 /* This is the naive implementation from Andersen's ``An Introduction
  * to Binary Decision Diagrams''.  This implementation has worst-case
@@ -180,4 +198,16 @@ bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b)
     return bdd_apply (mgr, BDD_AND,
                       bdd_restrict (mgr, b, var, false),
                       bdd_restrict (mgr, b, var, true));
+}
+
+bdd_t
+bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g)
+{
+    return bdd_apply (mgr, BDD_OR,
+                      bdd_apply (mgr, BDD_AND,
+                                 bdd_not (mgr, g),
+                                 bdd_restrict (mgr, f, x, false)),
+                      bdd_apply (mgr, BDD_AND,
+                                 g,
+                                 bdd_restrict (mgr, f, x, true)));
 }
