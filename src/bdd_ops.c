@@ -1,6 +1,6 @@
 #include "bdd_impl.h"
 #include "bdd_pair.h"
-#include "bdd_pair_hash_table.h"
+#include "bdd_pair_ht.h"
 
 bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
@@ -10,7 +10,7 @@ bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
     const node_t node = {i, bdd_false, bdd_true};
     const bdd_t ith_var = make_node (mgr, node);
     bdd_mgr_check_invariants (mgr);
-    assert (node_equal (node, node_vector_get (mgr->nodes_by_idx, ith_var)));
+    assert (node_equal (node, node_vec_get (mgr->nodes_by_idx, ith_var)));
     return ith_var;
 }
 
@@ -22,7 +22,7 @@ bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i)
     const node_t node = {i, bdd_true, bdd_false};
     const bdd_t ith_var = make_node (mgr, node);
     bdd_mgr_check_invariants (mgr);
-    assert (node_equal (node, node_vector_get (mgr->nodes_by_idx, ith_var)));
+    assert (node_equal (node, node_vec_get (mgr->nodes_by_idx, ith_var)));
     return ith_var;
 }
 
@@ -66,19 +66,19 @@ bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
 
 static bdd_t
 bdd_apply_rec (bdd_mgr_t *mgr,
-               bdd_pair_hash_table_t *cache,
+               bdd_pair_ht_t *cache,
                bdd_apply_binop op,
                bdd_pair_t p)
 {
-    const unsigned *cache_val = bdd_pair_hash_table_lookup (cache, p);
+    const unsigned *cache_val = bdd_pair_ht_lookup (cache, p);
     if (cache_val != NULL) {
         return *cache_val;
     }
     else {
         const bdd_t b1 = p.first;
-        const node_t n1 = node_vector_get(mgr->nodes_by_idx, b1);
+        const node_t n1 = node_vec_get(mgr->nodes_by_idx, b1);
         const bdd_t b2 = p.second;
-        const node_t n2 = node_vector_get(mgr->nodes_by_idx, b2);
+        const node_t n2 = node_vec_get(mgr->nodes_by_idx, b2);
         bdd_t result;
         if (b1 <= 1 && b2 <= 1) {
             result = bdd_eval_op_on_terminals (op, b1, b2);
@@ -118,7 +118,7 @@ bdd_apply_rec (bdd_mgr_t *mgr,
                 high
                 );
         }
-        bdd_pair_hash_table_insert (cache, p, result);
+        bdd_pair_ht_insert (cache, p, result);
         return result;
     }
 }
@@ -129,10 +129,10 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
     bdd_mgr_check_invariants (mgr);
     assert (b1 < bdd_mgr_get_num_nodes(mgr));
     assert (b2 < bdd_mgr_get_num_nodes(mgr));
-    bdd_pair_hash_table_t *cache = bdd_pair_hash_table_create ();
+    bdd_pair_ht_t *cache = bdd_pair_ht_create ();
     const bdd_pair_t p = {b1, b2};
     const bdd_t result = bdd_apply_rec (mgr, cache, op, p);
-    bdd_pair_hash_table_destroy (cache);
+    bdd_pair_ht_destroy (cache);
     bdd_mgr_check_invariants (mgr);
     return result;
 }
@@ -146,7 +146,7 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
 static bdd_t
 bdd_res_rec (bdd_mgr_t *mgr, const unsigned var, const bool val, bdd_t b)
 {
-    const node_t n = node_vector_get (mgr->nodes_by_idx, b);
+    const node_t n = node_vec_get (mgr->nodes_by_idx, b);
     if (n.var > var)
         return b;
     else if (n.var < var) {

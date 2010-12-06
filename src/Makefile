@@ -4,11 +4,11 @@ BDD_LIB_SOURCES =				\
 	bdd_impl.c				\
 	bdd_ops.c				\
 	bdd_pair.c				\
-	bdd_pair_hash_table.c			\
+	bdd_pair_ht.c				\
 	hash_pair.c				\
 	node.c					\
-	node_hash_table.c			\
-	node_vector.c
+	node_ht.c				\
+	node_vec.c
 
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -std=c99

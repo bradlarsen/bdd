@@ -1,46 +1,46 @@
 /* This module provides a hash table from node_t to bdd_t
  * implemented using separate chaining. */
 
-#ifndef NODE_HASH_TABLE_INCLUDED
-#define NODE_HASH_TABLE_INCLUDED
+#ifndef NODE_HT_INCLUDED
+#define NODE_HT_INCLUDED
 
 #include "node.h"
 
 /* A hash table implemented using separate chaining. */
-typedef struct node_hash_table_t node_hash_table_t;
+typedef struct node_ht_t node_ht_t;
 
 /* Creates and returns a new hash table with a default number of buckets. */
-extern node_hash_table_t *
-node_hash_table_create ();
+extern node_ht_t *
+node_ht_create ();
 
 /* Creates and returns a new hash table with a suggested number of buckets. */
-extern node_hash_table_t *
-node_hash_table_create_with_hint (unsigned num_buckets_hint);
+extern node_ht_t *
+node_ht_create_with_hint (unsigned num_buckets_hint);
 
 /* Frees the memory used by the given hash table.  It is an error
  * to call this procedure more than once on a hash table. */
 extern void
-node_hash_table_destroy (node_hash_table_t *tab);
+node_ht_destroy (node_ht_t *tab);
 
 /* Gets the number of entries in the hash table. */
 extern unsigned
-node_hash_table_get_num_entries (node_hash_table_t *tab);
+node_ht_get_num_entries (node_ht_t *tab);
 
 /* Gets the number of buckets in the hash table. */
 extern unsigned
-node_hash_table_get_num_buckets (node_hash_table_t *tab);
+node_ht_get_num_buckets (node_ht_t *tab);
 
 /* Return the hash table load, defined as the number of entries
  * divided by the number of buckets. */
 extern float
-node_hash_table_get_load (node_hash_table_t *tab);
+node_ht_get_load (node_ht_t *tab);
 
 /* Inserts a binding for the given key and value into the hash table.
  * If there is already an entry with the given key, its value is
  * replaced. */
 extern void
-node_hash_table_insert (
-    node_hash_table_t *tab,
+node_ht_insert (
+    node_ht_t *tab,
     node_t key,
     bdd_t val
     );
@@ -50,9 +50,9 @@ node_hash_table_insert (
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
 extern bdd_t *
-node_hash_table_lookup (
-    node_hash_table_t *tab,
+node_ht_lookup (
+    node_ht_t *tab,
     node_t key
     );
 
-#endif /* NODE_HASH_TABLE_INCLUDED */
+#endif /* NODE_HT_INCLUDED */
