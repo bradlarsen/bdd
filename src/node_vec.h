@@ -52,7 +52,7 @@ node_vec_get_capacity (node_vec_t *vec);
 
 /* Gets the element at the specified index.  The index must be less
  * than the number of used elements of the vector. */
-inline node_t
+static inline node_t
 node_vec_get (node_vec_t *vec, unsigned idx)
 {
     node_vec_check_invariants (vec);
@@ -63,7 +63,7 @@ node_vec_get (node_vec_t *vec, unsigned idx)
 /* Sets the element at the specified index to the given value.  The
  * index must be less than the number of used elements of the
  * vector. */
-inline void
+static inline void
 node_vec_set (node_vec_t *vec, unsigned idx, node_t val)
 {
     node_vec_check_invariants (vec);

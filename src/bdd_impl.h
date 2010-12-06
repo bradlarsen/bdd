@@ -44,7 +44,7 @@ extern bool
 is_robdd (bdd_mgr_t *mgr);
 
 /* Gets the node representing T for the given manager. */
-inline node_t
+static inline node_t
 get_true_node (bdd_mgr_t *mgr)
 {
     node_t t = {mgr->num_vars, bdd_false, bdd_true};
@@ -52,7 +52,7 @@ get_true_node (bdd_mgr_t *mgr)
 }
 
 /* Gets the node representing F for the given manager. */
-inline node_t
+static inline node_t
 get_false_node (bdd_mgr_t *mgr)
 {
     node_t f = {mgr->num_vars, bdd_true, bdd_false};
@@ -64,7 +64,7 @@ get_false_node (bdd_mgr_t *mgr)
 extern unsigned
 make_node (bdd_mgr_t *mgr, node_t node);
 
-inline unsigned
+static inline unsigned
 make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high)
 {
     node_t n = {var, low, high};

@@ -14,7 +14,7 @@ typedef struct
     /* invariant: low != high */
 } node_t;
 
-inline bool
+static inline bool
 node_equal (node_t n1, node_t n2)
 {
     return n1.var == n2.var && n1.low == n2.low && n1.high == n2.high;
@@ -22,7 +22,7 @@ node_equal (node_t n1, node_t n2)
 
 /* The node hash function h from Andersen's ``An introduction to
    binary decision diagrams''. */
-inline unsigned
+static inline unsigned
 node_hash (node_t n)
 {
     return hash_pair(n.var, hash_pair(n.low, n.high)) % 15485863; 

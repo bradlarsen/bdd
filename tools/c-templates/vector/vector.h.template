@@ -52,7 +52,7 @@ ${prefix}_get_capacity (${vector_type} *vec);
 
 /* Gets the element at the specified index.  The index must be less
  * than the number of used elements of the vector. */
-inline ${element_type}
+static inline ${element_type}
 ${prefix}_get (${vector_type} *vec, unsigned idx)
 {
     ${prefix}_check_invariants (vec);
@@ -63,7 +63,7 @@ ${prefix}_get (${vector_type} *vec, unsigned idx)
 /* Sets the element at the specified index to the given value.  The
  * index must be less than the number of used elements of the
  * vector. */
-inline void
+static inline void
 ${prefix}_set (${vector_type} *vec, unsigned idx, ${element_type} val)
 {
     ${prefix}_check_invariants (vec);
