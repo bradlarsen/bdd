@@ -51,14 +51,12 @@ main ()
 
     TEST_NAME ("expression correctness of x0");
     bool_expr_t *expr = new_bool_expr_t (1);
-    bool_expr_print (stderr, expr);
     tt_equal (expr, mgr);
     delete_bool_expr_t (expr);
 
     TEST_NAME ("expression correctness of (x0 AND x1)");
     expr = new_bool_expr_t (2);
     expr->connectives[0] = BDD_AND;
-    bool_expr_print (stderr, expr);
     tt_equal (expr, mgr);
     delete_bool_expr_t (expr);
 
@@ -66,7 +64,6 @@ main ()
     expr = new_bool_expr_t (3);
     expr->connectives[0] = BDD_AND;
     expr->connectives[1] = BDD_OR;
-    bool_expr_print (stderr, expr);
     tt_equal (expr, mgr);
     delete_bool_expr_t (expr);
 
@@ -75,7 +72,6 @@ main ()
     expr->connectives[0] = BDD_AND;
     expr->connectives[1] = BDD_OR;
     expr->connectives[2] = BDD_AND;
-    bool_expr_print (stderr, expr);
     tt_equal (expr, mgr);
     delete_bool_expr_t (expr);
 
