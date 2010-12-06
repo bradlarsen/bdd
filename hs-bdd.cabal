@@ -63,8 +63,8 @@ Library
   -- FIXME: These options are gcc-specific!
   cc-options:          -Wall -Wextra -pedantic -Wno-unused-parameter
                        -std=c99
-                       -g
-                       -- -O2 -DNDEBUG
+                       -- -g
+                       -O2 -DNDEBUG
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
