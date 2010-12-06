@@ -89,8 +89,8 @@ Executable test
 
   Build-depends:
                       QuickCheck == 2.4.*,
-                      array == 0.3.*,
-                      base == 4.2.*,
+                      base >= 3.0 && < 4.3,
+                      array >= 0.2 && < 0.4,
                       hs-bdd == 0.0.*
 
   Other-modules:
