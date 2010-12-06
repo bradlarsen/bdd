@@ -50,9 +50,6 @@ bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
     case BDD_NAND:
         result = !(b1 && b2);
         break;
-    case BDD_NOR:
-        result = !(b1 || b2);
-        break;
     case BDD_IMPLIES:
         result = !b1 || b2;
         break;
@@ -165,12 +162,6 @@ bdd_t
 bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
     return bdd_apply (mgr, BDD_NAND, b1, b2);
-}
-
-bdd_t
-bdd_nor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
-{
-    return bdd_apply (mgr, BDD_NOR, b1, b2);
 }
 
 bdd_t

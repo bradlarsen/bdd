@@ -55,7 +55,6 @@ typedef enum {
     BDD_XOR,
     BDD_EQUIV,
     BDD_NAND,
-    BDD_NOR,
     BDD_IMPLIES
 } bdd_apply_binop;
 
@@ -88,11 +87,6 @@ bdd_equiv (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
  * and space. */
 extern bdd_t
 bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
-
-/* Computes the logical NOR of the two BDDs.  O(m(b1) * m(b2)) time
- * and space. */
-extern bdd_t
-bdd_nor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
 
 /* Computes the logical IMPLIES of the two BDDs.  O(m(b1) * m(b2))
  * time and space. */

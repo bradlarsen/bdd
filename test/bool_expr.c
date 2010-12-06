@@ -40,9 +40,6 @@ eval_binop (bdd_apply_binop op, bool b1, bool b2)
     case BDD_NAND:
         result = !(b1 && b2);
         break;
-    case BDD_NOR:
-        result = !(b1 || b2);
-        break;
     case BDD_IMPLIES:
         result = !b1 || b2;
         break;
@@ -155,9 +152,6 @@ bool_expr_print (FILE *handle, bool_expr_t *expr)
             break;
         case BDD_NAND:
             opstr = "NAND";
-            break;
-        case BDD_NOR:
-            opstr = "NOR";
             break;
         case BDD_IMPLIES:
             opstr = "IMPLIES";
