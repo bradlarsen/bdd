@@ -4,7 +4,7 @@
 module BDD.Raw where
 
 import Foreign (Ptr)
-import Foreign.C.Types (CUInt, CInt)
+import Foreign.C.Types (CUInt, CInt, CDouble)
 
 #include "bdd.h"
 
@@ -84,3 +84,6 @@ foreign import ccall "bdd.h bdd_universal"
 
 foreign import ccall "bdd.h bdd_compose"
     bdd_compose :: BddMgr -> Bdd -> CUInt -> Bdd -> IO Bdd
+
+foreign import ccall "bdd.h bdd_sat_count"
+    bdd_sat_count :: BddMgr -> Bdd -> IO CDouble

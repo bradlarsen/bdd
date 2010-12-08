@@ -244,3 +244,30 @@ bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g)
                                  g,
                                  bdd_restrict (mgr, f, x, true)));
 }
+
+static double
+bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_t b)
+{
+    if (b == bdd_false)
+        return 0;
+    else if (b == bdd_true)
+        return 1;
+    else {
+        const node_t b_node = node_vec_get (mgr->nodes_by_idx, b);
+        const node_t b_low = node_vec_get (mgr->nodes_by_idx, b_node.low);
+        const node_t b_high = node_vec_get (mgr->nodes_by_idx, b_node.high);
+        return
+            pow (2.0, b_low.var - b_node.var - 1) *
+            bdd_sat_count_rec (mgr, b_node.low) +
+            pow (2.0, b_high.var - b_node.var - 1) *
+            bdd_sat_count_rec (mgr, b_node.high);
+    }
+}
+
+double
+bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
+{
+    bdd_mgr_check_invariants (mgr);
+    const unsigned b_var = node_vec_get(mgr->nodes_by_idx, b).var;
+    return pow (2, b_var) * bdd_sat_count_rec (mgr, b);
+}

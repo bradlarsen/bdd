@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "bdd.h"
 #include "node.h"

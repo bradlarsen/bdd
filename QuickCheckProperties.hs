@@ -101,3 +101,10 @@ prop_doubleNegation = bddProp $ \mgr expr -> do
     bdd <- buildBdd mgr expr
     bdd' <- Raw.bdd_not mgr =<< Raw.bdd_not mgr bdd
     return (bdd == bdd')
+
+prop_satCount :: AnnBoolExpr -> Property
+prop_satCount = bddProp' $ \mgr numVars expr -> do
+    let numSols = length . filter (eval expr) . assignments $ numVars
+    bdd <- buildBdd mgr expr
+    numSols' <- Raw.bdd_sat_count mgr bdd
+    return (fromIntegral numSols == numSols')

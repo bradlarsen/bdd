@@ -118,4 +118,8 @@ bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b);
 extern bdd_t
 bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g);
 
+/* Returns the number of satisfying solutions of b. */
+extern double
+bdd_sat_count (bdd_mgr_t *mgr, bdd_t b);
+
 #endif  /* BDD_INCLUDED */

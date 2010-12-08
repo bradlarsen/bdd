@@ -80,6 +80,8 @@ Library
   include-dirs:      src
   includes:          bdd.h
 
+  extra-libraries:   m
+
 
 Executable test
   Main-is:           Test.hs
@@ -122,3 +124,5 @@ Executable test
 
   include-dirs:      src
   includes:          bdd.h
+
+  extra-libraries:   m

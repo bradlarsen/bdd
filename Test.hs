@@ -49,3 +49,4 @@ testQuickCheckProperties args = do
     qc prop_selfXOr
     qc prop_not
     qc prop_doubleNegation
+    qc prop_satCount
