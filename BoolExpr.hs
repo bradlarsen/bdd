@@ -2,10 +2,9 @@ module BoolExpr where
 
 import qualified BDD.Raw as Raw
 
-import Control.Exception (finally)
-import Control.Monad (liftM, liftM2, foldM, (>=>))
+import Control.Monad (liftM, liftM2, foldM)
 import Test.QuickCheck
-    (Gen, Arbitrary, Property,
+    (Gen, Arbitrary,
      arbitrary, choose, sized, oneof, frequency, elements)
 import Data.Array.IArray (Array, (!), listArray)
 

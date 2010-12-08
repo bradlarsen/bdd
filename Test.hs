@@ -1,11 +1,8 @@
 module Main (main) where
 
-import HUnitTests ( hunitTests )
 import QuickCheckProperties
-
 import Test.QuickCheck ( quickCheckWith, Testable )
 import Test.QuickCheck ( Args, stdArgs, maxSize, maxSuccess, maxDiscard )
-import Test.HUnit ( runTestTT )
 import System.Environment ( getArgs, getProgName )
 import System.Exit ( exitFailure )
 import System.IO ( stderr )
@@ -19,7 +16,6 @@ main = do
                          , maxDiscard = numQCTests
                          }
     testQuickCheckProperties qcArgs
-    runHUnitTests
 
 parseArgs :: IO Int
 parseArgs = do
@@ -53,9 +49,3 @@ testQuickCheckProperties args = do
     qc prop_selfXOr
     qc prop_not
     qc prop_doubleNegation
-
-runHUnitTests :: IO ()
-runHUnitTests = do
-    putStrLn "Running HUnit tests..."
-    _ <- runTestTT hunitTests
-    return ()

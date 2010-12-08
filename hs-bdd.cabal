@@ -85,14 +85,12 @@ Executable test
   Main-is:           Test.hs
 
   Build-depends:
-                     HUnit == 1.2.*,
                      QuickCheck == 2.4.*,
                      base >= 3.0 && < 4.3,
                      array >= 0.2 && < 0.4
 
   Other-modules:
                      BoolExpr
-                     HUnitTests
                      QuickCheckProperties
 
   ghc-options:       -Wall
