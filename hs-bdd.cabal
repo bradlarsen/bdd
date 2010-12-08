@@ -46,53 +46,56 @@ Cabal-version:       >=1.6
 Library
   -- Modules exported by the library.
   Exposed-modules:
-                       BDD.Raw
+                     BDD.Raw
   
   -- Packages needed in order to build this package.
   Build-depends:
-                       base >= 3.0 && <= 4.2
+                     base >= 3.0 && <= 4.2
   
   -- Modules not exported by this package.
   Other-modules:       
   
   -- Extra tools (e.g. alex, hsc2hs, ...) needed to build the source.
-  Build-tools:         hsc2hs
+  Build-tools:       hsc2hs
 
-  ghc-options:         -Wall
+  ghc-options:       -Wall
 
   -- FIXME: These options are gcc-specific!
-  cc-options:          -Wall -Wextra -pedantic -Wno-unused-parameter
-                       -std=c99
-                       -- -g
-                       -O2 -DNDEBUG
+  cc-options:        -Wall -Wextra -pedantic -Wno-unused-parameter
+                     -std=c99
+                     -- -g
+                     -O2 -DNDEBUG
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
   c-sources:
-                       src/bdd_accessors.c
-                       src/bdd_create_destroy.c
-                       src/bdd_impl.c
-                       src/bdd_ops.c
-                       src/bdd_pair_ht.c
-                       src/node_ht.c
-                       src/node_vec.c
+                     src/bdd_accessors.c
+                     src/bdd_create_destroy.c
+                     src/bdd_impl.c
+                     src/bdd_ops.c
+                     src/bdd_pair_ht.c
+                     src/node_ht.c
+                     src/node_vec.c
 
-  include-dirs:        src
-  includes:            bdd.h
+  include-dirs:      src
+  includes:          bdd.h
 
 
 Executable test
-  Main-is:             Test.hs
+  Main-is:           Test.hs
 
   Build-depends:
-                      QuickCheck == 2.4.*,
-                      base >= 3.0 && < 4.3,
-                      array >= 0.2 && < 0.4
+                     HUnit == 1.2.*,
+                     QuickCheck == 2.4.*,
+                     base >= 3.0 && < 4.3,
+                     array >= 0.2 && < 0.4
 
   Other-modules:
-                      BoolExpr
+                     BoolExpr
+                     HUnitTests
+                     QuickCheckProperties
 
-  ghc-options:        -Wall
+  ghc-options:       -Wall
 
   -- FIXME: The following parts of the build specification for the
   -- test program are copied from the library build specification.  To
@@ -100,24 +103,24 @@ Executable test
   -- requires Cabal version 1.8 or higher.
 
   Other-modules:
-                      BDD.Raw
+                     BDD.Raw
 
   -- FIXME: These options are gcc-specific!
-  cc-options:         -Wall -Wextra -pedantic -Wno-unused-parameter
-                      -std=c99
-                      -- -g
-                      -O2 -DNDEBUG
+  cc-options:        -Wall -Wextra -pedantic -Wno-unused-parameter
+                     -std=c99
+                     -- -g
+                     -O2 -DNDEBUG
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
   c-sources:
-                      src/bdd_accessors.c
-                      src/bdd_create_destroy.c
-                      src/bdd_impl.c
-                      src/bdd_ops.c
-                      src/bdd_pair_ht.c
-                      src/node_ht.c
-                      src/node_vec.c
+                     src/bdd_accessors.c
+                     src/bdd_create_destroy.c
+                     src/bdd_impl.c
+                     src/bdd_ops.c
+                     src/bdd_pair_ht.c
+                     src/node_ht.c
+                     src/node_vec.c
 
-  include-dirs:       src
-  includes:           bdd.h
+  include-dirs:      src
+  includes:          bdd.h

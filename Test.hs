@@ -1,21 +1,25 @@
 module Main (main) where
 
-import BoolExpr (bddSymbolicEvalOk)
-import Test.QuickCheck ( quickCheckWith )
-import Test.QuickCheck ( stdArgs, maxSize, maxSuccess, maxDiscard )
-import System.Environment (getArgs, getProgName)
-import System.Exit (exitFailure)
-import System.IO (stderr)
-import Text.Printf (hPrintf)
+import HUnitTests ( hunitTests )
+import QuickCheckProperties
+
+import Test.QuickCheck ( quickCheckWith, Testable )
+import Test.QuickCheck ( Args, stdArgs, maxSize, maxSuccess, maxDiscard )
+import Test.HUnit ( runTestTT )
+import System.Environment ( getArgs, getProgName )
+import System.Exit ( exitFailure )
+import System.IO ( stderr )
+import Text.Printf ( hPrintf )
 
 main :: IO ()
 main = do
-    numTests <- parseArgs
-    let qcArgs = stdArgs { maxSize = 20000
-                         , maxSuccess = numTests
-                         , maxDiscard = numTests
+    numQCTests <- parseArgs
+    let qcArgs = stdArgs { maxSize = 1000
+                         , maxSuccess = numQCTests
+                         , maxDiscard = numQCTests
                          }
-    quickCheckWith qcArgs bddSymbolicEvalOk
+    testQuickCheckProperties qcArgs
+    runHUnitTests
 
 parseArgs :: IO Int
 parseArgs = do
@@ -32,3 +36,26 @@ usage = do
     pName <- getProgName
     _ <- hPrintf stderr "usage: %s NUM_TESTS\n" pName
     exitFailure
+
+
+testQuickCheckProperties :: Args -> IO ()
+testQuickCheckProperties args = do
+    putStrLn "Checking QuickCheck properties..."
+    let qc :: (Testable a) => a -> IO ()
+        qc = quickCheckWith args
+    qc prop_bddSymbolicEvalOk
+    qc prop_initialNumNodes
+    qc prop_correctNumVars
+    qc prop_andIdempotent
+    qc prop_orIdempotent
+    qc prop_selfImplies
+    qc prop_selfEquiv
+    qc prop_selfXOr
+    qc prop_not
+    qc prop_doubleNegation
+
+runHUnitTests :: IO ()
+runHUnitTests = do
+    putStrLn "Running HUnit tests..."
+    _ <- runTestTT hunitTests
+    return ()

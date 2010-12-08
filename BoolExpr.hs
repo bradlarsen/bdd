@@ -3,11 +3,10 @@ module BoolExpr where
 import qualified BDD.Raw as Raw
 
 import Control.Exception (finally)
-import Control.Monad (liftM, liftM2, foldM)
+import Control.Monad (liftM, liftM2, foldM, (>=>))
 import Test.QuickCheck
     (Gen, Arbitrary, Property,
      arbitrary, choose, sized, oneof, frequency, elements)
-import Test.QuickCheck.Monadic (monadicIO, assert, run)
 import Data.Array.IArray (Array, (!), listArray)
 
 -- Boolean expressions
@@ -43,28 +42,26 @@ arbitraryBoolExpr numVars = go
                         
 
 -- Boolean expressions along with number of variables
-newtype AnnBoolExpr = AnnBoolExpr (Int, BoolExpr)
+newtype AnnBoolExpr = Ann (Int, BoolExpr)
     deriving (Eq, Show)
 
 arbitraryAnnBoolExpr :: Gen AnnBoolExpr
 arbitraryAnnBoolExpr = do
-    numVars <- choose (0, 10)
+    numVars <- choose (0, 8)
     expr <- sized (arbitraryBoolExpr numVars)
-    return $ AnnBoolExpr (numVars, expr)
+    return $ Ann (numVars, expr)
 
 instance Arbitrary AnnBoolExpr where
     arbitrary = arbitraryAnnBoolExpr
 
-mkEnv :: [Bool] -> Array Int Bool
-mkEnv vs = listArray (0, length vs - 1) vs
-
 -- Evaluates the given Boolean expression under the given environment.
 -- The environment is a list of Boolean values, one for each variable
 -- index, in order.
-eval :: [Bool] -> BoolExpr -> Bool
-eval varAssigns = go
+eval :: BoolExpr -> [Bool] -> Bool
+eval expression assignment = go expression
     where
-        env = mkEnv varAssigns
+        env :: Array Int Bool
+        env = listArray (0, length assignment - 1) assignment
         go expr = case expr of
                       BFalse -> False
                       BTrue -> True
@@ -77,8 +74,8 @@ eval varAssigns = go
                       Nand l r -> not (go l && go r)
                       Implies l r -> not (go l) || go r
 
-evalBdd :: [Bool] -> Raw.BddMgr -> Raw.Bdd -> IO Bool
-evalBdd varAssigns mgr bdd = do
+evalBdd :: Raw.BddMgr -> Raw.Bdd -> [Bool] -> IO Bool
+evalBdd mgr bdd varAssigns = do
     let assigns = zip [0..] varAssigns
     res <- foldM (\b (i, v) -> Raw.bdd_restrict mgr b i v) bdd assigns
     case res of
@@ -86,9 +83,10 @@ evalBdd varAssigns mgr bdd = do
           | res == Raw.bdd_false -> return False
           | otherwise -> error "evalBdd: non-terminal result!"
 
-buildBdd :: AnnBoolExpr -> IO (Raw.BddMgr, Raw.Bdd)
-buildBdd (AnnBoolExpr (nVars, expr)) = do
-    mgr <- Raw.bdd_mgr_create (fromIntegral nVars)
+-- | Symbolically evaluates the given Boolean expression with the
+-- given BDD manager.
+buildBdd :: Raw.BddMgr -> BoolExpr -> IO Raw.Bdd
+buildBdd mgr expr = do
     let bin f l r = do { l' <- go l; r' <- go r; f mgr l' r' }
         go e =
           case e of
@@ -102,25 +100,4 @@ buildBdd (AnnBoolExpr (nVars, expr)) = do
               Equiv l r   -> bin Raw.bdd_equiv l r
               Nand l r    -> bin Raw.bdd_nand l r
               Implies l r -> bin Raw.bdd_implies l r
-    bdd <- go expr
-    return (mgr, bdd)
-
-assignments :: Int -> [[Bool]]
-assignments 0 = [[]]
-assignments numVars = map (True :) (assignments (pred numVars)) ++
-                      map (False :) (assignments (pred numVars))
-
--- Compares the symbolical BDD interpretation of the given Boolean
--- expression with a truth table.
-bddSymbolicEvalOk :: AnnBoolExpr -> Property
-bddSymbolicEvalOk annExpr = monadicIO $ do
-    res <- run (bddEvalOk' annExpr)
-    assert res
-
-bddEvalOk' :: AnnBoolExpr -> IO Bool
-bddEvalOk' annExpr@(AnnBoolExpr (numVars, expr)) = do
-    (mgr, bdd) <- buildBdd annExpr
-    flip finally (Raw.bdd_mgr_destroy mgr) $ do
-    let cmp :: [Bool] -> IO Bool
-        cmp as = liftM (eval as expr ==) (evalBdd as mgr bdd)
-    liftM and $ mapM cmp (assignments numVars)
+    go expr
