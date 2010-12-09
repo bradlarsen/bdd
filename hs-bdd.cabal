@@ -79,7 +79,7 @@ Library
   extra-libraries:   m
 
 
-Executable test
+Executable test-hs-bdd
   Main-is:           Test.hs
 
   Build-depends:
