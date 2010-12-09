@@ -60,7 +60,7 @@ Library
 
   ghc-options:       -Wall
 
-  cc-options:        -O2 -DNDEBUG
+  cc-options:        -DNDEBUG
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
@@ -101,7 +101,7 @@ Executable test
   Other-modules:
                      BDD.Raw
 
-  cc-options:        -O2 -DNDEBUG
+  cc-options:        -DNDEBUG
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
