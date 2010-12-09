@@ -1,0 +1,134 @@
+Comp-160 Project:  Binary Decision Diagrams
+Bradford Larsen
+December, 2010
+
+
+Overview
+========
+
+I implemented a simple C library for binary decision diagrams for my
+Comp-160 programming project.  Binary decision diagrams can be thought
+of as an abstract data type representing Boolean functions.  A binary
+decision diagram is like a binary decision *tree*, but with extra
+properties.  In BDDs and BDTs, each node is either labeled with a
+variable and has `low' and `high' successors, or is a terminal node,
+representing true or false.  BDDs include the following additional
+properties over BDTs:
+
+    * For each two nodes n1 and n2, if variable(n1) = variable(n2),
+      low(n1) = low(n2), and high(n1) = high(n2), then n1 = n2.
+
+    * For each node n, low(n) != high(n).
+
+    * For each node n, variable(n) < variable(low(n)) and
+      variable(n) < variable(high(n)).
+
+Through this project, I gained a basic understanding of how binary
+decision diagrams work, and made good progress on a BDD library
+implementation that I may use for future research on BDD variable
+reordering techniques.
+
+
+Building and Running
+====================
+
+Synopsis
+--------
+
+On linux.eecs.tufts.edu, run the following:
+
+    $ make
+    $ ./install/bin/test-hs-bdd
+
+There is a makefile in the top level of the directory tree.  Simply
+typing `make' at the top level directory should build the library and
+test program, and install them to the `install' subdirectory.
+
+Once the build has completed, the BDD library test program can be
+found in install/bin/test-hs-bdd.  Run without any arguments to
+perform each test on 100 random inputs.
+
+
+Implementation Details
+======================
+The BDD library is written in C89.  Haskell bindings for the BDD
+library are provided.  The test program is written in Haskell using
+the QuickCheck library.
+
+The BDD library implementation largely follows that described by
+Andersen in his lecture notes, ``An Introduction to Binary Decision
+Diagrams'':
+
+    * Multiple BDDs share the same graph, i.e., the graph has multiple
+      roots.
+
+    * In user code, BDDs are represented as integers, which are in
+      fact array indexes (although the user is not supposed to know
+      this fact.)
+
+    * The BDD graph is represented using a vector of triples and a
+      hash table from triples to indexes, allowing O(1) retrieval of
+      nodes by index or index by node.
+
+    * All creation of BDD nodes is done using a make_node internal
+      helper function that ensures that the BDD graph remains reduced.
+
+Other points of interest:
+
+    * My implementation of BDD negation and BDD restrict have time
+      complexity in O(2^n).  Using dynamic programming the complexity
+      could be made polynomial.  This is left as future work.
+
+Finally, regarding the test program:
+
+    * Haskell's QuickCheck library for random property testing is used.
+
+    * Several properties are tested, but the most significant is
+      probably the first, which tests whether symbolic evaluation of a
+      Boolean expression using BDDs is equivalent to the truth table
+      evaluation, i.e., for each possible assignment of the variables
+      in the expression, does the BDD evaluation match the truth table
+      evaluation?
+
+
+Files Included in the Submission
+================================
+There are many files included in this submission:
+
+    README                        This file
+    bdd97.ps                      Andersen's ``An Introduction to Binary
+                                      Decision Diagrams''
+
+There are many infrastructure files, e.g., which specify how to build
+things, which are not interesting:
+
+    Makefile                      A simple wrapper for the cabal commands
+    Setup.hs                      Haskell Cabal setup program
+    hs-bdd.cabal                  Haskell Cabal package description
+
+The sources for the BDD library are found in the src subdirectory:
+
+    src/bdd.h                     The public library interface
+    src/node.h                    BDD node definition
+    src/bdd_pair.h                BDD pair definition
+    src/bdd_impl.h                Internal BDD library interface
+    src/bdd_impl.c                Internal BDD library definitions
+    src/bdd_accessors.c           Num. vars. / num. nodes accessors
+    src/bdd_create_destroy.c      Initialization and destruction code
+    src/bdd_ops.c                 Implementation of BDD operations, e.g.,
+                                      apply and restrict
+    src/node_vec.h                BDD node vector interface
+    src/node_vec.c                BDD node vector implementation
+    src/hash_pair.h               Integer pair hash function
+    src/bdd_pair_ht.h             BDD pairs to BDDs hash table interface
+    src/bdd_pair_ht.c             Hash table from BDD pairs to BDDs
+    src/node_ht.h                 BDD node to BDD hash table interface
+    src/node_ht.c                 BDD node to BDD hash table implementation
+
+The Haskell bindings and test program sources are found mostly in the
+top-level directory:
+
+    BDD/Raw.hsc                       
+    Test.hs                       The test program
+    BoolExpr.hs                   Boolean expressions & random generation
+    QuickCheckProperties.hs       The actual test properties
