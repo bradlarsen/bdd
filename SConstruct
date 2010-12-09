@@ -17,7 +17,3 @@ for env_name, env in environments.items():
                     exports='env',
                     variant_dir=libbdd_dir,
                     )
-    env.SConscript (path.join('test', 'SConscript'),
-                    exports=['env', 'libbdd_dir'],
-                    variant_dir=path.join('build', 'test', env_name)
-                    )
