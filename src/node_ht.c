@@ -36,9 +36,6 @@ ht_bucket_create (node_t key,
 static void
 ht_bucket_free (ht_bucket_t *bucket)
 {
-    if (bucket == NULL)
-        return;
-
     ht_bucket_t *p = bucket;
     while (p != NULL) {
         ht_bucket_t *prev = p;
@@ -103,8 +100,10 @@ node_ht_get_hash_index (node_ht_t *tab, node_t key)
 static bool
 node_ht_proper_hash_values (node_ht_t *tab)
 {
-    for (unsigned i = 0; i < tab->num_buckets; i += 1)
-        for (ht_bucket_t *p = tab->buckets[i]; p != NULL; p = p->next)
+    unsigned i;
+    ht_bucket_t *p;
+    for (i = 0; i < tab->num_buckets; i += 1)
+        for (p = tab->buckets[i]; p != NULL; p = p->next)
             if (node_ht_get_hash_index(tab, p->key) != i)
                 return false;
     return true;
@@ -115,13 +114,19 @@ node_ht_proper_hash_values (node_ht_t *tab)
 static bool
 node_ht_no_duplicate_keys (node_ht_t *tab)
 {
-    unsigned num_buckets = tab->num_buckets;
-    ht_bucket_t **buckets = tab->buckets;
+    unsigned num_buckets;
+    ht_bucket_t **buckets;
 
-    for (unsigned i = 0; i < num_buckets; i += 1)
-        for (ht_bucket_t *p = buckets[i]; p != NULL; p = p->next)
-            for (unsigned j = i; j < num_buckets; j += 1)
-                for (ht_bucket_t *q = buckets[j]; q != NULL; q = q->next)
+    unsigned i, j;
+    ht_bucket_t *p, *q;
+
+    num_buckets = tab->num_buckets;
+    buckets = tab->buckets;
+
+    for (i = 0; i < num_buckets; i += 1)
+        for (p = buckets[i]; p != NULL; p = p->next)
+            for (j = i; j < num_buckets; j += 1)
+                for (q = buckets[j]; q != NULL; q = q->next)
                     if (p != q && node_equal(p->key, q->key))
                         return false;
     return true;
@@ -150,14 +155,17 @@ node_ht_create ()
 node_ht_t *
 node_ht_create_with_hint (unsigned num_buckets_hint)
 {
+    unsigned i;
+    const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
+
     node_ht_t *tab =
         (node_ht_t *) malloc (sizeof(node_ht_t));
     tab->num_entries = 0;
-    const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
+
     tab->num_buckets = num_buckets;
     tab->buckets =
         (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
-    for (unsigned i = 0; i < num_buckets; i += 1)
+    for (i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
     node_ht_check_invariants (tab);
     return tab;
@@ -168,8 +176,10 @@ node_ht_create_with_hint (unsigned num_buckets_hint)
 void
 node_ht_destroy (node_ht_t *tab)
 {
+    unsigned i;
+
     node_ht_check_invariants (tab);
-    for (unsigned i = 0; i < tab->num_buckets; i += 1)
+    for (i = 0; i < tab->num_buckets; i += 1)
         ht_bucket_free (tab->buckets[i]);
     free (tab->buckets);
     free (tab);
@@ -209,18 +219,23 @@ node_ht_get_load (node_ht_t *tab)
 static void
 double_hash_table_num_buckets (node_ht_t *tab)
 {
+    ht_bucket_t **old_buckets;
     const unsigned old_num_buckets = tab->num_buckets;
-    ht_bucket_t **old_buckets = tab->buckets;
+
+    unsigned i;
+    ht_bucket_t *p;
+
+    old_buckets = tab->buckets;
 
     tab->num_buckets *= 2;
     tab->buckets =
         (ht_bucket_t **) malloc (tab->num_buckets * sizeof(ht_bucket_t *));
-    for (unsigned i = 0; i < tab->num_buckets; i += 1)
+    for (i = 0; i < tab->num_buckets; i += 1)
         tab->buckets[i] = NULL;
     tab->num_entries = 0;
 
-    for (unsigned i = 0; i < old_num_buckets; i += 1) {
-        for (ht_bucket_t *p = old_buckets[i]; p != NULL; p = p->next) {
+    for (i = 0; i < old_num_buckets; i += 1) {
+        for (p = old_buckets[i]; p != NULL; p = p->next) {
             node_ht_insert (tab, p->key, p->value);
         }
         ht_bucket_free (old_buckets[i]);
@@ -238,11 +253,14 @@ node_ht_insert (node_ht_t *tab,
                   node_t key,
                   bdd_t val)
 {
+    unsigned b_idx;
+    ht_bucket_t *b;
+
     node_ht_check_invariants (tab);
     if (node_ht_get_load(tab) > 0.70f)
         double_hash_table_num_buckets (tab);
-    const unsigned b_idx = node_ht_get_hash_index (tab, key);
-    ht_bucket_t *b = ht_bucket_search (tab->buckets[b_idx], key);
+    b_idx = node_ht_get_hash_index (tab, key);
+    b = ht_bucket_search (tab->buckets[b_idx], key);
     if (b == NULL) {
         tab->buckets[b_idx] = ht_bucket_create (key, val, tab->buckets[b_idx]);
         tab->num_entries += 1;
@@ -258,8 +276,11 @@ node_ht_insert (node_ht_t *tab,
 bdd_t *
 node_ht_lookup (node_ht_t *tab, node_t key)
 {
+    unsigned b_idx;
+    ht_bucket_t *b;
+
     node_ht_check_invariants (tab);
-    const unsigned b_idx = node_ht_get_hash_index (tab, key);
-    ht_bucket_t *b = ht_bucket_search (tab->buckets[b_idx], key);
+    b_idx = node_ht_get_hash_index (tab, key);
+    b = ht_bucket_search (tab->buckets[b_idx], key);
     return b != NULL ? &b->value : NULL;
 }

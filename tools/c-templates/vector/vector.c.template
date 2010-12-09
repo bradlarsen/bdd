@@ -17,8 +17,9 @@ ${prefix}_create ()
 ${vector_type} *
 ${prefix}_create_with_capacity (unsigned num_elems)
 {
+    ${vector_type} *vec;
     num_elems = num_elems > 0 ? num_elems : INITIAL_CAPACITY;
-    ${vector_type} *vec = (${vector_type} *)
+    vec = (${vector_type} *)
         malloc (sizeof(${vector_type}));
     vec->store = (${element_type} *)
         malloc (num_elems * sizeof(${element_type}));
@@ -55,8 +56,8 @@ ${prefix}_get_capacity (${vector_type} *vec)
 static void
 double_vector_size (${vector_type} *vec)
 {
-    ${prefix}_check_invariants (vec);
     unsigned new_capacity = vec->capacity * 2;
+    ${prefix}_check_invariants (vec);
     vec->store = (${element_type} *)
         realloc (vec->store, new_capacity * sizeof(${element_type}));
     vec->capacity = new_capacity;
@@ -69,8 +70,7 @@ ${prefix}_push_back (${vector_type} *vec, ${element_type} node)
     ${prefix}_check_invariants (vec);
     if (vec->num_elems == vec->capacity)
         double_vector_size (vec);
-    const unsigned idx = vec->num_elems;
     vec->num_elems += 1;
-    ${prefix}_set (vec, idx, node);
+    ${prefix}_set (vec, vec->num_elems - 1, node);
     ${prefix}_check_invariants (vec);
 }
