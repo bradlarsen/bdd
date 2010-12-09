@@ -5,10 +5,16 @@
 bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
+    node_t node;
+    bdd_t ith_var;
+
     bdd_mgr_check_invariants (mgr);
     assert (i < mgr->num_vars);
-    const node_t node = {i, bdd_false, bdd_true};
-    const bdd_t ith_var = make_node (mgr, node);
+
+    node.var = i;
+    node.low = bdd_false;
+    node.high = bdd_true;
+    ith_var = make_node (mgr, node);
     bdd_mgr_check_invariants (mgr);
     assert (node_equal (node, node_vec_get (mgr->nodes_by_idx, ith_var)));
     return ith_var;
@@ -17,22 +23,16 @@ bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
 bdd_t
 bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i)
 {
-    bdd_mgr_check_invariants (mgr);
-    assert (i < mgr->num_vars);
-    const node_t node = {i, bdd_true, bdd_false};
-    const bdd_t ith_var = make_node (mgr, node);
-    bdd_mgr_check_invariants (mgr);
-    assert (node_equal (node, node_vec_get (mgr->nodes_by_idx, ith_var)));
-    return ith_var;
+    return bdd_not (mgr, bdd_mgr_get_ith_var (mgr, i));
 }
 
 static bdd_t
 bdd_eval_op_on_terminals (bdd_apply_binop op, bdd_t b1, bdd_t b2)
 {
+    bool result;
+
     assert (b1 <= 1);
     assert (b2 <= 1);
-
-    bool result;
 
     switch (op) {
     case BDD_AND:
@@ -105,14 +105,12 @@ bdd_apply_rec (bdd_mgr_t *mgr,
                 p2.first = b1;
                 p2.second = n2.high;
             }
-            const bdd_t low = bdd_apply_rec (mgr, cache, op, p1);
-            const bdd_t high = bdd_apply_rec (mgr, cache, op, p2);
 
             result = make_node_from_parts (
                 mgr,
                 var,
-                low,
-                high
+                bdd_apply_rec (mgr, cache, op, p1),
+                bdd_apply_rec (mgr, cache, op, p2)
                 );
         }
         bdd_pair_ht_insert (cache, p, result);
@@ -123,13 +121,20 @@ bdd_apply_rec (bdd_mgr_t *mgr,
 bdd_t
 bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2)
 {
+    bdd_pair_ht_t *cache;
+    bdd_pair_t p;
+    bdd_t result;
+
     bdd_mgr_check_invariants (mgr);
     assert (b1 < bdd_mgr_get_num_nodes(mgr));
     assert (b2 < bdd_mgr_get_num_nodes(mgr));
-    bdd_pair_ht_t *cache = bdd_pair_ht_create ();
-    const bdd_pair_t p = {b1, b2};
-    const bdd_t result = bdd_apply_rec (mgr, cache, op, p);
+
+    cache = bdd_pair_ht_create ();
+    p.first = b1;
+    p.second = b2;
+    result = bdd_apply_rec (mgr, cache, op, p);
     bdd_pair_ht_destroy (cache);
+
     bdd_mgr_check_invariants (mgr);
     return result;
 }
@@ -253,9 +258,9 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_t b)
     else if (b == bdd_true)
         return 1;
     else {
-        const node_t b_node = node_vec_get (mgr->nodes_by_idx, b);
-        const node_t b_low = node_vec_get (mgr->nodes_by_idx, b_node.low);
-        const node_t b_high = node_vec_get (mgr->nodes_by_idx, b_node.high);
+        const node_t b_node = get_node_by_idx(mgr, b);
+        const node_t b_low = get_node_by_idx(mgr, b_node.low);
+        const node_t b_high = get_node_by_idx(mgr, b_node.high);
         return
             pow (2.0, b_low.var - b_node.var - 1) *
             bdd_sat_count_rec (mgr, b_node.low) +
@@ -268,6 +273,5 @@ double
 bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
 {
     bdd_mgr_check_invariants (mgr);
-    const unsigned b_var = node_vec_get(mgr->nodes_by_idx, b).var;
-    return pow (2, b_var) * bdd_sat_count_rec (mgr, b);
+    return pow (2, get_node_by_idx(mgr, b).var) * bdd_sat_count_rec (mgr, b);
 }

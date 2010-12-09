@@ -22,6 +22,12 @@ struct bdd_mgr
     node_ht_t *idxs_by_node;
 };
 
+static inline node_t
+get_node_by_idx (bdd_mgr_t *mgr, bdd_t idx)
+{
+    return node_vec_get (mgr->nodes_by_idx, idx);
+}
+
 #define bdd_mgr_check_invariants(mgr)                                   \
     do {                                                                \
         assert (mgr != NULL);                                           \
@@ -29,10 +35,8 @@ struct bdd_mgr
         assert (mgr->idxs_by_node != NULL);                             \
         assert (node_vec_get_num_elems(mgr->nodes_by_idx) >= 2);        \
                                                                         \
-        assert (node_equal(node_vec_get(mgr->nodes_by_idx, 0),          \
-                           get_false_node(mgr)));                       \
-        assert (node_equal(node_vec_get(mgr->nodes_by_idx, 1),          \
-                           get_true_node(mgr)));                        \
+        assert (node_equal(get_node_by_idx(mgr, 0), get_false_node(mgr))); \
+        assert (node_equal(get_node_by_idx(mgr, 1), get_true_node(mgr))); \
                                                                         \
         assert (node_vec_get_num_elems(mgr->nodes_by_idx) ==            \
                 node_ht_get_num_entries(mgr->idxs_by_node));            \
@@ -48,7 +52,10 @@ is_robdd (bdd_mgr_t *mgr);
 static inline node_t
 get_true_node (bdd_mgr_t *mgr)
 {
-    node_t t = {mgr->num_vars, bdd_false, bdd_true};
+    node_t t;
+    t.var = mgr->num_vars;
+    t.low = bdd_false;
+    t.high = bdd_true;
     return t;
 }
 
@@ -56,7 +63,10 @@ get_true_node (bdd_mgr_t *mgr)
 static inline node_t
 get_false_node (bdd_mgr_t *mgr)
 {
-    node_t f = {mgr->num_vars, bdd_true, bdd_false};
+    node_t f;
+    f.var = mgr->num_vars;
+    f.low = bdd_true;
+    f.high = bdd_false;
     return f;
 }
 
@@ -68,9 +78,11 @@ make_node (bdd_mgr_t *mgr, node_t node);
 static inline unsigned
 make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high)
 {
-    node_t n = {var, low, high};
+    node_t n;
+    n.var = var;
+    n.low = low;
+    n.high = high;
     return make_node (mgr, n);
 }
-
 
 #endif /* BDD_IMPL_INCLUDED */
