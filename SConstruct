@@ -3,11 +3,11 @@ import os.path as path
 environments = {
     'opt' : Environment(
         CC = 'gcc', 
-        CFLAGS = Split('-std=c99 -Wall -Wextra -pedantic -O2 -DNDEBUG'),
+        CFLAGS = Split('-std=c89 -Wall -Wextra -pedantic -Wno-unused-function -O2 -DNDEBUG -Dinline=""'),
         ),
     'dbg' : Environment(
         CC = 'gcc', 
-        CFLAGS = Split('-std=c99 -Wall -Wextra -pedantic -g'),
+        CFLAGS = Split('-std=c89 -Wall -Wextra -pedantic -Wno-unused-function -g -Dinline=""'),
         )
     }
 
