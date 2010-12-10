@@ -1,19 +1,18 @@
 Comp-160 Project:  Binary Decision Diagrams
 Bradford Larsen
-December, 2010
+December 2010
 
 
 Overview
 ========
 
-I implemented a simple C library for binary decision diagrams for my
-Comp-160 programming project.  Binary decision diagrams can be thought
-of as an abstract data type representing Boolean functions.  A binary
-decision diagram is like a binary decision *tree*, but with extra
-properties.  In BDDs and BDTs, each node is either labeled with a
-variable and has `low' and `high' successors, or is a terminal node,
-representing true or false.  BDDs include the following additional
-properties over BDTs:
+I implemented a simple C library for binary decision diagrams (BDDs)
+for my Comp-160 programming project.  Binary decision diagrams
+represent Boolean functions compactly.  A binary decision diagram is
+like a binary decision tree (BDT), but with extra properties.  In BDDs
+and BDTs, each node is either labeled with a variable and has `low'
+and `high' successors, or is a terminal node, representing true or
+false.  BDDs include the following additional properties over BDTs:
 
     * For each two nodes n1 and n2, if variable(n1) = variable(n2),
       low(n1) = low(n2), and high(n1) = high(n2), then n1 = n2.
@@ -22,6 +21,34 @@ properties over BDTs:
 
     * For each node n, variable(n) < variable(low(n)) and
       variable(n) < variable(high(n)).
+
+Or in other words, a BDD is a BDT where variables always occur in a
+given order, and where isomorphic subgraphs are merged.
+
+My library supports the following core BDD operations:
+
+    * Get i'th variable --- Given a variable index i, constructs a BDD
+      denoting the expression x_i
+
+    * Logical not --- Given a BDD b, constructs a BDD denoting the
+      negation of b
+
+    * Restrict --- Given a BDD b, a variable index i, and a Boolean
+      value v, constructs a BDD equivalent to b with variable x_i
+      assigned value v.
+
+    * Apply --- Given a binary operation op, which is one of {AND, OR,
+      XOR, NAND, EQUIV, IMPLIES}, and two BDDs b1 and b2, constructs a
+      BDD denoting b1 op b2.
+
+    * Sat Count --- Given a BDD b, count the number of satisfying
+      variable assignments.
+
+Several other operations can be derived from these, such as
+existential instantiation, universal instantiation, and composition.
+I provide a test program with this submission that among other tests,
+compares BDD and truth table evaluation for random Boolean expressions
+of up to 8 variables.
 
 Through this project, I gained a basic understanding of how binary
 decision diagrams work, and made good progress on a BDD library
@@ -53,7 +80,7 @@ Implementation Details
 ======================
 The BDD library is written in C89.  Haskell bindings for the BDD
 library are provided.  The test program is written in Haskell using
-the QuickCheck library.
+the QuickCheck library for randomized testing.
 
 The BDD library implementation largely follows that described by
 Andersen in his lecture notes, ``An Introduction to Binary Decision
@@ -73,22 +100,13 @@ Diagrams'':
     * All creation of BDD nodes is done using a make_node internal
       helper function that ensures that the BDD graph remains reduced.
 
-Other points of interest:
+Another point of interest:
 
     * My implementation of BDD negation and BDD restrict have time
       complexity in O(2^n).  Using dynamic programming the complexity
-      could be made polynomial.  This is left as future work.
-
-Finally, regarding the test program:
-
-    * Haskell's QuickCheck library for random property testing is used.
-
-    * Several properties are tested, but the most significant is
-      probably the first, which tests whether symbolic evaluation of a
-      Boolean expression using BDDs is equivalent to the truth table
-      evaluation, i.e., for each possible assignment of the variables
-      in the expression, does the BDD evaluation match the truth table
-      evaluation?
+      could be made polynomial.  The modification would be simple to
+      do, involving some simple caching code, but is left as future
+      work.
 
 
 Files Included in the Submission
@@ -125,10 +143,9 @@ The sources for the BDD library are found in the src subdirectory:
     src/node_ht.h                 BDD node to BDD hash table interface
     src/node_ht.c                 BDD node to BDD hash table implementation
 
-The Haskell bindings and test program sources are found mostly in the
-top-level directory:
+A few files are for the Haskell bindings and test program:
 
-    BDD/Raw.hsc                       
+    BDD/Raw.hsc                   Haskell bindings to the C library
     Test.hs                       The test program
     BoolExpr.hs                   Boolean expressions & random generation
     QuickCheckProperties.hs       The actual test properties
