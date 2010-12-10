@@ -62,18 +62,20 @@ Building and Running
 Synopsis
 --------
 
-On linux.eecs.tufts.edu, run the following:
+There is a makefile in the top level of the directory tree.  On
+linux.eecs.tufts.edu, simply type `make' at the top level directory to
+build the library and test program:
 
     $ make
-    $ ./install/bin/test-hs-bdd
-
-There is a makefile in the top level of the directory tree.  Simply
-typing `make' at the top level directory should build the library and
-test program, and install them to the `install' subdirectory.
 
 Once the build has completed, the BDD library test program can be
-found in install/bin/test-hs-bdd.  Run without any arguments to
-perform each test on 100 random inputs.
+found in dist/build/test-hs-bdd/test-hs-bdd.
+
+    $ ./dist/build/test-hs-bdd/test-hs-bdd
+
+Run without any arguments to perform each test on 100 random inputs.
+An optional positive integer parameter specifies the number of tests
+to run.
 
 
 Implementation Details
