@@ -1,11 +1,5 @@
 #include "bdd_impl.h"
 
-extern node_t
-get_true_node (bdd_mgr_t *mgr);
-
-extern node_t
-get_false_node (bdd_mgr_t *mgr);
-
 bool
 is_robdd (bdd_mgr_t *mgr)
 {
@@ -32,9 +26,6 @@ is_robdd (bdd_mgr_t *mgr)
 
     return true;
 }
-
-extern unsigned
-make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high);
 
 unsigned
 make_node (bdd_mgr_t *mgr, node_t node)

@@ -151,7 +151,7 @@ bdd_or (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
     return bdd_apply (mgr, BDD_OR, b1, b2);
 }
 
-extern bdd_t
+bdd_t
 bdd_xor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
     return bdd_apply (mgr, BDD_XOR, b1, b2);
