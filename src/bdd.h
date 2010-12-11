@@ -5,6 +5,8 @@
  * m(f) denotes the number of nodes in the BDD f.
  */
 
+/* FIXME: the complexity measures listed here are not all correct. */
+
 #ifndef BDD_INCLUDED
 #define BDD_INCLUDED
 
@@ -83,13 +85,13 @@ bdd_not (bdd_mgr_t *mgr, bdd_t b);
 extern bdd_t
 bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val);
 
-/* Performs existential quantification on the given variable and
- * BDD.  O(m(b)^2) time and space.  */
+/* Performs existential instantiation on the given variable and BDD.
+ * O(m(b)^2) time and space.  */
 extern bdd_t
 bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b);
 
-/* Performs universal quantification on the given variable and
- * BDD.  O(m(b)^2) time and space.  */
+/* Performs universal instantiation on the given variable and BDD.
+ * O(m(b)^2) time and space.  */
 extern bdd_t
 bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b);
 
