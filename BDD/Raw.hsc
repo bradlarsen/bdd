@@ -37,21 +37,6 @@ foreign import ccall "bdd.h bdd_mgr_get_ith_var"
 foreign import ccall "bdd.h bdd_mgr_get_nith_var"
     bdd_mgr_get_nith_var :: BddMgr -> CUInt -> IO Bdd
 
-newtype BddApplyBinop = BddApplyBinop CInt
-    deriving (Eq, Ord)
-
-#{enum BddApplyBinop, BddApplyBinop
- , bdd_binop_and     = BDD_AND
- , bdd_binop_or      = BDD_OR
- , bdd_binop_xor     = BDD_XOR
- , bdd_binop_equiv   = BDD_EQUIV
- , bdd_binop_nand    = BDD_NAND
- , bdd_binop_implies = BDD_IMPLIES
- }
-
-foreign import ccall "bdd.h bdd_apply"
-    bdd_apply :: BddMgr -> BddApplyBinop -> Bdd -> Bdd -> IO Bdd
-
 foreign import ccall "bdd.h bdd_and"
     bdd_and :: BddMgr -> Bdd -> Bdd -> IO Bdd
 

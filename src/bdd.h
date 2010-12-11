@@ -48,21 +48,6 @@ bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i);
 extern bdd_t
 bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i);
 
-/* Binary operations to be used with bdd_apply. */
-typedef enum {
-    BDD_AND,
-    BDD_OR,
-    BDD_XOR,
-    BDD_EQUIV,
-    BDD_NAND,
-    BDD_IMPLIES
-} bdd_apply_binop;
-
-/* Applies a binary operation to the two given BDDs.  O(m(b1) * m(b2))
- * time and space. */
-extern bdd_t
-bdd_apply (bdd_mgr_t *mgr, bdd_apply_binop op, bdd_t b1, bdd_t b2);
-
 /* Computes the logical AND of the two BDDs.  O(m(b1) * m(b2)) time
  * and space. */
 extern bdd_t
