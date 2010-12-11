@@ -22,6 +22,7 @@ struct bdd_mgr
     node_ht_t *idxs_by_node;
 };
 
+/* FIXME: inline is not C89 */
 static inline node_t
 get_node_by_idx (bdd_mgr_t *mgr, bdd_t idx)
 {

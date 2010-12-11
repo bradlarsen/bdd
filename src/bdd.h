@@ -10,6 +10,7 @@
 #ifndef BDD_INCLUDED
 #define BDD_INCLUDED
 
+/* FIXME: stdbool.h is not C89 */
 #include <stdbool.h>
 
 /* A manager of the state for multiple BDDs. */
