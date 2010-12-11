@@ -69,3 +69,6 @@ foreign import ccall "bdd.h bdd_compose"
 
 foreign import ccall "bdd.h bdd_sat_count"
     bdd_sat_count :: BddMgr -> Bdd -> IO CDouble
+
+foreign import ccall "bdd.h bdd_get_num_nodes"
+    bdd_get_num_nodes :: BddMgr -> Bdd -> IO CUInt

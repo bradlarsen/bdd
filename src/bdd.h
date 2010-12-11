@@ -105,4 +105,9 @@ bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g);
 extern double
 bdd_sat_count (bdd_mgr_t *mgr, bdd_t b);
 
+/* Returns the number of nodes used by b.  O(m(b)) time, O(log m(b))
+ * space. */
+extern unsigned
+bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b);
+
 #endif  /* BDD_INCLUDED */
