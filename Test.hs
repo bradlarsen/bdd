@@ -1,7 +1,7 @@
 module Main (main) where
 
-import QuickCheckProperties
-import Test.QuickCheck ( quickCheckWith, Testable )
+import QuickCheckProperties ( bddTests )
+import TestSuite ( runTestWith )
 import Test.QuickCheck ( Args, stdArgs, maxSize, maxSuccess, maxDiscard )
 import System.Environment ( getArgs, getProgName )
 import System.Exit ( exitFailure )
@@ -11,11 +11,11 @@ import Text.Printf ( hPrintf )
 main :: IO ()
 main = do
     numQCTests <- parseArgs
-    let qcArgs = stdArgs { maxSize = 1000
+    let qcArgs = stdArgs { maxSize = 250
                          , maxSuccess = numQCTests
                          , maxDiscard = numQCTests
                          }
-    testQuickCheckProperties qcArgs
+    runTestWith qcArgs bddTests
 
 parseArgs :: IO Int
 parseArgs = do
@@ -32,21 +32,3 @@ usage = do
     pName <- getProgName
     _ <- hPrintf stderr "usage: %s NUM_TESTS\n" pName
     exitFailure
-
-
-testQuickCheckProperties :: Args -> IO ()
-testQuickCheckProperties args = do
-    putStrLn "Checking QuickCheck properties..."
-    let qc :: (Testable a) => a -> IO ()
-        qc = quickCheckWith args
-    qc prop_bddSymbolicEvalOk
-    qc prop_initialNumNodes
-    qc prop_correctNumVars
-    qc prop_andIdempotent
-    qc prop_orIdempotent
-    qc prop_selfImplies
-    qc prop_selfEquiv
-    qc prop_selfXOr
-    qc prop_not
-    qc prop_doubleNegation
-    qc prop_satCount

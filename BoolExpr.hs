@@ -4,8 +4,9 @@ import BDD.Raw
 
 import Control.Monad (liftM, liftM2, foldM)
 import Test.QuickCheck
-    (Gen, Arbitrary,
-     arbitrary, choose, sized, oneof, frequency, elements)
+    (Gen, Arbitrary (arbitrary, shrink),
+     shrinkIntegral,
+     choose, sized, oneof, frequency, elements)
 import Data.Array.IArray (Array, (!), listArray)
 
 -- | Boolean expressions.
@@ -54,18 +55,33 @@ arbitraryBoolExpr numVars = go
                               let s2 = maxNodes - s1
                               liftM2 cons (go s1) (go s2)
                 binCs = [And, Or, Xor, Equiv, Nand, Implies]
-                        
+
+shrinkBoolExpr :: BoolExpr -> [BoolExpr]
+shrinkBoolExpr expr =
+    case expr of 
+        BFalse -> []
+        BTrue -> []
+        Var i -> map Var (shrinkIntegral i)
+        Not e -> [e]
+        And l r -> [l, r]
+        Or l r -> [l, r]
+        Xor l r -> [l, r]
+        Equiv l r -> [l, r]
+        Nand l r -> [l, r]
+        Implies l r -> [l, r]
+
 instance Arbitrary BoolExpr where
-    arbitrary = (sized . arbitraryBoolExpr) =<< choose (0, 8)
+    arbitrary = (sized . arbitraryBoolExpr) =<< choose (0, 7)
+    shrink = shrinkBoolExpr
 
 -- Evaluates the given Boolean expression under the given environment.
 -- The environment is a list of Boolean values, one for each variable
 -- index, in order.
-eval :: BoolExpr -> [Bool] -> Bool
-eval expression assignment = go expression
+eval :: [Bool] -> BoolExpr -> Bool
+eval varAssigns expression = go expression
     where
         env :: Array Int Bool
-        env = listArray (0, length assignment - 1) assignment
+        env = listArray (0, length varAssigns - 1) varAssigns
         go expr = case expr of
                       BFalse -> False
                       BTrue -> True
@@ -78,8 +94,8 @@ eval expression assignment = go expression
                       Nand l r -> not (go l && go r)
                       Implies l r -> not (go l) || go r
 
-evalBdd :: BddMgr -> Bdd -> [Bool] -> IO Bool
-evalBdd mgr bdd varAssigns = do
+evalBdd ::  [Bool] -> BddMgr -> Bdd ->IO Bool
+evalBdd varAssigns mgr bdd = do
     let assigns = zip [0..] varAssigns
     res <- foldM (\b (i, v) -> bdd_restrict mgr b i v) bdd assigns
     case res of

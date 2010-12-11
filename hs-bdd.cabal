@@ -91,6 +91,7 @@ Executable test-hs-bdd
   Other-modules:
                      BoolExpr
                      QuickCheckProperties
+                     TestSuite
 
   ghc-options:       -Wall
 
