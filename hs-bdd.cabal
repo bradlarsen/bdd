@@ -67,6 +67,7 @@ Library
   c-sources:
                      src/bdd_accessors.c
                      src/bdd_create_destroy.c
+                     src/bdd_ht.c
                      src/bdd_impl.c
                      src/bdd_ops.c
                      src/bdd_pair_ht.c
@@ -108,6 +109,7 @@ Executable test-hs-bdd
   c-sources:
                      src/bdd_accessors.c
                      src/bdd_create_destroy.c
+                     src/bdd_ht.c
                      src/bdd_impl.c
                      src/bdd_ops.c
                      src/bdd_pair_ht.c

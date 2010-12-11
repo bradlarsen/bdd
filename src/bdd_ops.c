@@ -1,6 +1,7 @@
 #include "bdd_impl.h"
 #include "bdd_pair.h"
 #include "bdd_pair_ht.h"
+#include "bdd_ht.h"
 
 bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
@@ -184,51 +185,80 @@ bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
     return bdd_apply (mgr, BDD_IMPLIES, b1, b2);
 }
 
-/* Negation of a BDD is implemented by traversing it and switching
- * terminal links.  This should be improved with dynamic
- * programming. */
-bdd_t
-bdd_not (bdd_mgr_t *mgr, bdd_t b)
+static bdd_t
+bdd_not_rec (bdd_mgr_t *mgr, bdd_ht_t *cache, bdd_t b)
 {
     if (b == bdd_true)
         return bdd_false;
     else if (b == bdd_false)
         return bdd_true;
     else {
-        const node_t n = get_node_by_idx (mgr, b);
-        return make_node_from_parts (mgr,
-                                     n.var,
-                                     bdd_not (mgr, n.low),
-                                     bdd_not (mgr, n.high));
+        const bdd_t *cache_val = bdd_ht_lookup (cache, b);
+        if (cache_val == NULL) {
+            const node_t n = get_node_by_idx (mgr, b);
+            const bdd_t r = make_node_from_parts (mgr,
+                                                  n.var,
+                                                  bdd_not (mgr, n.low),
+                                                  bdd_not (mgr, n.high));
+            bdd_ht_insert (cache, b, r);
+            return r;
+        }
+        else
+            return *cache_val;
     }
 }
 
-/* This is the naive implementation from Andersen's ``An Introduction
- * to Binary Decision Diagrams''.  This implementation has worst-case
- * exponential time complexity due to the two recursive calls in the
- * second case.  This can be improved by memoization / dynamic
- * programming. */
-static bdd_t
-bdd_res_rec (bdd_mgr_t *mgr, const unsigned var, const bool val, bdd_t b)
+/* Negation of a BDD is implemented by traversing it and switching
+ * terminal nodes. */
+bdd_t
+bdd_not (bdd_mgr_t *mgr, bdd_t b)
 {
-    const node_t n = get_node_by_idx (mgr, b);
-    if (n.var > var)
-        return b;
-    else if (n.var < var) {
-        const bdd_t low = bdd_res_rec (mgr, var, val, n.low);
-        const bdd_t high = bdd_res_rec (mgr, var, val, n.high);
-        return make_node_from_parts (mgr, n.var, low, high);
+    bdd_ht_t *cache = bdd_ht_create ();
+    const bdd_t r = bdd_not_rec (mgr, cache, b);
+    bdd_ht_destroy (cache);
+    return r;
+}
+
+/* This largely follows the pseudocode from Andersen's ``An
+ * Introduction to Binary Decision Diagrams'', but with the addition
+ * of memoization. */
+static bdd_t
+bdd_res_rec (bdd_mgr_t *mgr,
+             const unsigned var,
+             const bool val,
+             bdd_ht_t *cache,
+             bdd_t b)
+{
+    const bdd_t *cache_val = bdd_ht_lookup (cache, b);
+    if (cache_val != NULL)
+        return *cache_val;
+    else {
+        bdd_t result;
+        const node_t n = get_node_by_idx (mgr, b);
+        if (n.var > var)
+            result = b;
+        else if (n.var == var)
+            result = val ? bdd_res_rec (mgr, var, val, cache, n.high)
+                         : bdd_res_rec (mgr, var, val, cache, n.low);
+        else /* n.var < var */
+            result = make_node_from_parts (
+                mgr,
+                n.var,
+                bdd_res_rec (mgr, var, val, cache, n.low),
+                bdd_res_rec (mgr, var, val, cache, n.high)
+                );
+        bdd_ht_insert (cache, b, result);
+        return result;
     }
-    else if (!val)
-        return bdd_res_rec (mgr, var, val, n.low);
-    else
-        return bdd_res_rec (mgr, var, val, n.high);
 }
 
 bdd_t
 bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val)
 {
-    return bdd_res_rec (mgr, var, val, b);
+    bdd_ht_t *cache = bdd_ht_create ();
+    const bdd_t r = bdd_res_rec (mgr, var, val, cache, b);
+    bdd_ht_destroy (cache);
+    return r;
 }
 
 bdd_t

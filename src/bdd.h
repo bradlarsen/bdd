@@ -5,8 +5,6 @@
  * m(f) denotes the number of nodes in the BDD f.
  */
 
-/* FIXME: the complexity measures listed here are not all correct. */
-
 #ifndef BDD_INCLUDED
 #define BDD_INCLUDED
 

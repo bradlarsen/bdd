@@ -35,3 +35,32 @@ make_hash_table(
     header_name='bdd_pair_ht.h',
     code_name='bdd_pair_ht.c'
     )
+
+make_hash_table(
+    include_guard_name='BDD_HT_INCLUDED',
+    local_includes=\
+"""
+#include "bdd.h"
+#include <stdbool.h>
+
+static inline bool
+bdd_equal (bdd_t b1, bdd_t b2)
+{
+    return b1 == b2;
+}
+
+static inline unsigned
+bdd_hash (bdd_t b)
+{
+    return b;
+}
+""",
+    prefix='bdd_ht',
+    hash_table_type='bdd_ht_t',
+    key_type='bdd_t',
+    key_equal_func='bdd_equal',
+    key_hash_func='bdd_hash',
+    value_type='bdd_t',
+    header_name='bdd_ht.h',
+    code_name='bdd_ht.c'
+    )
