@@ -34,9 +34,6 @@ foreign import ccall "bdd.h bdd_mgr_get_num_nodes"
 foreign import ccall "bdd.h bdd_mgr_get_ith_var"
     bdd_mgr_get_ith_var :: BddMgr -> CUInt -> IO Bdd
 
-foreign import ccall "bdd.h bdd_mgr_get_nith_var"
-    bdd_mgr_get_nith_var :: BddMgr -> CUInt -> IO Bdd
-
 foreign import ccall "bdd.h bdd_and"
     bdd_and :: BddMgr -> Bdd -> Bdd -> IO Bdd
 

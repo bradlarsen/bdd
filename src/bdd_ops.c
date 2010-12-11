@@ -20,12 +20,6 @@ bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
     return ith_var;
 }
 
-bdd_t
-bdd_mgr_get_nith_var (bdd_mgr_t *mgr, unsigned i)
-{
-    return bdd_not (mgr, bdd_mgr_get_ith_var (mgr, i));
-}
-
 /* Binary operations to be used with bdd_apply. */
 typedef enum {
     BDD_AND,
