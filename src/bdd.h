@@ -20,7 +20,7 @@ typedef struct bdd_mgr bdd_mgr_t;
  * this type would be abstract. */
 typedef unsigned bdd_t;
 
-/* True and false literals. */
+/* True and false BDD literals. */
 enum {bdd_false = 0, bdd_true = 1};
 
 /* Creates and initializes a new BDD manager with the given number of
@@ -28,16 +28,19 @@ enum {bdd_false = 0, bdd_true = 1};
 extern bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars);
 
-/* Frees the resources used by the BDD manager.  O(1) time. */
+/* FIXME: these complexity measures are wrong. */
+/* Frees the resources used by the BDD manager.  O(1) time and
+ * space. */
 extern void
 bdd_mgr_destroy (bdd_mgr_t *mgr);
 
 /* Returns the number of variables in the given BDD manager.  O(1)
- * time. */
+ * time and space. */
 extern unsigned
 bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
 
-/* Returns the number of BDD nodes in the given manager.  O(1). */
+/* Returns the number of BDD nodes in the given manager.  O(1) time
+ * and space. */
 extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 

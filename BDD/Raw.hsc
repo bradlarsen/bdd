@@ -4,7 +4,7 @@
 module BDD.Raw where
 
 import Foreign (Ptr)
-import Foreign.C.Types (CUInt, CInt, CDouble)
+import Foreign.C.Types (CUInt, CDouble)
 
 #include "bdd.h"
 
