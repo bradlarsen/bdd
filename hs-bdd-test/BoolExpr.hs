@@ -40,15 +40,15 @@ numVars expr =
         Implies l r -> max (numVars l) (numVars r)
 
 arbitraryBoolExpr :: Int -> Int -> Gen BoolExpr
-arbitraryBoolExpr numVars = go
+arbitraryBoolExpr nVars = go
     where
         go maxNodes = if maxNodes <= 1 then term else nonterm
             where
-                term = if numVars == 0
+                term = if nVars == 0
                        then elements [BFalse, BTrue]
                        else frequency [ (1, return BFalse)
                                       , (1, return BTrue)
-                                      , (12, liftM Var (choose (0, numVars - 1)))
+                                      , (12, liftM Var (choose (0, nVars - 1)))
                                       ]
                 nonterm = oneof (liftM Not (go (maxNodes - 1)) : map bin binCs)
                 bin cons = do s1 <- choose (1, maxNodes - 1)
@@ -78,8 +78,8 @@ instance Arbitrary BoolExpr where
 -- sequences of Booleans of length n.
 assignments :: Int -> [[Bool]]
 assignments 0 = [[]]
-assignments nVars = concatMap choose (assignments (pred nVars))
-    where choose a = [True : a, False : a]
+assignments nVars = concatMap assign (assignments (pred nVars))
+    where assign a = [True : a, False : a]
 
 -- | Evaluates the given Boolean expression under the given
 -- environment.  The environment is a list of Boolean values, one for

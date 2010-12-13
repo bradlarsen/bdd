@@ -1,7 +1,7 @@
 {-# LANGUAGE GADTs #-}
 module TestSuite where
 
-import Test.QuickCheck ( Testable, Property, Args, quickCheckWith )
+import Test.QuickCheck ( Testable, Args, quickCheckWith )
 import Text.Printf ( printf )
 
 data Test where

@@ -2,7 +2,6 @@ module NQueens ( queens, numDistinctSolutions ) where
 
 import BoolExpr
 import Control.Monad (guard)
-import Data.List (delete)
 
 conjoin :: [BoolExpr] -> BoolExpr
 conjoin = foldr And BTrue
@@ -79,7 +78,7 @@ queens n =
                    `And`
                conjoin [constrain (r, c) | r <- [0..n-1], c <- [0..n-1]]
 
-        decoder i = if i < 0 || i > n^2 - 1
+        decoder i = if i < 0 || i > n*n - 1
                     then error "queens: invalid variable index"
                     else i `divMod` n
     in (expr, decoder)
