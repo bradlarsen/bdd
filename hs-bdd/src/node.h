@@ -25,7 +25,7 @@ node_equal (node_t n1, node_t n2)
 static inline unsigned
 node_hash (node_t n)
 {
-    return hash_pair(n.var, hash_pair(n.low, n.high)) % 15485863; 
+    return hash_pair(n.var, hash_pair(n.low, n.high)) % 15485863;
 }
 
 #endif /* NODE_INCLUDED */
