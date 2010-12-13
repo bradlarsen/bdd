@@ -36,6 +36,8 @@ testQueensEquiv n = do
     withBddMgr nVars $ \mgr -> do
         bdd <- buildBdd mgr expr
         numSols <- liftM realToFrac (bdd_sat_count mgr bdd) :: IO Double
+        putStr . show =<< bdd_mgr_get_num_nodes mgr
+        putStrLn " nodes in use"
         case numDistinctSolutions n of
             Just s | fromIntegral s /= numSols -> do
                 printf "FAILED: wrong number of solutions---expected %d, got %d\n"
