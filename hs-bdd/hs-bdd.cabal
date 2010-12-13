@@ -40,13 +40,14 @@ Build-type:          Simple
 -- Extra-source-files:  
 
 -- Constraint on the version of Cabal needed to build this package.
-Cabal-version:       >=1.6
+Cabal-version:       >=1.1
 
 
 Library
   -- Modules exported by the library.
   Exposed-modules:
                      BDD.Raw
+                     BDD.Util
   
   -- Packages needed in order to build this package.
   Build-depends:
@@ -59,49 +60,6 @@ Library
   Build-tools:       hsc2hs
 
   ghc-options:       -Wall
-
-  cc-options:        -DNDEBUG
-
-  -- I really don't know what is required to get Haskell + C bits
-  -- linking together properly.  This seems to work.
-  c-sources:
-                     src/bdd_accessors.c
-                     src/bdd_create_destroy.c
-                     src/bdd_ht.c
-                     src/bdd_impl.c
-                     src/bdd_ops.c
-                     src/bdd_pair_ht.c
-                     src/node_ht.c
-                     src/node_vec.c
-
-  include-dirs:      src
-  includes:          bdd.h
-
-  extra-libraries:   m
-
-
-Executable test-hs-bdd
-  Main-is:           Test.hs
-
-  Build-depends:
-                     QuickCheck == 2.4.*,
-                     base >= 3.0 && < 4.3,
-                     array >= 0.2 && < 0.4
-
-  Other-modules:
-                     BoolExpr
-                     QuickCheckProperties
-                     TestSuite
-
-  ghc-options:       -Wall
-
-  -- FIXME: The following parts of the build specification for the
-  -- test program are copied from the library build specification.  To
-  -- allow the hs-bdd library to be a dependency of the test program
-  -- requires Cabal version 1.8 or higher.
-
-  Other-modules:
-                     BDD.Raw
 
   cc-options:        -DNDEBUG
 

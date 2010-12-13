@@ -1,7 +1,6 @@
 module QuickCheckProperties ( bddTests ) where
 
 import BoolExpr
-import NQueens
 import BDD.Raw
 import BDD.Util
 import TestSuite
