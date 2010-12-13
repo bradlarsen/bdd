@@ -18,6 +18,18 @@ typedef struct bdd_mgr bdd_mgr_t;
  * this type would be abstract. */
 typedef unsigned bdd_t;
 
+static inline bool
+bdd_equal (bdd_t b1, bdd_t b2)
+{
+    return b1 == b2;
+}
+
+static inline unsigned
+bdd_hash (bdd_t b)
+{
+    return b;
+}
+
 /* True and false BDD literals. */
 enum {bdd_false = 0, bdd_true = 1};
 

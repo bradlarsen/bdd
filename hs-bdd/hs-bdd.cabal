@@ -74,6 +74,7 @@ Library
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
   c-sources:
+                     src/bdd_double_ht.c
                      src/bdd_ht.c
                      src/bdd_impl.c
                      src/bdd_mgr.c
