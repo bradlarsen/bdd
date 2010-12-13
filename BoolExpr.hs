@@ -74,9 +74,16 @@ instance Arbitrary BoolExpr where
     arbitrary = (sized . arbitraryBoolExpr) =<< choose (0, 7)
     shrink = shrinkBoolExpr
 
--- Evaluates the given Boolean expression under the given environment.
--- The environment is a list of Boolean values, one for each variable
--- index, in order.
+-- | Constructs all possible assignments for n variables, i.e., all
+-- sequences of Booleans of length n.
+assignments :: Int -> [[Bool]]
+assignments 0 = [[]]
+assignments nVars = concatMap choose (assignments (pred nVars))
+    where choose a = [True : a, False : a]
+
+-- | Evaluates the given Boolean expression under the given
+-- environment.  The environment is a list of Boolean values, one for
+-- each variable index, in order.
 eval :: [Bool] -> BoolExpr -> Bool
 eval varAssigns expression = go expression
     where
@@ -94,7 +101,7 @@ eval varAssigns expression = go expression
                       Nand l r -> not (go l && go r)
                       Implies l r -> not (go l) || go r
 
-evalBdd ::  [Bool] -> BddMgr -> Bdd ->IO Bool
+evalBdd ::  [Bool] -> BddMgr -> Bdd -> IO Bool
 evalBdd varAssigns mgr bdd = do
     let assigns = zip [0..] varAssigns
     res <- foldM (\b (i, v) -> bdd_restrict mgr b i v) bdd assigns

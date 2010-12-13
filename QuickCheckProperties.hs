@@ -1,23 +1,14 @@
 module QuickCheckProperties ( bddTests ) where
 
 import BoolExpr
+import NQueens
 import BDD.Raw
+import BDD.Util
 import TestSuite
 
-import Control.Exception (finally)
 import Control.Monad (liftM)
 import Test.QuickCheck.Monadic (monadicIO, assert, run)
 import Test.QuickCheck (Property)
-
--- | Brackets an action that requires a BDD manager with manager
--- creation and destruction.
-withBddMgr
-  :: Int                  -- ^ the number of variables
-  -> (BddMgr -> IO a)     -- ^ the action to run
-  -> IO a
-withBddMgr nVars act = do
-    mgr <- bdd_mgr_create (fromIntegral nVars)
-    act mgr `finally` bdd_mgr_destroy mgr
 
 -- | Converts the given IO Boolean action into a QuickCheck property.
 ioProperty :: IO Bool -> Property
@@ -32,13 +23,6 @@ exprBddProperty
   :: (BddMgr -> BoolExpr -> Bdd -> IO Bool) -> BoolExpr -> Property
 exprBddProperty prop expr = ioProperty $ withBddMgr (numVars expr) $ \mgr ->
     prop mgr expr =<< buildBdd mgr expr
-
--- | Constructs all possible assignments for n variables, i.e., all
--- sequences of Booleans of length n.
-assignments :: Int -> [[Bool]]
-assignments 0 = [[]]
-assignments nVars = concatMap choose (assignments (pred nVars))
-    where choose a = [True : a, False : a]
 
 -- | Tests whether the given unary Boolean function is
 -- equivalent to the given unary BDD function.
