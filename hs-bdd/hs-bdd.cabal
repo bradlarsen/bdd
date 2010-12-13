@@ -43,6 +43,11 @@ Build-type:          Simple
 Cabal-version:       >=1.1
 
 
+Flag Debug
+  Description:       Compile C code with excessive checking
+  Default:           False
+
+
 Library
   -- Modules exported by the library.
   Exposed-modules:
@@ -61,7 +66,10 @@ Library
 
   ghc-options:       -Wall
 
-  cc-options:        -DNDEBUG
+  if flag(debug)
+    cc-options:        -g
+  else
+    cc-options:        -DNDEBUG
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
