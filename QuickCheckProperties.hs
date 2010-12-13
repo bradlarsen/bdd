@@ -15,8 +15,8 @@ withBddMgr
   :: Int                  -- ^ the number of variables
   -> (BddMgr -> IO a)     -- ^ the action to run
   -> IO a
-withBddMgr numVars act = do
-    mgr <- bdd_mgr_create (fromIntegral numVars)
+withBddMgr nVars act = do
+    mgr <- bdd_mgr_create (fromIntegral nVars)
     act mgr `finally` bdd_mgr_destroy mgr
 
 -- | Converts the given IO Boolean action into a QuickCheck property.
@@ -37,7 +37,7 @@ exprBddProperty prop expr = ioProperty $ withBddMgr (numVars expr) $ \mgr ->
 -- sequences of Booleans of length n.
 assignments :: Int -> [[Bool]]
 assignments 0 = [[]]
-assignments numVars = concatMap choose (assignments (pred numVars))
+assignments nVars = concatMap choose (assignments (pred nVars))
     where choose a = [True : a, False : a]
 
 -- | Tests whether the given unary Boolean function is
@@ -65,8 +65,7 @@ equiv2
 equiv2 op bddOp e1 e2 =
     let nVars = max (numVars e1) (numVars e2) in
     ioProperty $ withBddMgr nVars $ \mgr ->
-    let nVars = max (numVars e1) (numVars e2)
-        cmp :: [Bool] -> IO Bool
+    let cmp :: [Bool] -> IO Bool
         cmp as = do e1Bdd <- buildBdd mgr e1
                     e2Bdd <- buildBdd mgr e2
                     let e = op (eval as e1) (eval as e2)
@@ -79,42 +78,42 @@ idempotent2
     :: (BddMgr -> Bdd -> Bdd -> IO Bdd)
     -> BoolExpr
     -> Property
-idempotent2 op = exprBddProperty $ \mgr expr bddExpr -> do
+idempotent2 op = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- op mgr bddExpr bddExpr
     return (bddExpr == bddExpr')
 
 
 
 prop_initialNumNodes :: Int -> Property
-prop_initialNumNodes numVars =
-    bddProperty numVars (liftM (2 ==) . bdd_mgr_get_num_nodes)
+prop_initialNumNodes nVars =
+    bddProperty nVars (liftM (2 ==) . bdd_mgr_get_num_nodes)
 
 prop_correctNumVars :: Int -> Property
-prop_correctNumVars numVars =
-    bddProperty numVars (liftM (fromIntegral numVars ==) . bdd_mgr_get_num_vars)
+prop_correctNumVars nVars =
+    bddProperty nVars (liftM (fromIntegral nVars ==) . bdd_mgr_get_num_vars)
 
 prop_selfImplies :: BoolExpr -> Property
-prop_selfImplies = exprBddProperty $ \mgr expr bddExpr -> do
+prop_selfImplies = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_implies mgr bddExpr bddExpr
     return (bddExpr' == bdd_true)
 
 prop_selfEquiv :: BoolExpr -> Property
-prop_selfEquiv = exprBddProperty $ \mgr expr bddExpr -> do
+prop_selfEquiv = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_equiv mgr bddExpr bddExpr
     return (bddExpr' == bdd_true)
 
 prop_selfXOr :: BoolExpr -> Property
-prop_selfXOr = exprBddProperty $ \mgr expr bddExpr -> do
+prop_selfXOr = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_xor mgr bddExpr bddExpr
     return (bddExpr' == bdd_false)
 
 prop_not :: BoolExpr -> Property
-prop_not = exprBddProperty $ \mgr expr bddExpr -> do
+prop_not = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_not mgr bddExpr
     return (bddExpr /= bddExpr')
 
 prop_doubleNegation :: BoolExpr -> Property
-prop_doubleNegation = exprBddProperty $ \mgr expr bddExpr -> do
+prop_doubleNegation = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_not mgr =<< bdd_not mgr bddExpr
     return (bddExpr == bddExpr')
 
