@@ -7,16 +7,10 @@
 bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
-    node_t node;
-    bdd_t ith_var;
-
     bdd_mgr_check_invariants (mgr);
     assert (i < mgr->num_vars);
 
-    node.var = i;
-    node.low = bdd_false;
-    node.high = bdd_true;
-    ith_var = make_node (mgr, node);
+    const bdd_t ith_var = make_node_from_parts (mgr, i, bdd_false, bdd_true);
     bdd_mgr_check_invariants (mgr);
     assert (node_equal (node, get_node_by_idx (mgr, ith_var)));
     return ith_var;
