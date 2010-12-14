@@ -67,9 +67,9 @@ Library
   ghc-options:       -Wall
 
   if flag(debug)
-    cc-options:        -g
+    cc-options:        -g -Wall -Wextra -pedantic
   else
-    cc-options:        -DNDEBUG
+    cc-options:        -DNDEBUG -Wall -Wextra -pedantic
 
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
