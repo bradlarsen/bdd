@@ -42,13 +42,21 @@ extern void
 node_vec_destroy (node_vec_t *vec);
 
 /* Gets the number of used elements in the vector. */
-extern unsigned
-node_vec_get_num_elems (node_vec_t *vec);
+static inline unsigned
+node_vec_get_num_elems (node_vec_t *vec)
+{
+    node_vec_check_invariants (vec);
+    return vec->num_elems;
+}
 
 /* Gets the capacity of the vector, i.e., the number of elements for
    which it has allocated space. */
-extern unsigned
-node_vec_get_capacity (node_vec_t *vec);
+static inline unsigned
+node_vec_get_capacity (node_vec_t *vec)
+{
+    node_vec_check_invariants (vec);
+    return vec->capacity;
+}
 
 /* Gets the element at the specified index.  The index must be less
  * than the number of used elements of the vector. */

@@ -42,13 +42,21 @@ extern void
 ${prefix}_destroy (${vector_type} *vec);
 
 /* Gets the number of used elements in the vector. */
-extern unsigned
-${prefix}_get_num_elems (${vector_type} *vec);
+static inline unsigned
+${prefix}_get_num_elems (${vector_type} *vec)
+{
+    ${prefix}_check_invariants (vec);
+    return vec->num_elems;
+}
 
 /* Gets the capacity of the vector, i.e., the number of elements for
    which it has allocated space. */
-extern unsigned
-${prefix}_get_capacity (${vector_type} *vec);
+static inline unsigned
+${prefix}_get_capacity (${vector_type} *vec)
+{
+    ${prefix}_check_invariants (vec);
+    return vec->capacity;
+}
 
 /* Gets the element at the specified index.  The index must be less
  * than the number of used elements of the vector. */

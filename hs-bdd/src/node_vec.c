@@ -39,20 +39,6 @@ node_vec_destroy (node_vec_t *vec)
     free (vec);
 }
 
-unsigned
-node_vec_get_num_elems (node_vec_t *vec)
-{
-    node_vec_check_invariants (vec);
-    return vec->num_elems;
-}
-
-unsigned
-node_vec_get_capacity (node_vec_t *vec)
-{
-    node_vec_check_invariants (vec);
-    return vec->capacity;
-}
-
 static void
 double_vector_size (node_vec_t *vec)
 {
@@ -65,12 +51,12 @@ double_vector_size (node_vec_t *vec)
 }
 
 void
-node_vec_push_back (node_vec_t *vec, node_t node)
+node_vec_push_back (node_vec_t *vec, node_t val)
 {
     node_vec_check_invariants (vec);
     if (vec->num_elems == vec->capacity)
         double_vector_size (vec);
     vec->num_elems += 1;
-    node_vec_set (vec, vec->num_elems - 1, node);
+    node_vec_set (vec, vec->num_elems - 1, val);
     node_vec_check_invariants (vec);
 }
