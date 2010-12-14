@@ -48,7 +48,7 @@ usage = do
 testQueensEquiv :: Int -> IO ()
 testQueensEquiv n = do
     let nVars = n * n
-    withBddMgr nVars $ \mgr -> do
+    withBddMgrHint nVars 1000000 $ \mgr -> do
         bdd <- buildQueens n mgr
         numSols <- liftM realToFrac (bdd_sat_count mgr bdd) :: IO Double
         putStr . show =<< bdd_mgr_get_num_nodes mgr
