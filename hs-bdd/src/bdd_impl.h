@@ -6,21 +6,9 @@
 #include <math.h>
 
 #include "bdd.h"
-#include "bdd_pair_ht.h"
 #include "node.h"
 #include "node_vec.h"
 #include "node_ht.h"
-
-typedef enum {
-    BDD_AND = 0,
-    BDD_OR,
-    BDD_XOR,
-    BDD_EQUIV,
-    BDD_NAND,
-    BDD_IMPLIES
-} bdd_apply_op;
-
-enum {NUM_APPLY_OPS = 6};
 
 struct bdd_mgr
 {
@@ -32,8 +20,6 @@ struct bdd_mgr
     /* A hash table from nodes to index.  This field and nodes_by_idx
      * form a one-to-one mapping. */
     node_ht_t *idxs_by_node;
-
-    bdd_pair_ht_t * apply_caches[NUM_APPLY_OPS];
 };
 
 /* FIXME: inline is not C89 */
