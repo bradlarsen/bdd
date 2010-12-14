@@ -240,7 +240,9 @@ bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 static maybe_bdd_t
 bdd_implies_fun (bdd_t b1, bdd_t b2)
 {
-    if (b1 == bdd_false || b2 == bdd_true)
+    if (b1 == b2)
+        return maybe_bdd_just (bdd_true);
+    else if (b1 == bdd_false || b2 == bdd_true)
         return maybe_bdd_just (bdd_true);
     else if (b1 == bdd_true)
         return maybe_bdd_just (b2);
