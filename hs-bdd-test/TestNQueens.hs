@@ -90,6 +90,8 @@ buildQueens nVars mgr = do
     -- build requirements for each variable
     forM_ [0..n-1] $ \i -> do
         forM_ [0..n-1] $ \j -> do
+            hPrintf stderr "Adding position %s,%s\n" (show i) (show j)
+
             a <- newIORef bdd_true
             b <- newIORef bdd_true
             c <- newIORef bdd_true
