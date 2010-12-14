@@ -64,6 +64,10 @@ testQueensEquiv n = do
 -- This is nearly a verbatim translation from the C++ N-queens
 -- encoding in the BuDDy 2.4 examples.  Way more efficient than my
 -- earlier encoding, for some reason.
+--
+-- The number of nodes does not match the BuDDy queens example
+-- exactly, but if garbage collection is (effectively) disabled in
+-- BuDDy, the counts are within 100 for N up to 12.
 buildQueens :: Int -> BddMgr -> IO Bdd
 buildQueens nVars mgr = do
     let n = fromIntegral nVars
@@ -118,13 +122,14 @@ buildQueens nVars mgr = do
                     nxkll <- bdd_not mgr =<< loc k ll
                     writeIORef d =<< bdd_and mgr dVal =<< bdd_implies mgr xij nxkll
 
+            abcd <- newIORef =<< readIORef a
+            abcdVal <- readIORef abcd
+            writeIORef abcd =<< bdd_and mgr abcdVal =<< readIORef b
+            abcdVal <- readIORef abcd
+            writeIORef abcd =<< bdd_and mgr abcdVal =<< readIORef c
+            abcdVal <- readIORef abcd
+            writeIORef abcd =<< bdd_and mgr abcdVal =<< readIORef d
             queenVal <- readIORef queen
-            aVal <- readIORef a
-            bVal <- readIORef b
-            cVal <- readIORef c
-            dVal <- readIORef d
-            writeIORef queen =<< bdd_and mgr queenVal
-                             =<< bdd_and mgr aVal
-                             =<< bdd_and mgr bVal
-                             =<< bdd_and mgr cVal dVal
+            writeIORef queen =<< bdd_and mgr queenVal =<< readIORef abcd
+
     readIORef queen
