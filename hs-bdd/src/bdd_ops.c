@@ -7,12 +7,12 @@
 bdd_t
 bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
+    bdd_t ith_var;
     bdd_mgr_check_invariants (mgr);
     assert (i < mgr->num_vars);
 
-    const bdd_t ith_var = make_node_from_parts (mgr, i, bdd_false, bdd_true);
+    ith_var = make_node_from_parts (mgr, i, bdd_false, bdd_true);
     bdd_mgr_check_invariants (mgr);
-    assert (node_equal (node, get_node_by_idx (mgr, ith_var)));
     return ith_var;
 }
 
@@ -383,9 +383,12 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
 double
 bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
 {
+    bdd_double_ht_t *cache;
+    double result;
+
     bdd_mgr_check_invariants (mgr);
-    bdd_double_ht_t *cache = bdd_double_ht_create ();
-    double result =
+    cache = bdd_double_ht_create ();
+    result =
         pow (2, get_node_by_idx(mgr, b).var) *
         bdd_sat_count_rec (mgr, cache, b);
     bdd_double_ht_destroy (cache);
