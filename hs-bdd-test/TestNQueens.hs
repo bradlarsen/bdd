@@ -68,6 +68,9 @@ testQueensEquiv n = do
 -- The number of nodes does not match the BuDDy queens example
 -- exactly, but if garbage collection is (effectively) disabled in
 -- BuDDy, the counts are within 100 for N up to 12.
+--
+-- For the N-Queens problem, garbage collection makes a big
+-- difference!
 buildQueens :: Int -> BddMgr -> IO Bdd
 buildQueens nVars mgr = do
     let n = fromIntegral nVars
