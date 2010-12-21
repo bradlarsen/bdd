@@ -38,6 +38,12 @@ enum {bdd_false = 0, bdd_true = 1};
 extern bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars);
 
+/* Creates and initializes a new BDD manager with the given number of
+ * variables and with a hint for initial number of nodes to allocate.
+ * O(num_vars) time. */
+extern bdd_mgr_t *
+bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint);
+
 /* FIXME: these complexity measures are wrong. */
 /* Frees the resources used by the BDD manager.  O(1) time and
  * space. */

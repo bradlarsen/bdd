@@ -22,6 +22,9 @@ bdd_false = Bdd 0
 foreign import ccall "bdd.h bdd_mgr_create"
     bdd_mgr_create :: CUInt -> IO BddMgr
 
+foreign import ccall "bdd.h bdd_mgr_create_with_hint"
+    bdd_mgr_create_with_hint :: CUInt -> CUInt -> IO BddMgr
+
 foreign import ccall "bdd.h bdd_mgr_destroy"
     bdd_mgr_destroy :: BddMgr -> IO ()
 
