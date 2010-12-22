@@ -1,6 +1,6 @@
 #include "bdd_impl.h"
 #include "bdd_pair.h"
-#include "bdd_pair_ht.h"
+#include "bdd_pair_cache.h"
 #include "bdd_double_ht.h"
 #include "bdd_ht.h"
 
@@ -54,14 +54,13 @@ typedef maybe_bdd_t (* bdd_apply_op_fun) (bdd_t b1, bdd_t b2);
 
 static bdd_t
 bdd_apply_rec (bdd_mgr_t *mgr,
-               bdd_pair_ht_t *cache,
+               bdd_pair_cache_t cache,
                bdd_apply_op_fun op,
                bdd_pair_t p)
 {
-    const unsigned *cache_val = bdd_pair_ht_lookup (cache, p);
-    if (cache_val != NULL) {
-        return *cache_val;
-    }
+    cache_entry_t *cache_val = bdd_pair_cache_lookup (cache, p);
+    if (bdd_pair_equal(cache_val->key, p))
+        return cache_val->value;
     else {
         const bdd_t b1 = p.first;
         const node_t n1 = get_node_by_idx (mgr, b1);
@@ -104,15 +103,21 @@ bdd_apply_rec (bdd_mgr_t *mgr,
                 bdd_apply_rec (mgr, cache, op, p2)
                 );
         }
-        bdd_pair_ht_insert (cache, p, result);
+        cache_val->key = p;
+        cache_val->value = result;
         return result;
     }
 }
 
 static bdd_t
-bdd_apply (bdd_mgr_t *mgr, bdd_apply_op_fun op, bdd_t b1, bdd_t b2)
+bdd_apply (
+    bdd_mgr_t *mgr,
+    bdd_pair_cache_t cache,
+    bdd_apply_op_fun op,
+    bdd_t b1,
+    bdd_t b2
+    )
 {
-    bdd_pair_ht_t *cache;
     bdd_pair_t p;
     bdd_t result;
 
@@ -120,11 +125,9 @@ bdd_apply (bdd_mgr_t *mgr, bdd_apply_op_fun op, bdd_t b1, bdd_t b2)
     assert (b1 < bdd_mgr_get_num_nodes(mgr));
     assert (b2 < bdd_mgr_get_num_nodes(mgr));
 
-    cache = bdd_pair_ht_create ();
     p.first = b1;
     p.second = b2;
     result = bdd_apply_rec (mgr, cache, op, p);
-    bdd_pair_ht_destroy (cache);
 
     bdd_mgr_check_invariants (mgr);
     return result;
@@ -150,7 +153,7 @@ bdd_and_fun (bdd_t b1, bdd_t b2)
 bdd_t
 bdd_and (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, bdd_and_fun, b1, b2);
+    return bdd_apply (mgr, mgr->apply_caches[BDD_AND], bdd_and_fun, b1, b2);
 }
 
 static maybe_bdd_t
@@ -173,7 +176,7 @@ bdd_or_fun (bdd_t b1, bdd_t b2)
 bdd_t
 bdd_or (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, bdd_or_fun, b1, b2);
+    return bdd_apply (mgr, mgr->apply_caches[BDD_OR], bdd_or_fun, b1, b2);
 }
 
 static maybe_bdd_t
@@ -192,7 +195,7 @@ bdd_xor_fun (bdd_t b1, bdd_t b2)
 bdd_t
 bdd_xor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, bdd_xor_fun, b1, b2);
+    return bdd_apply (mgr, mgr->apply_caches[BDD_XOR], bdd_xor_fun, b1, b2);
 }
 
 static maybe_bdd_t
@@ -211,7 +214,7 @@ bdd_equiv_fun (bdd_t b1, bdd_t b2)
 bdd_t
 bdd_equiv (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, bdd_equiv_fun, b1, b2);
+    return bdd_apply (mgr, mgr->apply_caches[BDD_EQUIV], bdd_equiv_fun, b1, b2);
 }
 
 static maybe_bdd_t
@@ -228,7 +231,7 @@ bdd_nand_fun (bdd_t b1, bdd_t b2)
 bdd_t
 bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, bdd_nand_fun, b1, b2);
+    return bdd_apply (mgr, mgr->apply_caches[BDD_NAND], bdd_nand_fun, b1, b2);
 }
 
 static maybe_bdd_t
@@ -247,7 +250,7 @@ bdd_implies_fun (bdd_t b1, bdd_t b2)
 bdd_t
 bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, bdd_implies_fun, b1, b2);
+    return bdd_apply (mgr, mgr->apply_caches[BDD_IMPLIES], bdd_implies_fun, b1, b2);
 }
 
 static bdd_t
