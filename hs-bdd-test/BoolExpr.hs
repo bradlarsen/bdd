@@ -119,7 +119,7 @@ buildBdd mgr expr = do
           case e of
               BFalse      -> return bdd_false
               BTrue       -> return bdd_true
-              Var i       -> bdd_mgr_get_ith_var mgr (fromIntegral i)
+              Var i       -> bdd_ith_var mgr (fromIntegral i)
               Not e'      -> bdd_not mgr =<< go e'
               And l r     -> bin bdd_and l r
               Or l r      -> bin bdd_or l r

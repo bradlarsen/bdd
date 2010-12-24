@@ -5,7 +5,7 @@
 #include "bdd_ht.h"
 
 bdd_t
-bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i)
+bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
     bdd_t ith_var;
     bdd_mgr_check_invariants (mgr);

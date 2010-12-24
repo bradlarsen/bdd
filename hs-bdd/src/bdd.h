@@ -63,7 +63,7 @@ bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 /* Returns a BDD representing the given variable.  The variable must
  * exist in the manager.  O(1) time and space. */
 extern bdd_t
-bdd_mgr_get_ith_var (bdd_mgr_t *mgr, unsigned i);
+bdd_ith_var (bdd_mgr_t *mgr, unsigned i);
 
 /* Computes the logical AND of the two BDDs.  O(m(b1) * m(b2)) time
  * and space. */

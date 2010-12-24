@@ -74,7 +74,7 @@ testQueensEquiv n = do
 buildQueens :: Int -> BddMgr -> IO Bdd
 buildQueens nVars mgr = do
     let n = fromIntegral nVars
-        loc i j = bdd_mgr_get_ith_var mgr (i * n + j)
+        loc i j = bdd_ith_var mgr (i * n + j)
 
     queen <- newIORef bdd_true
 
