@@ -8,7 +8,7 @@ static unsigned
 up_to_next_power_of_two (unsigned n)
 {
     unsigned i;
-    for (i = 1; i <= n; i *= 2);
+    for (i = 1; i <= n; i *= 2) {}
     return i;
 }
 
