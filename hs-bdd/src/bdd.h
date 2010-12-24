@@ -11,12 +11,15 @@
 /* FIXME: stdbool.h is not C89 */
 #include <stdbool.h>
 
-/* A manager of the state for multiple BDDs. */
-typedef struct bdd_mgr bdd_mgr_t;
+/**********************************************************************/
+/* BDD type and operations                                            */
+/**********************************************************************/
 
-/* A BDD is represented by its corresponding node index.  Ideally,
- * this type would be abstract. */
-typedef unsigned bdd_t;
+/* A BDD is represented by its corresponding node index.  This package
+ * uses complement arcs to represent negations of formulae; a negative
+ * value represents a complemented formula.  Ideally, this type would
+ * be abstract. */
+typedef int bdd_t;
 
 static inline bool
 bdd_equal (bdd_t b1, bdd_t b2)
@@ -25,13 +28,32 @@ bdd_equal (bdd_t b1, bdd_t b2)
 }
 
 static inline unsigned
+bdd_to_idx (bdd_t b)
+{
+    return b < 0 ? -b : b;
+}
+
+static inline bool
+bdd_is_complement (bdd_t b)
+{
+    return b < 0;
+}
+
+static inline unsigned
 bdd_hash (bdd_t b)
 {
-    return b;
+    return bdd_to_idx(b);
 }
 
 /* True and false BDD literals. */
-enum {bdd_false = 0, bdd_true = 1};
+enum {bdd_false = -1, bdd_true = 1};
+
+/**********************************************************************/
+/* BDD manager type and operations                                    */
+/**********************************************************************/
+
+/* A manager of the state for multiple BDDs. */
+typedef struct bdd_mgr bdd_mgr_t;
 
 /* Creates and initializes a new BDD manager with the given number of
  * variables.  O(num_vars) time.  */
@@ -59,6 +81,7 @@ bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
  * and space. */
 extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
+
 
 /* Returns a BDD representing the given variable.  The variable must
  * exist in the manager.  O(1) time and space. */

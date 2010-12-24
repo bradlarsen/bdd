@@ -4,20 +4,20 @@
 module BDD.Raw where
 
 import Foreign (Ptr)
-import Foreign.C.Types (CUInt, CDouble)
+import Foreign.C.Types (CInt, CUInt, CDouble)
 
 #include "bdd.h"
 
 newtype BddMgr = BddMgr (Ptr BddMgr)
 
-newtype Bdd = Bdd CUInt
+newtype Bdd = Bdd CInt
     deriving (Eq, Ord, Show)
 
 bdd_true :: Bdd
 bdd_true = Bdd 1
 
 bdd_false :: Bdd
-bdd_false = Bdd 0
+bdd_false = Bdd (-1)
 
 foreign import ccall "bdd.h bdd_mgr_create"
     bdd_mgr_create :: CUInt -> IO BddMgr

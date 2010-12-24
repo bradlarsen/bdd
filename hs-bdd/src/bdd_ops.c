@@ -63,9 +63,9 @@ bdd_apply_rec (bdd_mgr_t *mgr,
         return cache_val->value;
     else {
         const bdd_t b1 = p.first;
-        const node_t n1 = get_node_by_idx (mgr, b1);
+        const node_t n1 = bdd_get_node (mgr, b1);
         const bdd_t b2 = p.second;
-        const node_t n2 = get_node_by_idx (mgr, b2);
+        const node_t n2 = bdd_get_node (mgr, b2);
         const maybe_bdd_t mresult = op (b1, b2);
         bdd_t result;
         if (mresult.has_value)
@@ -122,8 +122,8 @@ bdd_apply (
     bdd_t result;
 
     bdd_mgr_check_invariants (mgr);
-    assert (b1 < bdd_mgr_get_num_nodes(mgr));
-    assert (b2 < bdd_mgr_get_num_nodes(mgr));
+    assert (bdd_to_idx(b1) < bdd_mgr_get_num_nodes(mgr));
+    assert (bdd_to_idx(b2) < bdd_mgr_get_num_nodes(mgr));
 
     p.first = b1;
     p.second = b2;
@@ -253,38 +253,13 @@ bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
     return bdd_apply (mgr, mgr->apply_caches[BDD_IMPLIES], bdd_implies_fun, b1, b2);
 }
 
-static bdd_t
-bdd_not_rec (bdd_mgr_t *mgr, bdd_ht_t *cache, bdd_t b)
-{
-    if (b == bdd_true)
-        return bdd_false;
-    else if (b == bdd_false)
-        return bdd_true;
-    else {
-        const bdd_t *cache_val = bdd_ht_lookup (cache, b);
-        if (cache_val == NULL) {
-            const node_t n = get_node_by_idx (mgr, b);
-            const bdd_t r = make_node_from_parts (mgr,
-                                                  n.var,
-                                                  bdd_not (mgr, n.low),
-                                                  bdd_not (mgr, n.high));
-            bdd_ht_insert (cache, b, r);
-            return r;
-        }
-        else
-            return *cache_val;
-    }
-}
-
-/* Negation of a BDD is implemented by traversing it and switching
- * terminal nodes. */
+/* Since we use complement arcs (implemented by using negative values
+ * to denote negated BDDs), BDD negation is implemented simply by
+ * integer negation. */
 bdd_t
 bdd_not (bdd_mgr_t *mgr, bdd_t b)
 {
-    bdd_ht_t *cache = bdd_ht_create ();
-    const bdd_t r = bdd_not_rec (mgr, cache, b);
-    bdd_ht_destroy (cache);
-    return r;
+    return -b;
 }
 
 /* This largely follows the pseudocode from Andersen's ``An
@@ -302,7 +277,7 @@ bdd_res_rec (bdd_mgr_t *mgr,
         return *cache_val;
     else {
         bdd_t result;
-        const node_t n = get_node_by_idx (mgr, b);
+        const node_t n = bdd_get_node (mgr, b);
         if (n.var > var)
             result = b;
         else if (n.var == var)
@@ -366,9 +341,9 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
         if (result != NULL)
             return *result;
         else {
-            const node_t b_node = get_node_by_idx(mgr, b);
-            const node_t b_low = get_node_by_idx(mgr, b_node.low);
-            const node_t b_high = get_node_by_idx(mgr, b_node.high);
+            const node_t b_node = bdd_get_node(mgr, b);
+            const node_t b_low = bdd_get_node(mgr, b_node.low);
+            const node_t b_high = bdd_get_node(mgr, b_node.high);
             const double result = 
                 pow (2.0, b_low.var - b_node.var - 1) *
                 bdd_sat_count_rec (mgr, cache, b_node.low) +
@@ -389,7 +364,7 @@ bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
     bdd_mgr_check_invariants (mgr);
     cache = bdd_double_ht_create ();
     result =
-        pow (2, get_node_by_idx(mgr, b).var) *
+        pow (2, bdd_get_node(mgr, b).var) *
         bdd_sat_count_rec (mgr, cache, b);
     bdd_double_ht_destroy (cache);
     return result;
@@ -401,7 +376,7 @@ bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b)
     if (b == bdd_true || b == bdd_false)
         return 1;
     else {
-        const node_t b_node = get_node_by_idx (mgr, b);
+        const node_t b_node = bdd_get_node (mgr, b);
         return
             bdd_get_num_nodes (mgr, b_node.low) +
             bdd_get_num_nodes (mgr, b_node.high);

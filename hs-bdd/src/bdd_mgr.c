@@ -29,8 +29,13 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     mgr->num_vars = num_vars;
     mgr->nodes_by_idx = node_vec_create_with_capacity (capacity_hint);
     mgr->idxs_by_node = node_ht_create_with_hint (capacity_hint);
-    make_node (mgr, get_false_node(mgr));
-    make_node (mgr, get_true_node(mgr));
+
+    /* Not using make_node here; special case. */
+    node_vec_push_back (mgr->nodes_by_idx, get_sentinel_node(mgr));
+    node_ht_insert (mgr->idxs_by_node, get_sentinel_node(mgr), 0);
+    node_vec_push_back (mgr->nodes_by_idx, get_true_node(mgr));
+    node_ht_insert (mgr->idxs_by_node, get_true_node(mgr), 1);
+
     init_apply_caches (mgr);
     bdd_mgr_check_invariants (mgr);
     return mgr;

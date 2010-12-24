@@ -37,10 +37,21 @@ struct bdd_mgr
 };
 
 /* FIXME: inline is not C89 */
+/* Gets the node associated with the given BDD. */
 static inline node_t
-get_node_by_idx (bdd_mgr_t *mgr, bdd_t idx)
+bdd_get_node (bdd_mgr_t *mgr, bdd_t idx)
 {
-    return node_vec_get (mgr->nodes_by_idx, idx);
+    node_t n;
+    if (bdd_is_complement(idx)) {
+        bdd_t tmp;
+        n = node_vec_get (mgr->nodes_by_idx, -idx);
+        tmp = n.low;
+        n.low = n.high;
+        n.high = tmp;
+    }
+    else
+        n = node_vec_get (mgr->nodes_by_idx, idx);
+    return n;
 }
 
 #define bdd_mgr_check_invariants(mgr)                                   \
@@ -50,18 +61,23 @@ get_node_by_idx (bdd_mgr_t *mgr, bdd_t idx)
         assert (mgr->idxs_by_node != NULL);                             \
         assert (node_vec_get_num_elems(mgr->nodes_by_idx) >= 2);        \
                                                                         \
-        assert (node_equal(get_node_by_idx(mgr, 0), get_false_node(mgr))); \
-        assert (node_equal(get_node_by_idx(mgr, 1), get_true_node(mgr))); \
+        assert (node_equal(bdd_get_node(mgr, 0), get_sentinel_node(mgr))); \
+        assert (node_equal(bdd_get_node(mgr, 1), get_true_node(mgr)));  \
                                                                         \
         assert (node_vec_get_num_elems(mgr->nodes_by_idx) ==            \
                 node_ht_get_num_entries(mgr->idxs_by_node));            \
         assert (is_robdd(mgr));                                         \
+        assert (no_sentinel_links(mgr));                                \
     } while (0)
 
 /* Answers whether the BDDs represented by the manager are reduced and
  * ordered. */
 extern bool
 is_robdd (bdd_mgr_t *mgr);
+
+/* Answers whether no nodes link to the sentinel node. */
+extern bool
+no_sentinel_links (bdd_mgr_t *mgr);
 
 /* Gets the node representing T for the given manager. */
 static inline node_t
@@ -74,23 +90,23 @@ get_true_node (bdd_mgr_t *mgr)
     return t;
 }
 
-/* Gets the node representing F for the given manager. */
+/* Gets the sentinel node for the given manager. */
 static inline node_t
-get_false_node (bdd_mgr_t *mgr)
+get_sentinel_node (bdd_mgr_t *mgr)
 {
-    node_t f;
-    f.var = mgr->num_vars;
-    f.low = bdd_true;
-    f.high = bdd_false;
-    return f;
+    node_t s;
+    s.var = mgr->num_vars;
+    s.low = 0;
+    s.high = 0;
+    return s;
 }
 
 /* Retrieves an existing node equal to the given one, otherwise creates
  * a new node. */
-extern unsigned
+extern bdd_t
 make_node (bdd_mgr_t *mgr, node_t node);
 
-static inline unsigned
+static inline bdd_t
 make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high)
 {
     node_t n;

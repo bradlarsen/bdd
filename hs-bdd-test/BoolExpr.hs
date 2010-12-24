@@ -108,7 +108,7 @@ evalBdd varAssigns mgr bdd = do
     case res of
         _ | res == bdd_true -> return True
           | res == bdd_false -> return False
-          | otherwise -> error "evalBdd: non-terminal result!"
+          | otherwise -> error ("evalBdd: non-terminal result '" ++ show res ++ "'")
 
 -- | Symbolically evaluates the given Boolean expression with the
 -- given BDD manager.
