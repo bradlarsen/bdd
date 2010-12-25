@@ -43,14 +43,14 @@ bdd_get_node (bdd_mgr_t *mgr, bdd_t idx)
 {
     node_t n;
     if (bdd_is_complement(idx)) {
-        bdd_t tmp;
         n = node_vec_get (mgr->nodes_by_idx, -idx);
-        tmp = n.low;
-        n.low = n.high;
-        n.high = tmp;
+        node_check_invariants(n);
+        n = node_negate (n);
     }
-    else
+    else {
         n = node_vec_get (mgr->nodes_by_idx, idx);
+        node_check_invariants(n);
+    }
     return n;
 }
 
@@ -97,15 +97,17 @@ get_sentinel_node (bdd_mgr_t *mgr)
     node_t s;
     s.var = mgr->num_vars;
     s.low = 0;
-    s.high = 0;
+    s.high = 1;
     return s;
 }
 
-/* Retrieves an existing node equal to the given one, otherwise creates
- * a new node. */
+/* Retrieves the BDD of the node equal to 'node' if one exists,
+ * otherwise creates and returns a new BDD. */
 extern bdd_t
 make_node (bdd_mgr_t *mgr, node_t node);
 
+/* An alternative, possibly more convenient way to call
+ * 'make_node'. */
 static inline bdd_t
 make_node_from_parts (bdd_mgr_t *mgr, unsigned var, bdd_t low, bdd_t high)
 {

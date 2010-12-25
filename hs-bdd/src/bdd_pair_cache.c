@@ -2,7 +2,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <limits.h>
 
 static unsigned
 up_to_next_power_of_two (unsigned n)
@@ -24,7 +23,7 @@ bdd_pair_cache_create_with_hint (unsigned num_entries_hint)
         (cache_entry_t *) malloc (sizeof(cache_entry_t) * num_entries);
 
     for (i = 0; i < num_entries; i += 1) {
-        const cache_entry_t sentinel = { {UINT_MAX, UINT_MAX}, bdd_false };
+        const cache_entry_t sentinel = { {0, 0}, bdd_false };
         tab.entries[i] = sentinel;
     }
     return tab;

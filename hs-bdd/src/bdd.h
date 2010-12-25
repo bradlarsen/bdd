@@ -8,8 +8,8 @@
 #ifndef BDD_INCLUDED
 #define BDD_INCLUDED
 
-/* FIXME: stdbool.h is not C89 */
-#include <stdbool.h>
+typedef int bool;
+enum {true = 1, false = 0};
 
 /**********************************************************************/
 /* BDD type and operations                                            */
@@ -82,6 +82,17 @@ bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
 extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 
+/* Gets the variable of the root of the BDD. */
+extern unsigned
+bdd_var (bdd_mgr_t *mgr, bdd_t b);
+
+/* Gets the low branch of the root of the BDD. */
+extern bdd_t
+bdd_low (bdd_mgr_t *mgr, bdd_t b);
+
+/* Gets the high branch of the root of the BDD. */
+extern bdd_t
+bdd_high (bdd_mgr_t *mgr, bdd_t b);
 
 /* Returns a BDD representing the given variable.  The variable must
  * exist in the manager.  O(1) time and space. */

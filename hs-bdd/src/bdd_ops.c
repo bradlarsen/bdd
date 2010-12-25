@@ -4,6 +4,25 @@
 #include "bdd_double_ht.h"
 #include "bdd_ht.h"
 
+unsigned
+bdd_var (bdd_mgr_t *mgr, bdd_t b)
+{
+    return bdd_get_node(mgr, b).var;
+}
+
+bdd_t
+bdd_low (bdd_mgr_t *mgr, bdd_t b)
+{
+    return bdd_get_node(mgr, b).low;
+}
+
+bdd_t
+bdd_high (bdd_mgr_t *mgr, bdd_t b)
+{
+    return bdd_get_node(mgr, b).high;
+}
+
+
 bdd_t
 bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
@@ -15,6 +34,7 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
     bdd_mgr_check_invariants (mgr);
     return ith_var;
 }
+
 
 /* The type of an optional BDD. */
 typedef struct maybe_bdd
@@ -103,8 +123,8 @@ bdd_apply_rec (bdd_mgr_t *mgr,
                 bdd_apply_rec (mgr, cache, op, p2)
                 );
         }
-        cache_val->key = p;
-        cache_val->value = result;
+        /* cache_val->key = p; */
+        /* cache_val->value = result; */
         return result;
     }
 }
@@ -290,7 +310,7 @@ bdd_res_rec (bdd_mgr_t *mgr,
                 bdd_res_rec (mgr, var, val, cache, n.low),
                 bdd_res_rec (mgr, var, val, cache, n.high)
                 );
-        bdd_ht_insert (cache, b, result);
+        /* bdd_ht_insert (cache, b, result); */
         return result;
     }
 }
@@ -349,7 +369,7 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
                 bdd_sat_count_rec (mgr, cache, b_node.low) +
                 pow (2.0, b_high.var - b_node.var - 1) *
                 bdd_sat_count_rec (mgr, cache, b_node.high);
-            bdd_double_ht_insert (cache, b, result);
+            /* bdd_double_ht_insert (cache, b, result); */
             return result;
         }
     }

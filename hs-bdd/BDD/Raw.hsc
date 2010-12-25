@@ -10,6 +10,19 @@ import Foreign.C.Types (CInt, CUInt, CDouble)
 
 newtype BddMgr = BddMgr (Ptr BddMgr)
 
+newtype CBool = CBool CInt
+    deriving (Eq, Ord, Show)
+
+ctrue :: CBool
+ctrue = CBool 1
+
+cfalse :: CBool
+cfalse = CBool 0
+
+toCBool :: Bool -> CBool
+toCBool True = ctrue
+toCBool False = cfalse
+
 newtype Bdd = Bdd CInt
     deriving (Eq, Ord, Show)
 
@@ -34,6 +47,15 @@ foreign import ccall "bdd.h bdd_mgr_get_num_vars"
 foreign import ccall "bdd.h bdd_mgr_get_num_nodes"
     bdd_mgr_get_num_nodes :: BddMgr -> IO CUInt
 
+foreign import ccall "bdd.h bdd_var"
+    bdd_var :: BddMgr -> Bdd -> IO CUInt
+
+foreign import ccall "bdd.h bdd_low"
+    bdd_low :: BddMgr -> Bdd -> IO Bdd
+
+foreign import ccall "bdd.h bdd_high"
+    bdd_high :: BddMgr -> Bdd -> IO Bdd
+
 foreign import ccall "bdd.h bdd_ith_var"
     bdd_ith_var :: BddMgr -> CUInt -> IO Bdd
 
@@ -56,7 +78,7 @@ foreign import ccall "bdd.h bdd_implies"
     bdd_implies :: BddMgr -> Bdd -> Bdd -> IO Bdd
 
 foreign import ccall "bdd.h bdd_restrict"
-    bdd_restrict :: BddMgr -> Bdd -> CUInt -> Bool -> IO Bdd
+    bdd_restrict :: BddMgr -> Bdd -> CUInt -> CBool -> IO Bdd
 
 foreign import ccall "bdd.h bdd_not"
     bdd_not :: BddMgr -> Bdd -> IO Bdd

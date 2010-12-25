@@ -76,6 +76,7 @@ node_vec_set (node_vec_t *vec, unsigned idx, node_t val)
 {
     node_vec_check_invariants (vec);
     assert (idx < vec->num_elems);
+    node_check_invariants (val);
     vec->store[idx] = val;
 }
 

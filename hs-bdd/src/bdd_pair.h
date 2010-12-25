@@ -3,7 +3,6 @@
 
 #include "bdd.h"
 #include "hash_pair.h"
-#include <stdbool.h>
 
 typedef struct bdd_pair
 {

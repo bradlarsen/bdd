@@ -126,9 +126,9 @@ bddTests = Suite "Tests of the BDD.Raw module" [
     , Suite "Logical identity tests" [
             Test "x /\\ x === x" (idempotent2 bdd_and)
           , Test "x \\/ x === x" (idempotent2 bdd_or)
-          , Test "x x === True" prop_selfImplies
-          , Test "(x <=> x) === True" prop_selfEquiv
-          , Test "(x XOR x) === False" prop_selfXOr
+          , Test "x ==> x === True" prop_selfImplies
+          , Test "x <=> x === True" prop_selfEquiv
+          , Test "x XOR x === False" prop_selfXOr
           , Test "~x =/= x" prop_not
           , Test "~~x === x" prop_doubleNegation
           ]

@@ -62,13 +62,18 @@ shrinkBoolExpr expr =
         BFalse -> []
         BTrue -> []
         Var i -> map Var (shrinkIntegral i)
-        Not e -> [e]
-        And l r -> [l, r]
-        Or l r -> [l, r]
-        Xor l r -> [l, r]
-        Equiv l r -> [l, r]
-        Nand l r -> [l, r]
-        Implies l r -> [l, r]
+        Not e -> shrinkBoolExpr e ++ map Not (shrinkBoolExpr e)
+        And l r -> bin And l r
+        Or l r -> bin Or l r
+        Xor l r -> bin Xor l r
+        Equiv l r -> bin Equiv l r
+        Nand l r -> bin Nand l r
+        Implies l r -> bin Implies l r
+    where
+        bin op l r = shrinkBoolExpr l ++
+                     shrinkBoolExpr r ++
+                     [ op l' r' | l' <- shrinkBoolExpr l
+                                , r' <- shrinkBoolExpr r ]
 
 instance Arbitrary BoolExpr where
     arbitrary = (sized . arbitraryBoolExpr) =<< choose (0, 7)
@@ -104,7 +109,7 @@ eval varAssigns expression = go expression
 evalBdd ::  [Bool] -> BddMgr -> Bdd -> IO Bool
 evalBdd varAssigns mgr bdd = do
     let assigns = zip [0..] varAssigns
-    res <- foldM (\b (i, v) -> bdd_restrict mgr b i v) bdd assigns
+    res <- foldM (\b (i, v) -> bdd_restrict mgr b i (toCBool v)) bdd assigns
     case res of
         _ | res == bdd_true -> return True
           | res == bdd_false -> return False
