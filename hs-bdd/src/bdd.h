@@ -15,10 +15,8 @@ enum {true = 1, false = 0};
 /* BDD type and operations                                            */
 /**********************************************************************/
 
-/* A BDD is represented by its corresponding node index.  This package
- * uses complement arcs to represent negations of formulae; a negative
- * value represents a complemented formula.  Ideally, this type would
- * be abstract. */
+/* A BDD is represented by its corresponding node index.  Ideally,
+ * this type would be abstract. */
 typedef int bdd_t;
 
 static inline bool
@@ -28,25 +26,13 @@ bdd_equal (bdd_t b1, bdd_t b2)
 }
 
 static inline unsigned
-bdd_to_idx (bdd_t b)
-{
-    return b < 0 ? -b : b;
-}
-
-static inline bool
-bdd_is_complement (bdd_t b)
-{
-    return b < 0;
-}
-
-static inline unsigned
 bdd_hash (bdd_t b)
 {
-    return bdd_to_idx(b);
+    return b;
 }
 
 /* True and false BDD literals. */
-enum {bdd_false = -1, bdd_true = 1};
+enum {bdd_false = 0, bdd_true = 1};
 
 /**********************************************************************/
 /* BDD manager type and operations                                    */

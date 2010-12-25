@@ -26,11 +26,10 @@ toCBool False = cfalse
 newtype Bdd = Bdd CInt
     deriving (Eq, Ord, Show)
 
-bdd_true :: Bdd
-bdd_true = Bdd 1
-
-bdd_false :: Bdd
-bdd_false = Bdd (-1)
+#{enum Bdd, Bdd
+ , bdd_true = bdd_true
+ , bdd_false = bdd_false
+ }
 
 foreign import ccall "bdd.h bdd_mgr_create"
     bdd_mgr_create :: CUInt -> IO BddMgr

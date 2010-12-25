@@ -123,8 +123,8 @@ bdd_apply_rec (bdd_mgr_t *mgr,
                 bdd_apply_rec (mgr, cache, op, p2)
                 );
         }
-        /* cache_val->key = p; */
-        /* cache_val->value = result; */
+        cache_val->key = p;
+        cache_val->value = result;
         return result;
     }
 }
@@ -142,8 +142,10 @@ bdd_apply (
     bdd_t result;
 
     bdd_mgr_check_invariants (mgr);
-    assert (bdd_to_idx(b1) < bdd_mgr_get_num_nodes(mgr));
-    assert (bdd_to_idx(b2) < bdd_mgr_get_num_nodes(mgr));
+    assert (0 <= b1);
+    assert (0 <= b2);
+    assert ((unsigned)b1 < bdd_mgr_get_num_nodes(mgr));
+    assert ((unsigned)b2 < bdd_mgr_get_num_nodes(mgr));
 
     p.first = b1;
     p.second = b2;
@@ -273,13 +275,36 @@ bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
     return bdd_apply (mgr, mgr->apply_caches[BDD_IMPLIES], bdd_implies_fun, b1, b2);
 }
 
-/* Since we use complement arcs (implemented by using negative values
- * to denote negated BDDs), BDD negation is implemented simply by
- * integer negation. */
+static bdd_t
+bdd_not_rec (bdd_mgr_t *mgr, bdd_ht_t *cache, bdd_t b)
+{
+    if (b == bdd_true)
+        return bdd_false;
+    else if (b == bdd_false)
+        return bdd_true;
+    else {
+        const bdd_t *cache_val = bdd_ht_lookup (cache, b);
+        if (cache_val == NULL) {
+            const node_t n = bdd_get_node (mgr, b);
+            const bdd_t r = make_node_from_parts (mgr,
+                                                  n.var,
+                                                  bdd_not (mgr, n.low),
+                                                  bdd_not (mgr, n.high));
+            bdd_ht_insert (cache, b, r);
+            return r;
+        }
+        else
+            return *cache_val;
+    }
+}
+
 bdd_t
 bdd_not (bdd_mgr_t *mgr, bdd_t b)
 {
-    return -b;
+    bdd_ht_t *cache = bdd_ht_create ();
+    const bdd_t r = bdd_not_rec (mgr, cache, b);
+    bdd_ht_destroy (cache);
+    return r;
 }
 
 /* This largely follows the pseudocode from Andersen's ``An
@@ -310,7 +335,7 @@ bdd_res_rec (bdd_mgr_t *mgr,
                 bdd_res_rec (mgr, var, val, cache, n.low),
                 bdd_res_rec (mgr, var, val, cache, n.high)
                 );
-        /* bdd_ht_insert (cache, b, result); */
+        bdd_ht_insert (cache, b, result);
         return result;
     }
 }
@@ -369,7 +394,7 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
                 bdd_sat_count_rec (mgr, cache, b_node.low) +
                 pow (2.0, b_high.var - b_node.var - 1) *
                 bdd_sat_count_rec (mgr, cache, b_node.high);
-            /* bdd_double_ht_insert (cache, b, result); */
+            bdd_double_ht_insert (cache, b, result);
             return result;
         }
     }

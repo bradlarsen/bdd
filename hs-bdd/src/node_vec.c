@@ -33,8 +33,6 @@ void
 node_vec_destroy (node_vec_t *vec)
 {
     if (vec == NULL) return;
-
-    node_vec_check_invariants (vec);
     free (vec->store);
     free (vec);
 }
@@ -54,7 +52,6 @@ void
 node_vec_push_back (node_vec_t *vec, node_t val)
 {
     node_vec_check_invariants (vec);
-    node_check_invariants (val);
     if (vec->num_elems == vec->capacity)
         double_vector_size (vec);
     vec->num_elems += 1;
