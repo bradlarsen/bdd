@@ -11,19 +11,6 @@ make_vector(
     )
 
 make_hash_table(
-    include_guard_name='NODE_HT_INCLUDED',
-    local_includes='#include "node.h"',
-    prefix='node_ht',
-    hash_table_type='node_ht_t',
-    key_type='node_t',
-    key_equal_func='node_equal',
-    key_hash_func='node_hash',
-    value_type='bdd_t',
-    header_name='node_ht.h',
-    code_name='node_ht.c'
-    )
-
-make_hash_table(
     include_guard_name='BDD_HT_INCLUDED',
     local_includes='#include "bdd.h"',
     prefix='bdd_ht',

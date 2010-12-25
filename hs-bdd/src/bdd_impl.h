@@ -31,7 +31,7 @@ struct bdd_mgr
     node_vec_t *nodes_by_idx;
     /* A hash table from nodes to index.  This field and nodes_by_idx
      * form a one-to-one mapping. */
-    node_ht_t *idxs_by_node;
+    node_ht_t idxs_by_node;
 
     bdd_pair_cache_t apply_caches[NUM_APPLY_OPS];
 };
