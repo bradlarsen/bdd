@@ -28,7 +28,7 @@ struct bdd_mgr
     unsigned num_vars;
     /* A vector of nodes.  Node 0 is the F terminal and node 1 is the T
      * terminal. */
-    node_vec_t *nodes_by_idx;
+    node_vec_t nodes_by_idx;
     /* A hash table from nodes to index.  This field and nodes_by_idx
      * form a one-to-one mapping. */
     node_ht_t idxs_by_node;
@@ -41,23 +41,19 @@ struct bdd_mgr
 static inline node_t
 bdd_get_node (bdd_mgr_t *mgr, bdd_t idx)
 {
-    node_t n;
-    n = node_vec_get (mgr->nodes_by_idx, idx);
-    return n;
+    return node_vec_get (&mgr->nodes_by_idx, idx);
 }
 
 #define bdd_mgr_check_invariants(mgr)                                   \
     do {                                                                \
         assert (mgr != NULL);                                           \
-        assert (mgr->nodes_by_idx != NULL);                             \
-        assert (mgr->idxs_by_node != NULL);                             \
-        assert (node_vec_get_num_elems(mgr->nodes_by_idx) >= 2);        \
+        assert (node_vec_get_num_elems(&mgr->nodes_by_idx) >= 2);       \
                                                                         \
         assert (node_equal(bdd_get_node(mgr, 0), get_false_node(mgr))); \
         assert (node_equal(bdd_get_node(mgr, 1), get_true_node(mgr)));  \
                                                                         \
-        assert (node_vec_get_num_elems(mgr->nodes_by_idx) ==            \
-                node_ht_get_num_entries(mgr->idxs_by_node));            \
+        assert (node_vec_get_num_elems(&mgr->nodes_by_idx) ==           \
+                node_ht_get_num_entries(&mgr->idxs_by_node));           \
         assert (is_robdd(mgr));                                         \
     } while (0)
 

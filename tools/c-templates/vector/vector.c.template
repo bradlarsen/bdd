@@ -8,55 +8,33 @@ TO THE TEMPLATE INSTEAD. */
 
 static const unsigned INITIAL_CAPACITY = 32;
 
-${vector_type} *
-${prefix}_create ()
+void
+${prefix}_create (${vector_type} *vec)
 {
-    return ${prefix}_create_with_capacity(INITIAL_CAPACITY);
+    ${prefix}_create_with_capacity(vec, INITIAL_CAPACITY);
 }
 
-${vector_type} *
-${prefix}_create_with_capacity (unsigned num_elems)
+void
+${prefix}_create_with_capacity (${vector_type} *vec, unsigned num_elems)
 {
-    ${vector_type} *vec;
     num_elems = num_elems > 0 ? num_elems : INITIAL_CAPACITY;
-    vec = (${vector_type} *)
-        malloc (sizeof(${vector_type}));
     vec->store = (${element_type} *)
         malloc (num_elems * sizeof(${element_type}));
     vec->capacity = num_elems;
     vec->num_elems = 0;
-    ${prefix}_check_invariants (vec);
-    return vec;
 }
 
 void
 ${prefix}_destroy (${vector_type} *vec)
 {
-    if (vec == NULL) return;
-
-    ${prefix}_check_invariants (vec);
     free (vec->store);
-    free (vec);
-}
-
-static void
-double_vector_size (${vector_type} *vec)
-{
-    unsigned new_capacity = vec->capacity * 2;
-    ${prefix}_check_invariants (vec);
-    vec->store = (${element_type} *)
-        realloc (vec->store, new_capacity * sizeof(${element_type}));
-    vec->capacity = new_capacity;
-    ${prefix}_check_invariants (vec);
 }
 
 void
-${prefix}_push_back (${vector_type} *vec, ${element_type} val)
+double_vector_size (${vector_type} *vec)
 {
-    ${prefix}_check_invariants (vec);
-    if (vec->num_elems == vec->capacity)
-        double_vector_size (vec);
-    vec->num_elems += 1;
-    ${prefix}_set (vec, vec->num_elems - 1, val);
-    ${prefix}_check_invariants (vec);
+    unsigned new_capacity = vec->capacity * 2;
+    vec->store = (${element_type} *)
+        realloc (vec->store, new_capacity * sizeof(${element_type}));
+    vec->capacity = new_capacity;
 }

@@ -18,23 +18,20 @@ typedef struct
     /* number of used elements, i.e., index of first free element */
     unsigned num_elems;
 } node_vec_t;
-
-#define node_vec_check_invariants(vec)                 \
-    do {                                                \
-        assert (vec);                                   \
-        assert (vec->capacity > 0);                     \
-        assert (vec->capacity >= vec->num_elems);       \
-        assert (vec->store != NULL);                    \
-    } while (0)
+/* Invariants:
+ *     capacity > 0
+ *     capacity >= num_elems
+ *     store != NULL
+ */
 
 /* Creates and returns a new node_vec_t. */
-extern node_vec_t *
-node_vec_create ();
+extern void
+node_vec_create (node_vec_t *vec);
 
 /* Creates and returns a new node_vec_t with the given maximum
  * number of elements. */
-extern node_vec_t *
-node_vec_create_with_capacity (unsigned num_elems);
+extern void
+node_vec_create_with_capacity (node_vec_t *vec, unsigned num_elems);
 
 /* Frees the memory used by the given node_vec_t.  It is an error
  * to call this procedure more than once on a node_vec_t. */
@@ -45,7 +42,6 @@ node_vec_destroy (node_vec_t *vec);
 static inline unsigned
 node_vec_get_num_elems (node_vec_t *vec)
 {
-    node_vec_check_invariants (vec);
     return vec->num_elems;
 }
 
@@ -54,7 +50,6 @@ node_vec_get_num_elems (node_vec_t *vec)
 static inline unsigned
 node_vec_get_capacity (node_vec_t *vec)
 {
-    node_vec_check_invariants (vec);
     return vec->capacity;
 }
 
@@ -63,7 +58,6 @@ node_vec_get_capacity (node_vec_t *vec)
 static inline node_t
 node_vec_get (node_vec_t *vec, unsigned idx)
 {
-    node_vec_check_invariants (vec);
     assert (idx < vec->num_elems);
     return vec->store[idx];
 }
@@ -74,14 +68,20 @@ node_vec_get (node_vec_t *vec, unsigned idx)
 static inline void
 node_vec_set (node_vec_t *vec, unsigned idx, node_t val)
 {
-    node_vec_check_invariants (vec);
     assert (idx < vec->num_elems);
     vec->store[idx] = val;
 }
 
 /* Appends the given node_t to the vector, doubling the size of the
    vector if it is not large enough. */
-extern void
-node_vec_push_back (node_vec_t *vec, node_t val);
+static inline void
+node_vec_push_back (node_vec_t *vec, node_t val)
+{
+    extern void double_vector_size (node_vec_t *vec);
+    if (vec->num_elems == vec->capacity)
+        double_vector_size (vec);
+    vec->num_elems += 1;
+    node_vec_set (vec, vec->num_elems - 1, val);
+}
 
 #endif /* NODE_VEC_INCLUDED */

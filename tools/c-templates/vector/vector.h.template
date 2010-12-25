@@ -18,23 +18,20 @@ typedef struct
     /* number of used elements, i.e., index of first free element */
     unsigned num_elems;
 } ${vector_type};
-
-#define ${prefix}_check_invariants(vec)                 \
-    do {                                                \
-        assert (vec);                                   \
-        assert (vec->capacity > 0);                     \
-        assert (vec->capacity >= vec->num_elems);       \
-        assert (vec->store != NULL);                    \
-    } while (0)
+/* Invariants:
+ *     capacity > 0
+ *     capacity >= num_elems
+ *     store != NULL
+ */
 
 /* Creates and returns a new ${vector_type}. */
-extern ${vector_type} *
-${prefix}_create ();
+extern void
+${prefix}_create (${vector_type} *vec);
 
 /* Creates and returns a new ${vector_type} with the given maximum
  * number of elements. */
-extern ${vector_type} *
-${prefix}_create_with_capacity (unsigned num_elems);
+extern void
+${prefix}_create_with_capacity (${vector_type} *vec, unsigned num_elems);
 
 /* Frees the memory used by the given ${vector_type}.  It is an error
  * to call this procedure more than once on a ${vector_type}. */
@@ -45,7 +42,6 @@ ${prefix}_destroy (${vector_type} *vec);
 static inline unsigned
 ${prefix}_get_num_elems (${vector_type} *vec)
 {
-    ${prefix}_check_invariants (vec);
     return vec->num_elems;
 }
 
@@ -54,7 +50,6 @@ ${prefix}_get_num_elems (${vector_type} *vec)
 static inline unsigned
 ${prefix}_get_capacity (${vector_type} *vec)
 {
-    ${prefix}_check_invariants (vec);
     return vec->capacity;
 }
 
@@ -63,7 +58,6 @@ ${prefix}_get_capacity (${vector_type} *vec)
 static inline ${element_type}
 ${prefix}_get (${vector_type} *vec, unsigned idx)
 {
-    ${prefix}_check_invariants (vec);
     assert (idx < vec->num_elems);
     return vec->store[idx];
 }
@@ -74,14 +68,20 @@ ${prefix}_get (${vector_type} *vec, unsigned idx)
 static inline void
 ${prefix}_set (${vector_type} *vec, unsigned idx, ${element_type} val)
 {
-    ${prefix}_check_invariants (vec);
     assert (idx < vec->num_elems);
     vec->store[idx] = val;
 }
 
 /* Appends the given ${element_type} to the vector, doubling the size of the
    vector if it is not large enough. */
-extern void
-${prefix}_push_back (${vector_type} *vec, ${element_type} val);
+static inline void
+${prefix}_push_back (${vector_type} *vec, ${element_type} val)
+{
+    extern void double_vector_size (${vector_type} *vec);
+    if (vec->num_elems == vec->capacity)
+        double_vector_size (vec);
+    vec->num_elems += 1;
+    ${prefix}_set (vec, vec->num_elems - 1, val);
+}
 
 #endif /* ${include_guard_name} */

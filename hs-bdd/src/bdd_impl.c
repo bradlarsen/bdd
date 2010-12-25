@@ -3,7 +3,7 @@
 bool
 is_robdd (bdd_mgr_t *mgr)
 {
-    const unsigned vec_len = node_vec_get_num_elems(mgr->nodes_by_idx);
+    const unsigned vec_len = node_vec_get_num_elems(&mgr->nodes_by_idx);
     unsigned i;
     unsigned j;
 
@@ -33,14 +33,14 @@ make_node (bdd_mgr_t *mgr, node_t node)
         return node.low;
     else {
         bdd_t *existing_bdd;
-        existing_bdd = node_ht_lookup (mgr->idxs_by_node, node);
+        existing_bdd = node_ht_lookup (&mgr->idxs_by_node, node);
         if (existing_bdd != NULL)
             return *existing_bdd;
         else {
             unsigned idx;
-            idx = node_vec_get_num_elems (mgr->nodes_by_idx);
-            node_vec_push_back (mgr->nodes_by_idx, node);
-            node_ht_insert (mgr->idxs_by_node, node, idx);
+            idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
+            node_vec_push_back (&mgr->nodes_by_idx, node);
+            node_ht_insert (&mgr->idxs_by_node, node, idx);
             return idx;
         }
     }
