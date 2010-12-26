@@ -8,8 +8,13 @@
 #ifndef BDD_INCLUDED
 #define BDD_INCLUDED
 
+/* FIXME: this conditional compilation is ugly and not so safe, as the
+ * Haskell bindings to this library make assumptions about the
+ * representation of 'bool'. */
+#ifndef __cplusplus
 typedef int bool;
 enum {true = 1, false = 0};
+#endif
 
 /**********************************************************************/
 /* BDD type and operations                                            */
