@@ -2,6 +2,7 @@
  * to bdd_t. */
 
 #include "node_ht.h"
+#include <math.h>
 
 /***********************************************************************/
 /* HASH TABLE STRUCT INVARIANTS CHECKING                               */
@@ -64,6 +65,12 @@ up_to_next_power_of_two (unsigned n)
     return i;
 }
 
+static void
+create_bucket_pool (ht_bucket_pool_t *pool, unsigned num_buckets)
+{
+    ht_bucket_pool_create (pool, ceilf (NODE_HT_MAX_LOAD * num_buckets));
+}
+
 /* Creates and returns a new hash table with a default number of buckets. */
 void
 node_ht_create (node_ht_t *tab)
@@ -79,12 +86,12 @@ node_ht_create_with_hint (node_ht_t *tab, unsigned num_buckets_hint)
     const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
 
     tab->num_entries = 0;
-
     tab->num_buckets = num_buckets;
     tab->buckets =
         (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
     for (i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
+    create_bucket_pool (&tab->pool, num_buckets);
     node_ht_check_invariants (tab);
 }
 
@@ -93,11 +100,8 @@ node_ht_create_with_hint (node_ht_t *tab, unsigned num_buckets_hint)
 void
 node_ht_destroy (node_ht_t *tab)
 {
-    unsigned i;
-
     node_ht_check_invariants (tab);
-    for (i = 0; i < tab->num_buckets; i += 1)
-        ht_bucket_free (tab->buckets[i]);
+    ht_bucket_pool_destroy (&tab->pool);
     free (tab->buckets);
 }
 
@@ -105,12 +109,14 @@ node_ht_destroy (node_ht_t *tab)
 void
 double_hash_table_num_buckets (node_ht_t *tab)
 {
+    ht_bucket_pool_t old_pool;
     ht_bucket_t **old_buckets;
     const unsigned old_num_buckets = tab->num_buckets;
 
     unsigned i;
     ht_bucket_t *p;
 
+    old_pool = tab->pool;
     old_buckets = tab->buckets;
 
     tab->num_buckets *= 2;
@@ -119,14 +125,15 @@ double_hash_table_num_buckets (node_ht_t *tab)
     for (i = 0; i < tab->num_buckets; i += 1)
         tab->buckets[i] = NULL;
     tab->num_entries = 0;
+    create_bucket_pool (&tab->pool, tab->num_buckets);
 
     for (i = 0; i < old_num_buckets; i += 1) {
         for (p = old_buckets[i]; p != NULL; p = p->next) {
             node_ht_insert (tab, p->key, p->value);
         }
-        ht_bucket_free (old_buckets[i]);
     }
     free (old_buckets);
+    ht_bucket_pool_destroy (&old_pool);
 
     node_ht_check_invariants (tab);
 }

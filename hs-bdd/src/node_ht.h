@@ -10,6 +10,8 @@
 #include "node.h"
 #include "node_ht_bucket.h"
 
+#define NODE_HT_MAX_LOAD 0.75f
+
 /* A hash table implemented using separate chaining. */
 typedef struct
 {
@@ -19,6 +21,8 @@ typedef struct
     unsigned num_buckets;
     /* the array of buckets */
     ht_bucket_t **buckets;
+    /* memory pool for buckets */
+    ht_bucket_pool_t pool;
 } node_ht_t;
 
 /* Creates and returns a new hash table with a default number of buckets. */
@@ -79,12 +83,13 @@ node_ht_insert (node_ht_t *tab,
     unsigned b_idx;
     ht_bucket_t *b;
 
-    if (node_ht_get_load(tab) > 0.70f)
+    if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
         double_hash_table_num_buckets (tab);
     b_idx = node_ht_get_hash_index (tab, key);
     b = ht_bucket_search (tab->buckets[b_idx], key);
     if (b == NULL) {
-        tab->buckets[b_idx] = ht_bucket_create (key, val, tab->buckets[b_idx]);
+        tab->buckets[b_idx] =
+            ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
         tab->num_entries += 1;
     }
     else
