@@ -1,4 +1,4 @@
-#include "bdd_pair_cache.h"
+#include "bdd_ite_cache.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -12,29 +12,28 @@ up_to_next_power_of_two (unsigned n)
     return i;
 }
 
-bdd_pair_cache_t
-bdd_pair_cache_create_with_hint (unsigned num_entries_hint)
+void
+bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
 {
     unsigned i;
     const unsigned num_entries = up_to_next_power_of_two (num_entries_hint);
+    const bdd_ite_cache_entry_t sentinel =
+        { INT_MAX, INT_MAX, INT_MAX, bdd_false };
 
-    bdd_pair_cache_t tab;
-    tab.num_entries = num_entries;
-    tab.entries =
-        (cache_entry_t *) malloc (sizeof(cache_entry_t) * num_entries);
+    tab->num_entries = num_entries;
+    tab->entries = (bdd_ite_cache_entry_t *)
+        malloc (sizeof(bdd_ite_cache_entry_t) * num_entries);
 
     for (i = 0; i < num_entries; i += 1) {
         /* FIXME: this sentinel is bogus */
-        const cache_entry_t sentinel = { {UINT_MAX, UINT_MAX}, bdd_false };
-        tab.entries[i] = sentinel;
+        tab->entries[i] = sentinel;
     }
-    return tab;
 }
 
 /* Frees the memory used by the given hash table.  It is an error
  * to call this procedure more than once on a hash table. */
 void
-bdd_pair_cache_destroy (bdd_pair_cache_t tab)
+bdd_ite_cache_destroy (bdd_ite_cache_t *tab)
 {
-    free (tab.entries);
+    free (tab->entries);
 }

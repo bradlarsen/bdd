@@ -125,6 +125,10 @@ bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2);
 extern bdd_t
 bdd_not (bdd_mgr_t *mgr, bdd_t b);
 
+/* Computes if-then-else of the given BDDs. */
+extern bdd_t
+bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f);
+
 /* Restricts the given BDD by assigning a value to a variable.
  * O(m(b)) time and space. */
 extern bdd_t

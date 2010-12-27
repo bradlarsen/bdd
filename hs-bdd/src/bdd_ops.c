@@ -1,6 +1,6 @@
 #include "bdd_impl.h"
 #include "bdd_pair.h"
-#include "bdd_pair_cache.h"
+#include "bdd_ite_cache.h"
 #include "bdd_double_ht.h"
 #include "bdd_ht.h"
 
@@ -36,243 +36,43 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 }
 
 
-/* The type of an optional BDD. */
-typedef struct maybe_bdd
-{
-    bdd_t value;
-    bool has_value;
-} maybe_bdd_t;
-
-/* Create an optional BDD with no value. */
-static inline maybe_bdd_t
-maybe_bdd_nothing ()
-{
-    maybe_bdd_t m;
-    m.value = 0;
-    m.has_value = false;
-    return m;
-}
-
-/* Create an optional BDD with the given value. */
-static inline maybe_bdd_t
-maybe_bdd_just (bdd_t v)
-{
-    maybe_bdd_t m;
-    m.value = v;
-    m.has_value = true;
-    return m;
-}
-
-/* The type of operator-specific functions passed to bdd_apply.  A
- * bdd_apply_op_fun looks at its two BDD arguments and possibly
- * returns a BDD result.  Given two terminal BDDs, such a function
- * must return a result; in the other case, the function maybe return
- * a result if identies apply.  This allows the same recursive BDD
- * apply code to be reused, as only the operator-specific code
- * changes. */
-typedef maybe_bdd_t (* bdd_apply_op_fun) (bdd_t b1, bdd_t b2);
-
-static bdd_t
-bdd_apply_rec (bdd_mgr_t *mgr,
-               bdd_pair_cache_t cache,
-               bdd_apply_op_fun op,
-               bdd_pair_t p)
-{
-    cache_entry_t *cache_val = bdd_pair_cache_lookup (cache, p);
-    if (bdd_pair_equal(cache_val->key, p))
-        return cache_val->value;
-    else {
-        const bdd_t b1 = p.first;
-        const node_t n1 = bdd_get_node (mgr, b1);
-        const bdd_t b2 = p.second;
-        const node_t n2 = bdd_get_node (mgr, b2);
-        const maybe_bdd_t mresult = op (b1, b2);
-        bdd_t result;
-        if (mresult.has_value)
-            result = mresult.value;
-        else {
-            bdd_pair_t p1, p2;
-            unsigned var;
-            if (n1.var == n2.var) {
-                var = n1.var;
-                p1.first = n1.low;
-                p1.second = n2.low;
-                p2.first = n1.high;
-                p2.second = n2.high;
-            }
-            else if (n1.var < n2.var) {
-                var = n1.var;
-                p1.first = n1.low;
-                p1.second = b2;
-                p2.first = n1.high;
-                p2.second = b2;
-            }
-            else {
-                assert (n1.var > n2.var);
-                var = n2.var;
-                p1.first = b1;
-                p1.second = n2.low;
-                p2.first = b1;
-                p2.second = n2.high;
-            }
-
-            result = make_node_from_parts (
-                mgr,
-                var,
-                bdd_apply_rec (mgr, cache, op, p1),
-                bdd_apply_rec (mgr, cache, op, p2)
-                );
-        }
-        cache_val->key = p;
-        cache_val->value = result;
-        return result;
-    }
-}
-
-static bdd_t
-bdd_apply (
-    bdd_mgr_t *mgr,
-    bdd_pair_cache_t cache,
-    bdd_apply_op_fun op,
-    bdd_t b1,
-    bdd_t b2
-    )
-{
-    bdd_pair_t p;
-    bdd_t result;
-
-    bdd_mgr_check_invariants (mgr);
-    assert (0 <= b1);
-    assert (0 <= b2);
-    assert ((unsigned)b1 < bdd_mgr_get_num_nodes(mgr));
-    assert ((unsigned)b2 < bdd_mgr_get_num_nodes(mgr));
-
-    p.first = b1;
-    p.second = b2;
-    result = bdd_apply_rec (mgr, cache, op, p);
-
-    bdd_mgr_check_invariants (mgr);
-    return result;
-}
-
-static maybe_bdd_t
-bdd_and_fun (bdd_t b1, bdd_t b2)
-{
-    if (b1 == b2)
-        return maybe_bdd_just (b1);
-    if (b1 == bdd_true && b2 == bdd_true)
-        return maybe_bdd_just (bdd_true);
-    else if (b1 == bdd_true)
-        return maybe_bdd_just (b2);
-    else if (b2 == bdd_true)
-        return maybe_bdd_just (b1);
-    else if (b1 == bdd_false || b2 == bdd_false)
-        return maybe_bdd_just (bdd_false);
-    else
-        return maybe_bdd_nothing ();
-}
-
 bdd_t
 bdd_and (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, mgr->apply_caches[BDD_AND], bdd_and_fun, b1, b2);
-}
-
-static maybe_bdd_t
-bdd_or_fun (bdd_t b1, bdd_t b2)
-{
-    if (b1 == b2)
-        return maybe_bdd_just (b1);
-    else if (b1 == bdd_true || b2 == bdd_true)
-        return maybe_bdd_just (bdd_true);
-    else if (b1 == bdd_false)
-        return maybe_bdd_just (b2);
-    else if (b2 == bdd_false)
-        return maybe_bdd_just (b1);
-    else if (b1 == bdd_false && b2 == bdd_false)
-        return maybe_bdd_just (bdd_false);
-    else
-        return maybe_bdd_nothing ();
+    return bdd_ite (mgr, b1, b2, bdd_false);
 }
 
 bdd_t
 bdd_or (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, mgr->apply_caches[BDD_OR], bdd_or_fun, b1, b2);
-}
-
-static maybe_bdd_t
-bdd_xor_fun (bdd_t b1, bdd_t b2)
-{
-    if (b1 == b2)
-        return maybe_bdd_just (bdd_false);
-    else if (b1 == bdd_false)
-        return maybe_bdd_just (b2);
-    else if (b2 == bdd_false)
-        return maybe_bdd_just (b1);
-    else
-        return maybe_bdd_nothing ();
+    return bdd_ite (mgr, b1, bdd_true, b2);
 }
 
 bdd_t
 bdd_xor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, mgr->apply_caches[BDD_XOR], bdd_xor_fun, b1, b2);
-}
-
-static maybe_bdd_t
-bdd_equiv_fun (bdd_t b1, bdd_t b2)
-{
-    if (b1 == b2)
-        return maybe_bdd_just (bdd_true);
-    else if (b1 == bdd_true)
-        return maybe_bdd_just (b2);
-    else if (b2 == bdd_true)
-        return maybe_bdd_just (b1);
-    else
-        return maybe_bdd_nothing ();
+    bdd_t not_b2 = bdd_not (mgr, b2);
+    return bdd_ite (mgr, b1, not_b2, b2);
 }
 
 bdd_t
 bdd_equiv (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, mgr->apply_caches[BDD_EQUIV], bdd_equiv_fun, b1, b2);
-}
-
-static maybe_bdd_t
-bdd_nand_fun (bdd_t b1, bdd_t b2)
-{
-    if (b1 == bdd_false || b2 == bdd_false)
-        return maybe_bdd_just (bdd_true);
-    else if (b1 == bdd_true && b2 == bdd_true)
-        return maybe_bdd_just (bdd_false);
-    else
-        return maybe_bdd_nothing ();
+    bdd_t not_b2 = bdd_not (mgr, b2);
+    return bdd_ite (mgr, b1, b2, not_b2);
 }
 
 bdd_t
 bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, mgr->apply_caches[BDD_NAND], bdd_nand_fun, b1, b2);
-}
-
-static maybe_bdd_t
-bdd_implies_fun (bdd_t b1, bdd_t b2)
-{
-    if (b1 == b2)
-        return maybe_bdd_just (bdd_true);
-    else if (b1 == bdd_false || b2 == bdd_true)
-        return maybe_bdd_just (bdd_true);
-    else if (b1 == bdd_true)
-        return maybe_bdd_just (b2);
-    else
-        return maybe_bdd_nothing ();
+    bdd_t not_b2 = bdd_not (mgr, b2);
+    return bdd_ite (mgr, b1, not_b2, bdd_true);
 }
 
 bdd_t
 bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
 {
-    return bdd_apply (mgr, mgr->apply_caches[BDD_IMPLIES], bdd_implies_fun, b1, b2);
+    return bdd_ite (mgr, b1, b2, bdd_true);
 }
 
 static bdd_t
@@ -305,6 +105,87 @@ bdd_not (bdd_mgr_t *mgr, bdd_t b)
     const bdd_t r = bdd_not_rec (mgr, cache, b);
     bdd_ht_destroy (cache);
     return r;
+}
+
+static inline unsigned
+var_min3 (unsigned x, unsigned y, unsigned z)
+{
+    if (x <= y && x <= z)
+        return x;
+    else if (y <= x && y <= z)
+        return y;
+    else {
+        assert (z <= x && z <= y);
+        return z;
+    }
+}
+
+/* Given a BDD index, its corresponding node, and a variable no
+ * greater than its variable, restricts the BDD with 'var' assigned
+ * both false and true.  The first element of the result contains 'b'
+ * restricted with 'var' assigned false, the second element contains
+ * 'b' restricted with 'var' assigned true. */
+static inline bdd_pair_t
+quick_restrict (bdd_t b, node_t b_n, unsigned var)
+{
+    bdd_pair_t result;
+    assert (var <= b_n.var);
+    if (var < b_n.var) {
+        result.first = b;
+        result.second = b;
+    }
+    else {
+        result.first = b_n.low;
+        result.second = b_n.high;
+    }
+    return result;
+}
+
+bdd_t
+bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
+{
+    bdd_ite_cache_entry_t *cache_val;
+
+    assert (0 <= p && (unsigned) p < bdd_mgr_get_num_nodes(mgr));
+    assert (0 <= t && (unsigned) t < bdd_mgr_get_num_nodes(mgr));
+    assert (0 <= f && (unsigned) f < bdd_mgr_get_num_nodes(mgr));
+
+    if (p == bdd_true)
+        return t;
+    else if (p == bdd_false)
+        return f;
+    else if (t == bdd_true && f == bdd_false)
+        return p;
+
+    cache_val = bdd_ite_cache_lookup (&mgr->ite_cache, p, t, f);
+    if (cache_val->p == p && cache_val->t == t && cache_val->f == f)
+        return cache_val->result;
+    else {
+        unsigned top_var;
+        node_t p_n, t_n, f_n;
+        bdd_pair_t p_v, t_v, f_v; /* p, t, and f restricted with
+                                   * top_var and !top_var */
+        bdd_t low, high, result;
+
+        p_n = bdd_get_node (mgr, p);
+        t_n = bdd_get_node (mgr, t);
+        f_n = bdd_get_node (mgr, f);
+        top_var = var_min3 (p_n.var, t_n.var, f_n.var);
+        p_v = quick_restrict (p, p_n, top_var);
+        t_v = quick_restrict (t, t_n, top_var);
+        f_v = quick_restrict (f, f_n, top_var);
+
+        low = bdd_ite (mgr, p_v.first, t_v.first, f_v.first);
+        high = bdd_ite (mgr, p_v.second, t_v.second, f_v.second);
+        result = make_node_from_parts (mgr, top_var, low, high);
+
+        cache_val->p = p;
+        cache_val->t = t;
+        cache_val->f = f;
+        cache_val->result = result;
+
+        return result;
+    }
 }
 
 /* This largely follows the pseudocode from Andersen's ``An
