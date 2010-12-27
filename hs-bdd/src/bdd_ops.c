@@ -236,19 +236,17 @@ bdd_apply_nonrec (bdd_mgr_t *mgr,
                   bdd_apply_op_fun op,
                   bdd_pair_t start_pair)
 {
-    apply_command_t *cmd_stk;    /* stack for commands */
+    apply_command_t cmd_stk[1000];    /* stack for commands */
     int cmd_stk_idx;
-    bdd_t *res_stk;              /* stack for results */
+    bdd_t res_stk[1000];              /* stack for results */
     int res_stk_idx;
     bdd_t result;                /* final result */
 
-    cmd_stk = (apply_command_t *) malloc (1000000 * sizeof(apply_command_t));
     cmd_stk_idx = -1;
     STACK_PUSH (cmd_stk, apply_cmd (start_pair));
     /* fprintf (stderr, "!!! push "); */
     /* fprint_command (stderr, apply_cmd (start_pair)); */
     assert (cmd_stk_idx == 0);
-    res_stk = (bdd_t *) malloc (1000000 * sizeof(bdd_t));
     res_stk_idx = -1;
 
     while (!STACK_EMPTY(cmd_stk)) {
@@ -270,9 +268,6 @@ bdd_apply_nonrec (bdd_mgr_t *mgr,
     assert (cmd_stk_idx == -1);
     assert (res_stk_idx == 0);
     result = STACK_POP (res_stk);
-
-    free (res_stk);
-    free (cmd_stk);
 
     return result;
 }
