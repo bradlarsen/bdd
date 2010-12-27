@@ -26,13 +26,8 @@ bdd_high (bdd_mgr_t *mgr, bdd_t b)
 bdd_t
 bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
-    bdd_t ith_var;
-    bdd_mgr_check_invariants (mgr);
     assert (i < mgr->num_vars);
-
-    ith_var = make_node_from_parts (mgr, i, bdd_false, bdd_true);
-    bdd_mgr_check_invariants (mgr);
-    return ith_var;
+    return make_node_from_parts (mgr, i, bdd_false, bdd_true);
 }
 
 
@@ -120,23 +115,27 @@ var_min3 (unsigned x, unsigned y, unsigned z)
     }
 }
 
+typedef struct
+{
+    bdd_t low;
+    bdd_t high;
+} quick_restrict_res_t;
+
 /* Given a BDD index, its corresponding node, and a variable no
  * greater than its variable, restricts the BDD with 'var' assigned
- * both false and true.  The first element of the result contains 'b'
- * restricted with 'var' assigned false, the second element contains
- * 'b' restricted with 'var' assigned true. */
-static inline bdd_pair_t
+ * both false and true. */
+static inline quick_restrict_res_t
 quick_restrict (bdd_t b, node_t b_n, unsigned var)
 {
-    bdd_pair_t result;
+    quick_restrict_res_t result;
     assert (var <= b_n.var);
     if (var < b_n.var) {
-        result.first = b;
-        result.second = b;
+        result.low = b;
+        result.high = b;
     }
     else {
-        result.first = b_n.low;
-        result.second = b_n.high;
+        result.low = b_n.low;
+        result.high = b_n.high;
     }
     return result;
 }
@@ -172,8 +171,8 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
     else {
         unsigned top_var;
         node_t p_n, t_n, f_n;
-        bdd_pair_t p_v, t_v, f_v; /* p, t, and f restricted with
-                                   * top_var and !top_var */
+        quick_restrict_res_t p_v, t_v, f_v; /* p, t, and f restricted with
+                                             * top_var and !top_var */
         bdd_t low, high, result;
 
         p_n = bdd_get_node (mgr, p);
@@ -184,8 +183,8 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
         t_v = quick_restrict (t, t_n, top_var);
         f_v = quick_restrict (f, f_n, top_var);
 
-        low = bdd_ite (mgr, p_v.first, t_v.first, f_v.first);
-        high = bdd_ite (mgr, p_v.second, t_v.second, f_v.second);
+        low = bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
+        high = bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
         result = make_node_from_parts (mgr, top_var, low, high);
 
         cache_val->p = p;
@@ -296,7 +295,6 @@ bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
     bdd_double_ht_t *cache;
     double result;
 
-    bdd_mgr_check_invariants (mgr);
     cache = bdd_double_ht_create ();
     result =
         pow (2, bdd_get_node(mgr, b).var) *

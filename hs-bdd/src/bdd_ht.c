@@ -72,6 +72,14 @@ struct bdd_ht_t
     ht_bucket_t **buckets;
 };
 
+/* bdd_ht_t invariants:
+ *     - buckets != NULL
+ *     - for each i in [0, num_entries), for each key/value entry in
+ *       buckets[i], bdd_hash(key) == i.
+ *     - For all key1/value1, key2/value2 pairs in the hash table, if
+ *       key1 == key2, then value1 == value2
+ */
+
 /***********************************************************************/
 /* HASHING FUNCTIONS                                                   */
 /***********************************************************************/
@@ -82,56 +90,6 @@ bdd_ht_get_hash_index (bdd_ht_t *tab, bdd_t key)
 {
     return bdd_hash (key) % tab->num_buckets;
 }
-
-/***********************************************************************/
-/* HASH TABLE STRUCT INVARIANTS CHECKING                               */
-/***********************************************************************/
-#define bdd_ht_check_invariants(tab)                 \
-    do {                                                \
-        assert (tab != NULL);                           \
-        assert (tab->buckets != NULL);                  \
-        assert (bdd_ht_proper_hash_values(tab));     \
-        assert (bdd_ht_no_duplicate_keys(tab));      \
-    } while (0)
-
-#ifndef NDEBUG
-/* Returns true if and only if every entry in a bucket hashes to that
- * bucket. */
-static bool
-bdd_ht_proper_hash_values (bdd_ht_t *tab)
-{
-    unsigned i;
-    ht_bucket_t *p;
-    for (i = 0; i < tab->num_buckets; i += 1)
-        for (p = tab->buckets[i]; p != NULL; p = p->next)
-            if (bdd_ht_get_hash_index(tab, p->key) != i)
-                return false;
-    return true;
-}
-
-/* Returns true if and only if there are no two distinct entries with
- * the same key. */
-static bool
-bdd_ht_no_duplicate_keys (bdd_ht_t *tab)
-{
-    unsigned num_buckets;
-    ht_bucket_t **buckets;
-
-    unsigned i, j;
-    ht_bucket_t *p, *q;
-
-    num_buckets = tab->num_buckets;
-    buckets = tab->buckets;
-
-    for (i = 0; i < num_buckets; i += 1)
-        for (p = buckets[i]; p != NULL; p = p->next)
-            for (j = i; j < num_buckets; j += 1)
-                for (q = buckets[j]; q != NULL; q = q->next)
-                    if (p != q && bdd_equal(p->key, q->key))
-                        return false;
-    return true;
-}
-#endif /* NDEBUG */
 
 /***********************************************************************/
 /* HASH TABLE CREATION AND DESTRUCTION                                 */
@@ -167,7 +125,6 @@ bdd_ht_create_with_hint (unsigned num_buckets_hint)
         (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
     for (i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
-    bdd_ht_check_invariants (tab);
     return tab;
 }
 
@@ -178,7 +135,7 @@ bdd_ht_destroy (bdd_ht_t *tab)
 {
     unsigned i;
 
-    bdd_ht_check_invariants (tab);
+    assert (tab != NULL);
     for (i = 0; i < tab->num_buckets; i += 1)
         ht_bucket_free (tab->buckets[i]);
     free (tab->buckets);
@@ -192,7 +149,7 @@ bdd_ht_destroy (bdd_ht_t *tab)
 unsigned
 bdd_ht_get_num_entries (bdd_ht_t *tab)
 {
-    bdd_ht_check_invariants (tab);
+    assert (tab != NULL);
     return tab->num_entries;
 }
 
@@ -200,7 +157,7 @@ bdd_ht_get_num_entries (bdd_ht_t *tab)
 unsigned
 bdd_ht_get_num_buckets (bdd_ht_t *tab)
 {
-    bdd_ht_check_invariants (tab);
+    assert (tab != NULL);
     return tab->num_buckets;
 }
 
@@ -209,7 +166,7 @@ bdd_ht_get_num_buckets (bdd_ht_t *tab)
 float
 bdd_ht_get_load (bdd_ht_t *tab)
 {
-    bdd_ht_check_invariants (tab);
+    assert (tab != NULL);
     return
         (float) bdd_ht_get_num_entries (tab) /
         (float) bdd_ht_get_num_buckets (tab);
@@ -241,8 +198,6 @@ double_hash_table_num_buckets (bdd_ht_t *tab)
         ht_bucket_free (old_buckets[i]);
     }
     free (old_buckets);
-
-    bdd_ht_check_invariants (tab);
 }
 
 /* Inserts a binding for the given key and value into the hash table.
@@ -256,7 +211,7 @@ bdd_ht_insert (bdd_ht_t *tab,
     unsigned b_idx;
     ht_bucket_t *b;
 
-    bdd_ht_check_invariants (tab);
+    assert (tab != NULL);
     if (bdd_ht_get_load(tab) > 0.70f)
         double_hash_table_num_buckets (tab);
     b_idx = bdd_ht_get_hash_index (tab, key);
@@ -279,7 +234,7 @@ bdd_ht_lookup (bdd_ht_t *tab, bdd_t key)
     unsigned b_idx;
     ht_bucket_t *b;
 
-    bdd_ht_check_invariants (tab);
+    assert (tab != NULL);
     b_idx = bdd_ht_get_hash_index (tab, key);
     b = ht_bucket_search (tab->buckets[b_idx], key);
     return b != NULL ? &b->value : NULL;

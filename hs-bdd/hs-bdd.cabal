@@ -76,7 +76,6 @@ Library
   c-sources:
                      src/bdd_double_ht.c
                      src/bdd_ht.c
-                     src/bdd_impl.c
                      src/bdd_mgr.c
                      src/bdd_ops.c
                      src/bdd_ite_cache.c

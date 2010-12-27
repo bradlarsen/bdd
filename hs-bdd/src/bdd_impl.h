@@ -33,19 +33,6 @@ bdd_get_node (bdd_mgr_t *mgr, bdd_t idx)
     return node_vec_get (&mgr->nodes_by_idx, idx);
 }
 
-#define bdd_mgr_check_invariants(mgr)                                   \
-    do {                                                                \
-        assert (mgr != NULL);                                           \
-        assert (node_vec_get_num_elems(&mgr->nodes_by_idx) >= 2);       \
-                                                                        \
-        assert (node_equal(bdd_get_node(mgr, 0), get_false_node(mgr))); \
-        assert (node_equal(bdd_get_node(mgr, 1), get_true_node(mgr)));  \
-                                                                        \
-        assert (node_vec_get_num_elems(&mgr->nodes_by_idx) ==           \
-                node_ht_get_num_entries(&mgr->idxs_by_node));           \
-        assert (is_robdd(mgr));                                         \
-    } while (0)
-
 /* Answers whether the BDDs represented by the manager are reduced and
  * ordered. */
 extern bool
@@ -75,8 +62,25 @@ get_false_node (bdd_mgr_t *mgr)
 
 /* Retrieves the BDD of the node equal to 'node' if one exists,
  * otherwise creates and returns a new BDD. */
-extern bdd_t
-make_node (bdd_mgr_t *mgr, node_t node);
+static inline bdd_t
+make_node (bdd_mgr_t *mgr, node_t node)
+{
+    if (node.low == node.high)
+        return node.low;
+    else {
+        bdd_t *existing_bdd;
+        existing_bdd = node_ht_lookup (&mgr->idxs_by_node, node);
+        if (existing_bdd != NULL)
+            return *existing_bdd;
+        else {
+            unsigned idx;
+            idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
+            node_vec_push_back (&mgr->nodes_by_idx, node);
+            node_ht_insert (&mgr->idxs_by_node, node, idx);
+            return idx;
+        }
+    }
+}
 
 /* An alternative, possibly more convenient way to call
  * 'make_node'. */
