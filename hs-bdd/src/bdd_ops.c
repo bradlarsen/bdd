@@ -150,6 +150,14 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
     assert (0 <= t && (unsigned) t < bdd_mgr_get_num_nodes(mgr));
     assert (0 <= f && (unsigned) f < bdd_mgr_get_num_nodes(mgr));
 
+    /* put arguments into ``standard triple'' form */
+    /* FIXME: there are many more cases that require complement edges */
+    if (p == t)
+        t = bdd_true;
+    if (p == f)
+        f = bdd_false;
+
+    /* terminal cases */
     if (p == bdd_true)
         return t;
     else if (p == bdd_false)
@@ -157,6 +165,7 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
     else if (t == bdd_true && f == bdd_false)
         return p;
 
+    /* check cache, recur if needed */
     cache_val = bdd_ite_cache_lookup (&mgr->ite_cache, p, t, f);
     if (cache_val->p == p && cache_val->t == t && cache_val->f == f)
         return cache_val->result;
