@@ -40,7 +40,7 @@ bdd_ite_cache_get_size (bdd_ite_cache_t *tab)
 static inline unsigned
 bdd_ite_hash (bdd_t p, bdd_t t, bdd_t f)
 {
-    return hash_pair (p, hash_pair (t, f));
+    return hash_pair (p, hash_pair (t, f)) % 999999937;
 }
 
 /* Retrieves a pointer to the entry that the given key hashes to.  The
