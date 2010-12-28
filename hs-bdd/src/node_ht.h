@@ -71,8 +71,9 @@ node_ht_get_hash_index (node_ht_t *tab, node_t key)
 }
 
 /* Inserts a binding for the given key and value into the hash table.
- * If there is already an entry with the given key, its value is
- * replaced. */
+ * Existing values are not searched for, so calling this with the same
+ * key/value inputs multiple times will result in multiple hash table
+ * entries. */
 static inline void
 node_ht_insert (node_ht_t *tab,
                 node_t key,
@@ -81,19 +82,14 @@ node_ht_insert (node_ht_t *tab,
     extern void double_hash_table_num_buckets (node_ht_t *tab);
 
     unsigned b_idx;
-    ht_bucket_t *b;
-
     if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
         double_hash_table_num_buckets (tab);
     b_idx = node_ht_get_hash_index (tab, key);
-    b = ht_bucket_search (tab->buckets[b_idx], key);
-    if (b == NULL) {
-        tab->buckets[b_idx] =
-            ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
-        tab->num_entries += 1;
-    }
-    else
-        b->value = val;
+    assert (ht_bucket_search (tab->buckets[b_idx], key) == NULL);
+
+    tab->buckets[b_idx] =
+        ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
+    tab->num_entries += 1;
 }
 
 /* Retrieves a pointer to the value bound to the specified key.  If no
