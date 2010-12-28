@@ -215,8 +215,7 @@ bdd_res_rec (bdd_mgr_t *mgr,
         if (n.var > var)
             result = b;
         else if (n.var == var)
-            result = val ? bdd_res_rec (mgr, var, val, cache, n.high)
-                         : bdd_res_rec (mgr, var, val, cache, n.low);
+            result = val ? n.high : n.low;
         else /* n.var < var */
             result = make_node_from_parts (
                 mgr,
@@ -257,10 +256,10 @@ bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b)
 bdd_t
 bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g)
 {
-    bdd_t not_g = bdd_not (mgr, g);
-    return bdd_or (mgr,
-                   bdd_and (mgr, not_g, bdd_restrict (mgr, f, x, false)),
-                   bdd_and (mgr, g, bdd_restrict (mgr, f, x, true)));
+    bdd_t ite_t, ite_f;
+    ite_t = bdd_restrict (mgr, f, x, true);
+    ite_f = bdd_restrict (mgr, f, x, false);
+    return bdd_ite (mgr, g, ite_t, ite_f);
 }
 
 static double
