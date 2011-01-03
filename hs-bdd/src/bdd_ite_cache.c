@@ -1,4 +1,5 @@
 #include "bdd_ite_cache.h"
+#include "memory.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -22,7 +23,7 @@ bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
 
     tab->num_entries = num_entries;
     tab->entries = (bdd_ite_cache_entry_t *)
-        malloc (sizeof(bdd_ite_cache_entry_t) * num_entries);
+        checked_malloc (sizeof(bdd_ite_cache_entry_t) * num_entries);
 
     for (i = 0; i < num_entries; i += 1) {
         /* FIXME: this sentinel is bogus */
@@ -35,5 +36,5 @@ bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
 void
 bdd_ite_cache_destroy (bdd_ite_cache_t *tab)
 {
-    free (tab->entries);
+    checked_free (tab->entries);
 }

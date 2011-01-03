@@ -1,9 +1,7 @@
-/* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
-TO THE TEMPLATE INSTEAD. */
-
 #ifndef NODE_VEC_INCLUDED
 #define NODE_VEC_INCLUDED
 
+#include "memory.h"
 #include "node.h"
 
 #include <assert.h>
@@ -72,14 +70,16 @@ node_vec_set (node_vec_t *vec, unsigned idx, node_t val)
     vec->store[idx] = val;
 }
 
+extern void
+node_vec_double_size (node_vec_t *vec);
+
 /* Appends the given node_t to the vector, doubling the size of the
    vector if it is not large enough. */
 static inline void
 node_vec_push_back (node_vec_t *vec, node_t val)
 {
-    extern void double_vector_size (node_vec_t *vec);
     if (vec->num_elems == vec->capacity)
-        double_vector_size (vec);
+        node_vec_double_size (vec);
     vec->num_elems += 1;
     node_vec_set (vec, vec->num_elems - 1, val);
 }

@@ -16,9 +16,10 @@ up_to_next_power_of_two (unsigned n)
 }
 
 static void
-create_bucket_pool (ht_bucket_pool_t *pool, unsigned num_buckets)
+create_bucket_pool (node_ht_bucket_pool_t *pool, unsigned num_buckets)
 {
-    ht_bucket_pool_create (pool, ceilf (NODE_HT_MAX_LOAD * num_buckets));
+    node_ht_bucket_pool_create (pool,
+                           (unsigned)ceilf (NODE_HT_MAX_LOAD * num_buckets));
 }
 
 /* Creates and returns a new hash table with a default number of buckets. */
@@ -38,7 +39,7 @@ node_ht_create_with_hint (node_ht_t *tab, unsigned num_buckets_hint)
     tab->num_entries = 0;
     tab->num_buckets = num_buckets;
     tab->buckets =
-        (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
+        (node_ht_bucket_t **) checked_malloc (num_buckets * sizeof(node_ht_bucket_t *));
     for (i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
     create_bucket_pool (&tab->pool, num_buckets);
@@ -49,27 +50,27 @@ node_ht_create_with_hint (node_ht_t *tab, unsigned num_buckets_hint)
 void
 node_ht_destroy (node_ht_t *tab)
 {
-    ht_bucket_pool_destroy (&tab->pool);
-    free (tab->buckets);
+    node_ht_bucket_pool_destroy (&tab->pool);
+    checked_free (tab->buckets);
 }
 
 /* Double the number of buckets in the hash table. */
 void
-double_hash_table_num_buckets (node_ht_t *tab)
+node_ht_double_num_buckets (node_ht_t *tab)
 {
-    ht_bucket_pool_t old_pool;
-    ht_bucket_t **old_buckets;
+    node_ht_bucket_pool_t old_pool;
+    node_ht_bucket_t **old_buckets;
     const unsigned old_num_buckets = tab->num_buckets;
 
     unsigned i;
-    ht_bucket_t *p;
+    node_ht_bucket_t *p;
 
     old_pool = tab->pool;
     old_buckets = tab->buckets;
 
     tab->num_buckets *= 2;
-    tab->buckets =
-        (ht_bucket_t **) malloc (tab->num_buckets * sizeof(ht_bucket_t *));
+    tab->buckets = (node_ht_bucket_t **)
+        checked_malloc (tab->num_buckets * sizeof(node_ht_bucket_t *));
     for (i = 0; i < tab->num_buckets; i += 1)
         tab->buckets[i] = NULL;
     tab->num_entries = 0;
@@ -80,6 +81,6 @@ double_hash_table_num_buckets (node_ht_t *tab)
             node_ht_insert (tab, p->key, p->value);
         }
     }
-    free (old_buckets);
-    ht_bucket_pool_destroy (&old_pool);
+    checked_free (old_buckets);
+    node_ht_bucket_pool_destroy (&old_pool);
 }

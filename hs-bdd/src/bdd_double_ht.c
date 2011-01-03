@@ -12,20 +12,21 @@ TO THE TEMPLATE INSTEAD. */
 /***********************************************************************/
 /* HASH TABLE BUCKETS                                                  */
 /***********************************************************************/
-typedef struct ht_bucket
+typedef struct bdd_double_ht_bucket
 {
     bdd_t key;
     double value;
-    struct ht_bucket *next;
-} ht_bucket_t;
+    struct bdd_double_ht_bucket *next;
+} bdd_double_ht_bucket_t;
 
 /* Allocates and initializes a bucket with the given parameters. */
-static ht_bucket_t *
-ht_bucket_create (bdd_t key,
-                  double value,
-                  ht_bucket_t *next)
+static bdd_double_ht_bucket_t *
+bdd_double_ht_bucket_create (bdd_t key,
+                            double value,
+                            bdd_double_ht_bucket_t *next)
 {
-    ht_bucket_t * bucket = (ht_bucket_t *) malloc (sizeof(ht_bucket_t));
+    bdd_double_ht_bucket_t * bucket = (bdd_double_ht_bucket_t *)
+        checked_malloc (sizeof(bdd_double_ht_bucket_t));
     bucket->key = key;
     bucket->value = value;
     bucket->next = next;
@@ -34,23 +35,23 @@ ht_bucket_create (bdd_t key,
 
 /* Frees the memory used by the list rooted by the bucket. */
 static void
-ht_bucket_free (ht_bucket_t *bucket)
+bdd_double_ht_bucket_free (bdd_double_ht_bucket_t *bucket)
 {
-    ht_bucket_t *p = bucket;
+    bdd_double_ht_bucket_t *p = bucket;
     while (p != NULL) {
-        ht_bucket_t *prev = p;
+        bdd_double_ht_bucket_t *prev = p;
         p = p->next;
-        free (prev);
+        checked_free (prev);
     }
 }
 
 /* Performs a linear search down a bucket list for the given key.  A
  * pointer to the bucket with the matching key is returned if one
  * exists, and NULL returned otherwise. */
-static ht_bucket_t *
-ht_bucket_search (ht_bucket_t *bucket, bdd_t key)
+static bdd_double_ht_bucket_t *
+bdd_double_ht_bucket_search (bdd_double_ht_bucket_t *bucket, bdd_t key)
 {
-    ht_bucket_t *p = bucket;
+    bdd_double_ht_bucket_t *p = bucket;
     while (p != NULL) {
         if (bdd_equal(p->key, key))
             break;
@@ -69,7 +70,7 @@ struct bdd_double_ht_t
     /* the number of elems in the buckets array */
     unsigned num_buckets;
     /* the array of buckets */
-    ht_bucket_t **buckets;
+    bdd_double_ht_bucket_t **buckets;
 };
 
 /* bdd_double_ht_t invariants:
@@ -116,13 +117,13 @@ bdd_double_ht_create_with_hint (unsigned num_buckets_hint)
     unsigned i;
     const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
 
-    bdd_double_ht_t *tab =
-        (bdd_double_ht_t *) malloc (sizeof(bdd_double_ht_t));
+    bdd_double_ht_t *tab = (bdd_double_ht_t *)
+        checked_malloc (sizeof(bdd_double_ht_t));
     tab->num_entries = 0;
 
     tab->num_buckets = num_buckets;
-    tab->buckets =
-        (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
+    tab->buckets = (bdd_double_ht_bucket_t **)
+        checked_malloc (num_buckets * sizeof(bdd_double_ht_bucket_t *));
     for (i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
     return tab;
@@ -137,9 +138,9 @@ bdd_double_ht_destroy (bdd_double_ht_t *tab)
 
     assert (tab != NULL);
     for (i = 0; i < tab->num_buckets; i += 1)
-        ht_bucket_free (tab->buckets[i]);
-    free (tab->buckets);
-    free (tab);
+        bdd_double_ht_bucket_free (tab->buckets[i]);
+    checked_free (tab->buckets);
+    checked_free (tab);
 }
 
 /***********************************************************************/
@@ -176,17 +177,17 @@ bdd_double_ht_get_load (bdd_double_ht_t *tab)
 static void
 double_hash_table_num_buckets (bdd_double_ht_t *tab)
 {
-    ht_bucket_t **old_buckets;
+    bdd_double_ht_bucket_t **old_buckets;
     const unsigned old_num_buckets = tab->num_buckets;
 
     unsigned i;
-    ht_bucket_t *p;
+    bdd_double_ht_bucket_t *p;
 
     old_buckets = tab->buckets;
 
     tab->num_buckets *= 2;
-    tab->buckets =
-        (ht_bucket_t **) malloc (tab->num_buckets * sizeof(ht_bucket_t *));
+    tab->buckets = (bdd_double_ht_bucket_t **)
+        checked_malloc (tab->num_buckets * sizeof(bdd_double_ht_bucket_t *));
     for (i = 0; i < tab->num_buckets; i += 1)
         tab->buckets[i] = NULL;
     tab->num_entries = 0;
@@ -195,9 +196,9 @@ double_hash_table_num_buckets (bdd_double_ht_t *tab)
         for (p = old_buckets[i]; p != NULL; p = p->next) {
             bdd_double_ht_insert (tab, p->key, p->value);
         }
-        ht_bucket_free (old_buckets[i]);
+        bdd_double_ht_bucket_free (old_buckets[i]);
     }
-    free (old_buckets);
+    checked_free (old_buckets);
 }
 
 /* Inserts a binding for the given key and value into the hash table.
@@ -209,15 +210,15 @@ bdd_double_ht_insert (bdd_double_ht_t *tab,
                   double val)
 {
     unsigned b_idx;
-    ht_bucket_t *b;
+    bdd_double_ht_bucket_t *b;
 
     assert (tab != NULL);
     if (bdd_double_ht_get_load(tab) > 0.70f)
         double_hash_table_num_buckets (tab);
     b_idx = bdd_double_ht_get_hash_index (tab, key);
-    b = ht_bucket_search (tab->buckets[b_idx], key);
+    b = bdd_double_ht_bucket_search (tab->buckets[b_idx], key);
     if (b == NULL) {
-        tab->buckets[b_idx] = ht_bucket_create (key, val, tab->buckets[b_idx]);
+        tab->buckets[b_idx] = bdd_double_ht_bucket_create (key, val, tab->buckets[b_idx]);
         tab->num_entries += 1;
     }
     else
@@ -232,10 +233,10 @@ double *
 bdd_double_ht_lookup (bdd_double_ht_t *tab, bdd_t key)
 {
     unsigned b_idx;
-    ht_bucket_t *b;
+    bdd_double_ht_bucket_t *b;
 
     assert (tab != NULL);
     b_idx = bdd_double_ht_get_hash_index (tab, key);
-    b = ht_bucket_search (tab->buckets[b_idx], key);
+    b = bdd_double_ht_bucket_search (tab->buckets[b_idx], key);
     return b != NULL ? &b->value : NULL;
 }

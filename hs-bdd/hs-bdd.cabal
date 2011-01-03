@@ -79,6 +79,7 @@ Library
                      src/bdd_mgr.c
                      src/bdd_ops.c
                      src/bdd_ite_cache.c
+                     src/memory.c
                      src/node_ht.c
                      src/node_vec.c
 

@@ -277,13 +277,13 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
             const node_t b_node = bdd_get_node(mgr, b);
             const node_t b_low = bdd_get_node(mgr, b_node.low);
             const node_t b_high = bdd_get_node(mgr, b_node.high);
-            const double result = 
-                pow (2.0, b_low.var - b_node.var - 1) *
-                bdd_sat_count_rec (mgr, cache, b_node.low) +
-                pow (2.0, b_high.var - b_node.var - 1) *
+            const double lhs = pow (2.0, b_low.var - b_node.var - 1) *
+                bdd_sat_count_rec (mgr, cache, b_node.low);
+            const double rhs = pow (2.0, b_high.var - b_node.var - 1) *
                 bdd_sat_count_rec (mgr, cache, b_node.high);
-            bdd_double_ht_insert (cache, b, result);
-            return result;
+            const double res = lhs + rhs;
+            bdd_double_ht_insert (cache, b, res);
+            return res;
         }
     }
 }

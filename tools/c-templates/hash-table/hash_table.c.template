@@ -12,20 +12,21 @@ TO THE TEMPLATE INSTEAD. */
 /***********************************************************************/
 /* HASH TABLE BUCKETS                                                  */
 /***********************************************************************/
-typedef struct ht_bucket
+typedef struct ${prefix}_bucket
 {
     ${key_type} key;
     ${value_type} value;
-    struct ht_bucket *next;
-} ht_bucket_t;
+    struct ${prefix}_bucket *next;
+} ${prefix}_bucket_t;
 
 /* Allocates and initializes a bucket with the given parameters. */
-static ht_bucket_t *
-ht_bucket_create (${key_type} key,
-                  ${value_type} value,
-                  ht_bucket_t *next)
+static ${prefix}_bucket_t *
+${prefix}_bucket_create (${key_type} key,
+                            ${value_type} value,
+                            ${prefix}_bucket_t *next)
 {
-    ht_bucket_t * bucket = (ht_bucket_t *) malloc (sizeof(ht_bucket_t));
+    ${prefix}_bucket_t * bucket = (${prefix}_bucket_t *)
+        ${malloc_func} (sizeof(${prefix}_bucket_t));
     bucket->key = key;
     bucket->value = value;
     bucket->next = next;
@@ -34,23 +35,23 @@ ht_bucket_create (${key_type} key,
 
 /* Frees the memory used by the list rooted by the bucket. */
 static void
-ht_bucket_free (ht_bucket_t *bucket)
+${prefix}_bucket_free (${prefix}_bucket_t *bucket)
 {
-    ht_bucket_t *p = bucket;
+    ${prefix}_bucket_t *p = bucket;
     while (p != NULL) {
-        ht_bucket_t *prev = p;
+        ${prefix}_bucket_t *prev = p;
         p = p->next;
-        free (prev);
+        ${free_func} (prev);
     }
 }
 
 /* Performs a linear search down a bucket list for the given key.  A
  * pointer to the bucket with the matching key is returned if one
  * exists, and NULL returned otherwise. */
-static ht_bucket_t *
-ht_bucket_search (ht_bucket_t *bucket, ${key_type} key)
+static ${prefix}_bucket_t *
+${prefix}_bucket_search (${prefix}_bucket_t *bucket, ${key_type} key)
 {
-    ht_bucket_t *p = bucket;
+    ${prefix}_bucket_t *p = bucket;
     while (p != NULL) {
         if (${key_equal_func}(p->key, key))
             break;
@@ -69,7 +70,7 @@ struct ${hash_table_type}
     /* the number of elems in the buckets array */
     unsigned num_buckets;
     /* the array of buckets */
-    ht_bucket_t **buckets;
+    ${prefix}_bucket_t **buckets;
 };
 
 /* ${hash_table_type} invariants:
@@ -116,13 +117,13 @@ ${prefix}_create_with_hint (unsigned num_buckets_hint)
     unsigned i;
     const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
 
-    ${hash_table_type} *tab =
-        (${hash_table_type} *) malloc (sizeof(${hash_table_type}));
+    ${hash_table_type} *tab = (${hash_table_type} *)
+        ${malloc_func} (sizeof(${hash_table_type}));
     tab->num_entries = 0;
 
     tab->num_buckets = num_buckets;
-    tab->buckets =
-        (ht_bucket_t **) malloc (num_buckets * sizeof(ht_bucket_t *));
+    tab->buckets = (${prefix}_bucket_t **)
+        ${malloc_func} (num_buckets * sizeof(${prefix}_bucket_t *));
     for (i = 0; i < num_buckets; i += 1)
         tab->buckets[i] = NULL;
     return tab;
@@ -137,9 +138,9 @@ ${prefix}_destroy (${hash_table_type} *tab)
 
     assert (tab != NULL);
     for (i = 0; i < tab->num_buckets; i += 1)
-        ht_bucket_free (tab->buckets[i]);
-    free (tab->buckets);
-    free (tab);
+        ${prefix}_bucket_free (tab->buckets[i]);
+    ${free_func} (tab->buckets);
+    ${free_func} (tab);
 }
 
 /***********************************************************************/
@@ -176,17 +177,17 @@ ${prefix}_get_load (${hash_table_type} *tab)
 static void
 double_hash_table_num_buckets (${hash_table_type} *tab)
 {
-    ht_bucket_t **old_buckets;
+    ${prefix}_bucket_t **old_buckets;
     const unsigned old_num_buckets = tab->num_buckets;
 
     unsigned i;
-    ht_bucket_t *p;
+    ${prefix}_bucket_t *p;
 
     old_buckets = tab->buckets;
 
     tab->num_buckets *= 2;
-    tab->buckets =
-        (ht_bucket_t **) malloc (tab->num_buckets * sizeof(ht_bucket_t *));
+    tab->buckets = (${prefix}_bucket_t **)
+        ${malloc_func} (tab->num_buckets * sizeof(${prefix}_bucket_t *));
     for (i = 0; i < tab->num_buckets; i += 1)
         tab->buckets[i] = NULL;
     tab->num_entries = 0;
@@ -195,9 +196,9 @@ double_hash_table_num_buckets (${hash_table_type} *tab)
         for (p = old_buckets[i]; p != NULL; p = p->next) {
             ${prefix}_insert (tab, p->key, p->value);
         }
-        ht_bucket_free (old_buckets[i]);
+        ${prefix}_bucket_free (old_buckets[i]);
     }
-    free (old_buckets);
+    ${free_func} (old_buckets);
 }
 
 /* Inserts a binding for the given key and value into the hash table.
@@ -209,15 +210,15 @@ ${prefix}_insert (${hash_table_type} *tab,
                   ${value_type} val)
 {
     unsigned b_idx;
-    ht_bucket_t *b;
+    ${prefix}_bucket_t *b;
 
     assert (tab != NULL);
     if (${prefix}_get_load(tab) > 0.70f)
         double_hash_table_num_buckets (tab);
     b_idx = ${prefix}_get_hash_index (tab, key);
-    b = ht_bucket_search (tab->buckets[b_idx], key);
+    b = ${prefix}_bucket_search (tab->buckets[b_idx], key);
     if (b == NULL) {
-        tab->buckets[b_idx] = ht_bucket_create (key, val, tab->buckets[b_idx]);
+        tab->buckets[b_idx] = ${prefix}_bucket_create (key, val, tab->buckets[b_idx]);
         tab->num_entries += 1;
     }
     else
@@ -232,10 +233,10 @@ ${value_type} *
 ${prefix}_lookup (${hash_table_type} *tab, ${key_type} key)
 {
     unsigned b_idx;
-    ht_bucket_t *b;
+    ${prefix}_bucket_t *b;
 
     assert (tab != NULL);
     b_idx = ${prefix}_get_hash_index (tab, key);
-    b = ht_bucket_search (tab->buckets[b_idx], key);
+    b = ${prefix}_bucket_search (tab->buckets[b_idx], key);
     return b != NULL ? &b->value : NULL;
 }

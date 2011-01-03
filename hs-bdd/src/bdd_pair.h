@@ -19,7 +19,7 @@ bdd_pair_equal (bdd_pair_t p1, bdd_pair_t p2)
 static inline unsigned
 bdd_pair_hash (bdd_pair_t p)
 {
-    return hash_pair (p.first, p.second);
+    return (unsigned)hash_pair (p.first, p.second);
 }
 
 #endif /* BDD_PAIR_INCLUDED */

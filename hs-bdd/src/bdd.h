@@ -33,7 +33,7 @@ bdd_equal (bdd_t b1, bdd_t b2)
 static inline unsigned
 bdd_hash (bdd_t b)
 {
-    return b;
+    return (unsigned)b;
 }
 
 /* True and false BDD literals. */

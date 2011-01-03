@@ -20,9 +20,9 @@ typedef struct
     /* the number of elems in the buckets array */
     unsigned num_buckets;
     /* the array of buckets */
-    ht_bucket_t **buckets;
+    node_ht_bucket_t **buckets;
     /* memory pool for buckets */
-    ht_bucket_pool_t pool;
+    node_ht_bucket_pool_t pool;
 } node_ht_t;
 
 /* Creates and returns a new hash table with a default number of buckets. */
@@ -70,6 +70,9 @@ node_ht_get_hash_index (node_ht_t *tab, node_t key)
     return node_hash (key) % tab->num_buckets;
 }
 
+extern void
+node_ht_double_num_buckets (node_ht_t *tab);
+
 /* Inserts a binding for the given key and value into the hash table.
  * Existing values are not searched for, so calling this with the same
  * key/value inputs multiple times will result in multiple hash table
@@ -79,16 +82,14 @@ node_ht_insert (node_ht_t *tab,
                 node_t key,
                 bdd_t val)
 {
-    extern void double_hash_table_num_buckets (node_ht_t *tab);
-
     unsigned b_idx;
     if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
-        double_hash_table_num_buckets (tab);
+        node_ht_double_num_buckets (tab);
     b_idx = node_ht_get_hash_index (tab, key);
-    assert (ht_bucket_search (tab->buckets[b_idx], key) == NULL);
+    assert (node_ht_bucket_search (tab->buckets[b_idx], key) == NULL);
 
     tab->buckets[b_idx] =
-        ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
+        node_ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
     tab->num_entries += 1;
 }
 
@@ -100,10 +101,10 @@ static inline bdd_t *
 node_ht_lookup (node_ht_t *tab, node_t key)
 {
     unsigned b_idx;
-    ht_bucket_t *b;
+    node_ht_bucket_t *b;
 
     b_idx = node_ht_get_hash_index (tab, key);
-    b = ht_bucket_search (tab->buckets[b_idx], key);
+    b = node_ht_bucket_search (tab->buckets[b_idx], key);
     return b != NULL ? &b->value : NULL;
 }
 

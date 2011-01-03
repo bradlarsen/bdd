@@ -7,6 +7,7 @@
 
 #include "bdd.h"
 #include "bdd_ite_cache.h"
+#include "memory.h"
 #include "node.h"
 #include "node_vec.h"
 #include "node_ht.h"
@@ -30,7 +31,7 @@ struct bdd_mgr
 static inline node_t
 bdd_get_node (bdd_mgr_t *mgr, bdd_t idx)
 {
-    return node_vec_get (&mgr->nodes_by_idx, idx);
+    return node_vec_get (&mgr->nodes_by_idx, (unsigned)idx);
 }
 
 /* Answers whether the BDDs represented by the manager are reduced and
@@ -76,8 +77,8 @@ make_node (bdd_mgr_t *mgr, node_t node)
             unsigned idx;
             idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
             node_vec_push_back (&mgr->nodes_by_idx, node);
-            node_ht_insert (&mgr->idxs_by_node, node, idx);
-            return idx;
+            node_ht_insert (&mgr->idxs_by_node, node, (bdd_t)idx);
+            return (bdd_t)idx;
         }
     }
 }

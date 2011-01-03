@@ -8,6 +8,7 @@ TO THE TEMPLATE INSTEAD. */
 #define BDD_HT_INCLUDED
 
 #include "bdd.h"
+#include "memory.h"
 
 /* A hash table implemented using separate chaining. */
 typedef struct bdd_ht_t bdd_ht_t;
