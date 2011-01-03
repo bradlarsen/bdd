@@ -1,5 +1,4 @@
 #include "bdd_impl.h"
-#include "bdd_pair.h"
 #include "bdd_ite_cache.h"
 #include "bdd_double_ht.h"
 #include "bdd_ht.h"
