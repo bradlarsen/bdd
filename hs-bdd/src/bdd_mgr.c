@@ -1,5 +1,27 @@
 #include "bdd_impl.h"
 
+/* Gets the node representing T for the given manager. */
+static node_t
+get_true_node (bdd_mgr_t *mgr)
+{
+    node_t t;
+    t.var = mgr->num_vars;
+    t.low = bdd_false;
+    t.high = bdd_true;
+    return t;
+}
+
+/* Gets the node representing F for the given manager. */
+static node_t
+get_false_node (bdd_mgr_t *mgr)
+{
+    node_t f;
+    f.var = mgr->num_vars;
+    f.low = bdd_true;
+    f.high = bdd_false;
+    return f;
+}
+
 bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars)
 {

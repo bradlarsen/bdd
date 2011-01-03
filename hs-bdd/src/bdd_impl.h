@@ -34,33 +34,6 @@ bdd_get_node (bdd_mgr_t *mgr, bdd_t idx)
     return node_vec_get (&mgr->nodes_by_idx, (unsigned)idx);
 }
 
-/* Answers whether the BDDs represented by the manager are reduced and
- * ordered. */
-extern bool
-is_robdd (bdd_mgr_t *mgr);
-
-/* Gets the node representing T for the given manager. */
-static inline node_t
-get_true_node (bdd_mgr_t *mgr)
-{
-    node_t t;
-    t.var = mgr->num_vars;
-    t.low = bdd_false;
-    t.high = bdd_true;
-    return t;
-}
-
-/* Gets the node representing F for the given manager. */
-static inline node_t
-get_false_node (bdd_mgr_t *mgr)
-{
-    node_t f;
-    f.var = mgr->num_vars;
-    f.low = bdd_true;
-    f.high = bdd_false;
-    return f;
-}
-
 /* Retrieves the BDD of the node equal to 'node' if one exists,
  * otherwise creates and returns a new BDD. */
 static inline bdd_t
