@@ -18,6 +18,22 @@ bdd_mgr_create (unsigned num_vars)
     return bdd_mgr_create_with_hint (num_vars, 1024);
 }
 
+static void
+add_false_node (bdd_mgr_t *mgr)
+{
+    raw_bdd_t usr_false;
+    usr_false = make_node (mgr, mgr->num_vars, raw_bdd_true, raw_bdd_false);
+    bdd_inc_ref (mgr, intern_raw_bdd (mgr, usr_false));
+}
+
+static void
+add_true_node (bdd_mgr_t *mgr)
+{
+    raw_bdd_t usr_true;
+    usr_true = make_node (mgr, mgr->num_vars, raw_bdd_false, raw_bdd_true);
+    bdd_inc_ref (mgr, intern_raw_bdd (mgr, usr_true));
+}
+
 bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
@@ -33,17 +49,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
 
-    /* add false node */
-    intern_raw_bdd (
-        mgr,
-        make_node (mgr, mgr->num_vars, raw_bdd_true, raw_bdd_false)
-        );
-
-    /* add true node */
-    intern_raw_bdd (
-        mgr,
-        make_node (mgr, mgr->num_vars, raw_bdd_false, raw_bdd_true)
-        );
+    add_false_node (mgr);
+    add_true_node (mgr);
 
     return mgr;
 }
