@@ -52,6 +52,7 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 static void
 free_usr_bdds (raw_bdd_t raw, bdd_t *usr)
 {
+    (void) raw;
     checked_free (usr);
 }
 
