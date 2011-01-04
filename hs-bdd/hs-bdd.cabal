@@ -78,6 +78,7 @@ Library
                      src/bdd_ht.c
                      src/bdd_rtu_ht.c
                      src/bdd_mgr.c
+                     src/bdd_mgr_perform_gc.c
                      src/bdd_ops.c
                      src/bdd_ite_cache.c
                      src/memory.c

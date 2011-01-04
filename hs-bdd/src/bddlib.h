@@ -43,6 +43,12 @@ bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
 extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 
+/* Performs a garbage collection on the graph represented by the
+ * manager. BDDs that are not referenced directly or indirectly will
+ * be freed. */
+extern void
+bdd_mgr_perform_gc (bdd_mgr_t *mgr);
+
 /**********************************************************************/
 /* BDD type, constants, and accessors                                 */
 /**********************************************************************/
