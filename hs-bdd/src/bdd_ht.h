@@ -60,10 +60,14 @@ bdd_ht_lookup (
     raw_bdd_t key
     );
 
-typedef void (* bdd_ht_map_fun) (raw_bdd_t key, raw_bdd_t val);
+typedef void (* bdd_ht_map_fun) (void *env,
+                                    raw_bdd_t key,
+                                    raw_bdd_t val);
 
 /* Applies a function to each key/value entry. */
 extern void
-bdd_ht_map_entries (bdd_ht_t *tab, bdd_ht_map_fun fun);
+bdd_ht_map_entries (bdd_ht_t *tab,
+                       void *env,
+                       bdd_ht_map_fun fun);
 
 #endif /* BDD_HT_INCLUDED */

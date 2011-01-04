@@ -50,8 +50,9 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
 /* Frees all the allocated bdd_t structs handed out by this manager. */
 static void
-free_usr_bdds (raw_bdd_t raw, bdd_t *usr)
+free_usr_bdds (void *env, raw_bdd_t raw, bdd_t *usr)
 {
+    (void) env;
     (void) raw;
     checked_free (usr);
 }
@@ -68,7 +69,7 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
 
     bdd_ite_cache_destroy (&mgr->ite_cache);
 
-    bdd_rtu_ht_map_entries (mgr->raw_bdd_map, free_usr_bdds);
+    bdd_rtu_ht_map_entries (mgr->raw_bdd_map, NULL, free_usr_bdds);
     bdd_rtu_ht_destroy (mgr->raw_bdd_map);
     usr_bdd_ht_destroy (mgr->usr_bdd_map);
     

@@ -245,13 +245,17 @@ usr_bdd_ht_lookup (usr_bdd_ht_t *tab, bdd_t * key)
 /* HASH TABLE MAPPING                                                  */
 /***********************************************************************/
 void
-usr_bdd_ht_map_entries (usr_bdd_ht_t *tab, usr_bdd_ht_map_fun fun)
+usr_bdd_ht_map_entries (
+    usr_bdd_ht_t *tab,
+    void *env,
+    usr_bdd_ht_map_fun fun
+    )
 {
     unsigned idx;
     for (idx = 0; idx < usr_bdd_ht_get_num_buckets (tab); idx += 1) {
         usr_bdd_ht_bucket_t *p = tab->buckets[idx];
         while (p != NULL) {
-            fun (p->key, p->value);
+            fun (env, p->key, p->value);
             p = p->next;
         }
     }

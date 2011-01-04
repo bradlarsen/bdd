@@ -245,13 +245,17 @@ ${prefix}_lookup (${hash_table_type} *tab, ${key_type} key)
 /* HASH TABLE MAPPING                                                  */
 /***********************************************************************/
 void
-${prefix}_map_entries (${hash_table_type} *tab, ${prefix}_map_fun fun)
+${prefix}_map_entries (
+    ${hash_table_type} *tab,
+    void *env,
+    ${prefix}_map_fun fun
+    )
 {
     unsigned idx;
     for (idx = 0; idx < ${prefix}_get_num_buckets (tab); idx += 1) {
         ${prefix}_bucket_t *p = tab->buckets[idx];
         while (p != NULL) {
-            fun (p->key, p->value);
+            fun (env, p->key, p->value);
             p = p->next;
         }
     }

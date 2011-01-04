@@ -58,10 +58,14 @@ ${prefix}_lookup (
     ${key_type} key
     );
 
-typedef void (* ${prefix}_map_fun) (${key_type} key, ${value_type} val);
+typedef void (* ${prefix}_map_fun) (void *env,
+                                    ${key_type} key,
+                                    ${value_type} val);
 
 /* Applies a function to each key/value entry. */
 extern void
-${prefix}_map_entries (${hash_table_type} *tab, ${prefix}_map_fun fun);
+${prefix}_map_entries (${hash_table_type} *tab,
+                       void *env,
+                       ${prefix}_map_fun fun);
 
 #endif /* ${include_guard_name} */
