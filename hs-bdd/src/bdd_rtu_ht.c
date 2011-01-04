@@ -255,7 +255,7 @@ bdd_rtu_ht_map_entries (
     for (idx = 0; idx < bdd_rtu_ht_get_num_buckets (tab); idx += 1) {
         bdd_rtu_ht_bucket_t *p = tab->buckets[idx];
         while (p != NULL) {
-            fun (env, p->key, p->value);
+            fun (env, p->key, &p->value);
             p = p->next;
         }
     }

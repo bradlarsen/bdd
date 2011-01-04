@@ -60,7 +60,7 @@ ${prefix}_lookup (
 
 typedef void (* ${prefix}_map_fun) (void *env,
                                     ${key_type} key,
-                                    ${value_type} val);
+                                    ${value_type} *val);
 
 /* Applies a function to each key/value entry. */
 extern void

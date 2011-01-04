@@ -34,11 +34,15 @@ add_true_node (bdd_mgr_t *mgr)
     bdd_inc_ref (mgr, intern_raw_bdd (mgr, usr_true));
 }
 
-bdd_mgr_t *
-bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
+void
+bdd_mgr_initialize_with_hint (
+    bdd_mgr_t *mgr,
+    unsigned num_vars,
+    unsigned capacity_hint
+    )
 {
-    bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
     mgr->num_vars = num_vars;
+
     node_vec_create_with_capacity (&mgr->nodes_by_idx, capacity_hint);
     node_ht_create_with_hint (&mgr->idxs_by_node, capacity_hint);
 
@@ -51,24 +55,28 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     add_false_node (mgr);
     add_true_node (mgr);
+}
 
+bdd_mgr_t *
+bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
+{
+    bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
+    bdd_mgr_initialize_with_hint (mgr, num_vars, capacity_hint);
     return mgr;
 }
 
 /* Frees all the allocated bdd_t structs handed out by this manager. */
 static void
-free_usr_bdds (void *env, raw_bdd_t raw, bdd_t *usr)
+free_usr_bdds (void *env, raw_bdd_t raw, bdd_t **usr)
 {
     (void) env;
     (void) raw;
-    checked_free (usr);
+    checked_free (*usr);
 }
 
 void
-bdd_mgr_destroy (bdd_mgr_t *mgr)
+bdd_mgr_deinitialize_partial (bdd_mgr_t *mgr)
 {
-    if (mgr == NULL) return;
-
     assert (bdd_rtu_ht_get_num_entries (mgr->raw_bdd_map) ==
             usr_bdd_ht_get_num_entries (mgr->usr_bdd_map));
     assert (bdd_rtu_ht_get_num_entries (mgr->raw_bdd_map) <=
@@ -76,12 +84,19 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
 
     bdd_ite_cache_destroy (&mgr->ite_cache);
 
-    bdd_rtu_ht_map_entries (mgr->raw_bdd_map, NULL, free_usr_bdds);
     bdd_rtu_ht_destroy (mgr->raw_bdd_map);
     usr_bdd_ht_destroy (mgr->usr_bdd_map);
     
     node_ht_destroy (&mgr->idxs_by_node);
     node_vec_destroy (&mgr->nodes_by_idx);
+}
+
+void
+bdd_mgr_destroy (bdd_mgr_t *mgr)
+{
+    if (mgr == NULL) return;
+    bdd_rtu_ht_map_entries (mgr->raw_bdd_map, NULL, free_usr_bdds);
+    bdd_mgr_deinitialize_partial (mgr);
     checked_free (mgr);
 }
 

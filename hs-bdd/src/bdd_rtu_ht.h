@@ -62,7 +62,7 @@ bdd_rtu_ht_lookup (
 
 typedef void (* bdd_rtu_ht_map_fun) (void *env,
                                     raw_bdd_t key,
-                                    bdd_t * val);
+                                    bdd_t * *val);
 
 /* Applies a function to each key/value entry. */
 extern void

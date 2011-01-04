@@ -42,6 +42,20 @@ struct bdd_mgr
     bdd_ite_cache_t ite_cache;
 };
 
+/* Initializes the given manager. */
+extern void
+bdd_mgr_initialize_with_hint (
+    bdd_mgr_t *mgr,
+    unsigned num_vars,
+    unsigned capacity_hint
+    );
+
+/* De-initializes the given manager, except for freeing the memory
+ * allocated to user-level BDDs.  The pointer to the manager itself is
+ * not freed. */
+extern void
+bdd_mgr_deinitialize_partial (bdd_mgr_t *mgr);
+
 /* FIXME: inline is not C89 */
 /* Gets the node associated with the given BDD. */
 static inline node_t

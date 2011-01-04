@@ -63,7 +63,7 @@ usr_bdd_ht_lookup (
 
 typedef void (* usr_bdd_ht_map_fun) (void *env,
                                     bdd_t * key,
-                                    usr_bdd_entry_t val);
+                                    usr_bdd_entry_t *val);
 
 /* Applies a function to each key/value entry. */
 extern void
