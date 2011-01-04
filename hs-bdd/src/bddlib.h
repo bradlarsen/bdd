@@ -17,24 +17,22 @@
 typedef struct bdd_mgr bdd_mgr_t;
 
 /* Creates and initializes a new BDD manager with the given number of
- * variables.  O(num_vars) time.  */
+ * variables.  */
 extern bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars);
 
 /* Creates and initializes a new BDD manager with the given number of
- * variables and with a hint for initial number of nodes to allocate.
- * O(num_vars) time. */
+ * variables and with a hint for initial number of nodes to
+ * allocate. */
 extern bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint);
 
-/* FIXME: these complexity measures are wrong. */
-/* Frees the resources used by the BDD manager.  O(1) time and
- * space. */
+/* Frees the resources used by the BDD manager. */
 extern void
 bdd_mgr_destroy (bdd_mgr_t *mgr);
 
-/* Returns the number of variables in the given BDD manager.  O(1)
- * time and space. */
+/* Returns the number of variables in the given manager.  O(1) time
+ * and space. */
 extern unsigned
 bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
 
@@ -42,6 +40,11 @@ bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
  * and space. */
 extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
+
+/* Returns the number of allocated nodes in the given manager.  O(1)
+ * time and space. */
+extern unsigned
+bdd_mgr_get_num_allocated (bdd_mgr_t *mgr);
 
 /* Performs a garbage collection on the graph represented by the
  * manager. BDDs that are not referenced directly or indirectly will

@@ -81,5 +81,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
              nl_formulae, n_formulae, nl_formulae / n_formulae * 100);
     fprintf (stderr, "    %.0f/%.0f live nodes (%.2f%%)\n",
              nl_nodes, n_nodes, nl_nodes / n_nodes * 100);
+    fprintf (stderr, "    %u allocated nodes\n",
+             bdd_mgr_get_num_allocated (mgr));
     fprintf (stderr, "*** bdd_mgr_perform_gc end ***\n");
 }

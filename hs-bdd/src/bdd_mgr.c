@@ -89,3 +89,9 @@ bdd_mgr_get_num_nodes (bdd_mgr_t *mgr)
 {
     return node_vec_get_num_elems(&mgr->nodes_by_idx);
 }
+
+unsigned
+bdd_mgr_get_num_allocated (bdd_mgr_t *mgr)
+{
+    return node_vec_get_capacity (&mgr->nodes_by_idx);
+}

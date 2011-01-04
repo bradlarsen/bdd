@@ -40,6 +40,9 @@ foreign import ccall "bddlib.h bdd_mgr_get_num_vars"
 foreign import ccall "bddlib.h bdd_mgr_get_num_nodes"
     bdd_mgr_get_num_nodes :: BddMgr -> IO CUInt
 
+foreign import ccall "bddlib.h bdd_mgr_get_num_allocated"
+    bdd_mgr_get_num_allocated :: BddMgr -> IO CUInt
+
 foreign import ccall "bddlib.h bdd_mgr_perform_gc"
     bdd_mgr_perform_gc :: BddMgr -> IO ()
 
