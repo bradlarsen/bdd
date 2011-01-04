@@ -89,15 +89,25 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
     return res->raw_bdd;
 }
 
-/* Retrieves the BDD of the node equal to 'node' if one exists,
- * otherwise creates and returns a new BDD. */
+/* Retrieves the BDD of the node equal to the node with the given
+ * components if one exists, otherwise creates and returns a new
+ * BDD. */
 static inline raw_bdd_t
-make_node (bdd_mgr_t *mgr, node_t node)
+make_node (
+    bdd_mgr_t *mgr,
+    unsigned var,
+    raw_bdd_t low,
+    raw_bdd_t high
+    )
 {
-    if (node.low == node.high)
-        return node.low;
+    if (low == high)
+        return low;
     else {
         raw_bdd_t *existing_bdd;
+        node_t node;
+        node.var = var;
+        node.low = low;
+        node.high = high;
         existing_bdd = node_ht_lookup (&mgr->idxs_by_node, node);
         if (existing_bdd != NULL)
             return *existing_bdd;
@@ -109,23 +119,6 @@ make_node (bdd_mgr_t *mgr, node_t node)
             return (raw_bdd_t)idx;
         }
     }
-}
-
-/* An alternative, possibly more convenient way to call
- * 'make_node'. */
-static inline raw_bdd_t
-make_node_from_parts (
-    bdd_mgr_t *mgr,
-    unsigned var,
-    raw_bdd_t low,
-    raw_bdd_t high
-    )
-{
-    node_t n;
-    n.var = var;
-    n.low = low;
-    n.high = high;
-    return make_node (mgr, n);
 }
 
 #endif /* BDD_IMPL_INCLUDED */

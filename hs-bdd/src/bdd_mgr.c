@@ -13,28 +13,6 @@ bdd_true (bdd_mgr_t *mgr)
     return raw_to_usr (mgr, raw_bdd_true);
 }
 
-/* Gets the node representing T for the given manager. */
-static node_t
-get_true_node (bdd_mgr_t *mgr)
-{
-    node_t t;
-    t.var = mgr->num_vars;
-    t.low = raw_bdd_false;
-    t.high = raw_bdd_true;
-    return t;
-}
-
-/* Gets the node representing F for the given manager. */
-static node_t
-get_false_node (bdd_mgr_t *mgr)
-{
-    node_t f;
-    f.var = mgr->num_vars;
-    f.low = raw_bdd_true;
-    f.high = raw_bdd_false;
-    return f;
-}
-
 bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars)
 {
@@ -56,8 +34,17 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
 
-    intern_raw_bdd (mgr, make_node (mgr, get_false_node(mgr)));
-    intern_raw_bdd (mgr, make_node (mgr, get_true_node(mgr)));
+    /* add false node */
+    intern_raw_bdd (
+        mgr,
+        make_node (mgr, mgr->num_vars, raw_bdd_true, raw_bdd_false)
+        );
+
+    /* add true node */
+    intern_raw_bdd (
+        mgr,
+        make_node (mgr, mgr->num_vars, raw_bdd_false, raw_bdd_true)
+        );
 
     return mgr;
 }

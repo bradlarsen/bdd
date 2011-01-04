@@ -45,7 +45,7 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
     raw_bdd_t res;
     assert (i < mgr->num_vars);
-    res = make_node_from_parts (mgr, i, raw_bdd_false, raw_bdd_true);
+    res = make_node (mgr, i, raw_bdd_false, raw_bdd_true);
     return raw_to_usr(mgr, res);
 }
 
@@ -178,7 +178,7 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 
         low = raw_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
         high = raw_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
-        result = make_node_from_parts (mgr, top_var, low, high);
+        result = make_node (mgr, top_var, low, high);
 
         cache_val->p = p;
         cache_val->t = t;
@@ -220,7 +220,7 @@ raw_bdd_res_rec (bdd_mgr_t *mgr,
         else if (n.var == var)
             result = val ? n.high : n.low;
         else /* n.var < var */
-            result = make_node_from_parts (
+            result = make_node (
                 mgr,
                 n.var,
                 raw_bdd_res_rec (mgr, var, val, cache, n.low),
