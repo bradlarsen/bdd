@@ -69,36 +69,10 @@ bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
     return bdd_ite (mgr, b1, b2, bdd_true);
 }
 
-static bdd_t
-bdd_not_rec (bdd_mgr_t *mgr, bdd_ht_t *cache, bdd_t b)
-{
-    if (b == bdd_true)
-        return bdd_false;
-    else if (b == bdd_false)
-        return bdd_true;
-    else {
-        const bdd_t *cache_val = bdd_ht_lookup (cache, b);
-        if (cache_val == NULL) {
-            const node_t n = bdd_get_node (mgr, b);
-            const bdd_t r = make_node_from_parts (mgr,
-                                                  n.var,
-                                                  bdd_not (mgr, n.low),
-                                                  bdd_not (mgr, n.high));
-            bdd_ht_insert (cache, b, r);
-            return r;
-        }
-        else
-            return *cache_val;
-    }
-}
-
 bdd_t
 bdd_not (bdd_mgr_t *mgr, bdd_t b)
 {
-    bdd_ht_t *cache = bdd_ht_create ();
-    const bdd_t r = bdd_not_rec (mgr, cache, b);
-    bdd_ht_destroy (cache);
-    return r;
+    return bdd_ite (mgr, b, bdd_false, bdd_true);
 }
 
 static inline unsigned
