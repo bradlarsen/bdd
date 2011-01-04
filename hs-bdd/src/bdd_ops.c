@@ -23,27 +23,10 @@ bdd_high (bdd_mgr_t *mgr, bdd_t *b)
     return raw_to_usr (mgr, raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).high);
 }
 
-static void
-count_live_refs (void *env, bdd_t *key, usr_bdd_entry_t val)
-{
-    (void) key;
-    if (val.ref_cnt > 0)
-        *((unsigned *)env) += 1;
-}
-
-static unsigned
-num_live_refs (bdd_mgr_t *mgr)
-{
-    unsigned num = 0;
-    usr_bdd_ht_map_entries (mgr->usr_bdd_map, (void *)&num, count_live_refs);
-    return num;
-}
-
 void
 bdd_inc_ref (bdd_mgr_t *mgr, bdd_t *b)
 {
     usr_bdd_entry_t *entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, b);
-    fprintf (stderr, "!!! bdd_inc_ref: %u live references\n", num_live_refs(mgr));
     assert (entry != NULL);
     entry->ref_cnt += 1;
 }
@@ -52,7 +35,6 @@ void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
 {
     usr_bdd_entry_t *entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, b);
-    fprintf (stderr, "!!! bdd_dec_ref: %u live references\n", num_live_refs(mgr));
     assert (entry != NULL);
     assert (entry->ref_cnt > 0);
     entry->ref_cnt -= 1;
