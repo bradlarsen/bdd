@@ -76,6 +76,7 @@ Library
   c-sources:
                      src/bdd_double_ht.c
                      src/bdd_ht.c
+                     src/bdd_rtu_ht.c
                      src/bdd_mgr.c
                      src/bdd_ops.c
                      src/bdd_ite_cache.c
@@ -85,6 +86,6 @@ Library
                      src/usr_bdd_ht.c
 
   include-dirs:      src
-  includes:          bdd.h
+  includes:          bddlib.h
 
   extra-libraries:   m

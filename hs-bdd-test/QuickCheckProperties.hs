@@ -78,17 +78,17 @@ prop_correctNumVars nVars =
 prop_selfImplies :: BoolExpr -> Property
 prop_selfImplies = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_implies mgr bddExpr bddExpr
-    return (bddExpr' == bdd_true)
+    liftM (bddExpr' ==) (bdd_true mgr)
 
 prop_selfEquiv :: BoolExpr -> Property
 prop_selfEquiv = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_equiv mgr bddExpr bddExpr
-    return (bddExpr' == bdd_true)
+    liftM (bddExpr' ==) (bdd_true mgr)
 
 prop_selfXOr :: BoolExpr -> Property
 prop_selfXOr = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_xor mgr bddExpr bddExpr
-    return (bddExpr' == bdd_false)
+    liftM (bddExpr' ==) (bdd_false mgr)
 
 prop_not :: BoolExpr -> Property
 prop_not = exprBddProperty $ \mgr _expr bddExpr -> do

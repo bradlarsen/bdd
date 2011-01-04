@@ -1,5 +1,4 @@
 #include "bdd_impl.h"
-#include <stdio.h>
 
 bdd_t *
 bdd_false (bdd_mgr_t *mgr)
@@ -61,12 +60,10 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
     if (mgr == NULL) return;
 
-    fprintf (stderr, "!!! there are %u BDD nodes\n",
-             bdd_mgr_get_num_nodes (mgr));
-    fprintf (stderr, "!!! there are %u raw BDD entries\n",
-             bdd_rtu_ht_get_num_entries (mgr->raw_bdd_map));
-    fprintf (stderr, "!!! there are %u user BDD entries\n",
-             usr_bdd_ht_get_num_entries (mgr->usr_bdd_map));
+    assert (bdd_rtu_ht_get_num_entries (mgr->raw_bdd_map) ==
+            usr_bdd_ht_get_num_entries (mgr->usr_bdd_map));
+    assert (bdd_rtu_ht_get_num_entries (mgr->raw_bdd_map) <=
+            bdd_mgr_get_num_nodes (mgr));
 
     bdd_ite_cache_destroy (&mgr->ite_cache);
 

@@ -44,9 +44,21 @@ extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 
 /**********************************************************************/
-/* BDD type and constants                                             */
+/* BDD type, constants, and accessors                                 */
 /**********************************************************************/
 typedef struct bdd bdd_t;
+
+/* Gets the variable of the root of the BDD. */
+extern unsigned
+bdd_var (bdd_mgr_t *mgr, bdd_t *b);
+
+/* Gets the low branch of the root of the BDD. */
+extern bdd_t *
+bdd_low (bdd_mgr_t *mgr, bdd_t *b);
+
+/* Gets the high branch of the root of the BDD. */
+extern bdd_t *
+bdd_high (bdd_mgr_t *mgr, bdd_t *b);
 
 /* The BDD representing truth. */
 extern bdd_t *
@@ -71,18 +83,6 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b);
 /**********************************************************************/
 /* BDD operations                                                     */
 /**********************************************************************/
-/* Gets the variable of the root of the BDD. */
-extern unsigned
-bdd_var (bdd_mgr_t *mgr, bdd_t *b);
-
-/* Gets the low branch of the root of the BDD. */
-extern bdd_t *
-bdd_low (bdd_mgr_t *mgr, bdd_t *b);
-
-/* Gets the high branch of the root of the BDD. */
-extern bdd_t *
-bdd_high (bdd_mgr_t *mgr, bdd_t *b);
-
 /* Returns a BDD representing the given variable.  The variable must
  * exist in the manager.  O(1) time and space. */
 extern bdd_t *

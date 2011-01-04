@@ -109,10 +109,12 @@ eval varAssigns expression = go expression
 evalBdd ::  [Bool] -> BddMgr -> Bdd -> IO Bool
 evalBdd varAssigns mgr bdd = do
     let assigns = zip [0..] varAssigns
-    res <- foldM (\b (i, v) -> bdd_restrict mgr b i (toCBool v)) bdd assigns
+    res <- foldM (\b (i, v) -> bdd_restrict mgr b i (toCBoolean v)) bdd assigns
+    true_bdd <- bdd_true mgr
+    false_bdd <- bdd_false mgr
     case res of
-        _ | res == bdd_true -> return True
-          | res == bdd_false -> return False
+        _ | res == true_bdd -> return True
+          | res == false_bdd -> return False
           | otherwise -> error ("evalBdd: non-terminal result '" ++ show res ++ "'")
 
 -- | Symbolically evaluates the given Boolean expression with the
@@ -122,8 +124,8 @@ buildBdd mgr expr = do
     let bin f l r = do { l' <- go l; r' <- go r; f mgr l' r' }
         go e =
           case e of
-              BFalse      -> return bdd_false
-              BTrue       -> return bdd_true
+              BFalse      -> bdd_false mgr
+              BTrue       -> bdd_true mgr
               Var i       -> bdd_ith_var mgr (fromIntegral i)
               Not e'      -> bdd_not mgr =<< go e'
               And l r     -> bin bdd_and l r
