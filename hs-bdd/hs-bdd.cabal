@@ -82,6 +82,7 @@ Library
                      src/memory.c
                      src/node_ht.c
                      src/node_vec.c
+                     src/usr_bdd_ht.c
 
   include-dirs:      src
   includes:          bdd.h

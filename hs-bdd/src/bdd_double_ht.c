@@ -1,7 +1,7 @@
 /* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
 TO THE TEMPLATE INSTEAD. */
 
-/* The definition of a separate-chaining hash table from bdd_t
+/* The definition of a separate-chaining hash table from raw_bdd_t
  * to double. */
 
 #include "bdd_double_ht.h"
@@ -14,14 +14,14 @@ TO THE TEMPLATE INSTEAD. */
 /***********************************************************************/
 typedef struct bdd_double_ht_bucket
 {
-    bdd_t key;
+    raw_bdd_t key;
     double value;
     struct bdd_double_ht_bucket *next;
 } bdd_double_ht_bucket_t;
 
 /* Allocates and initializes a bucket with the given parameters. */
 static bdd_double_ht_bucket_t *
-bdd_double_ht_bucket_create (bdd_t key,
+bdd_double_ht_bucket_create (raw_bdd_t key,
                             double value,
                             bdd_double_ht_bucket_t *next)
 {
@@ -49,11 +49,11 @@ bdd_double_ht_bucket_free (bdd_double_ht_bucket_t *bucket)
  * pointer to the bucket with the matching key is returned if one
  * exists, and NULL returned otherwise. */
 static bdd_double_ht_bucket_t *
-bdd_double_ht_bucket_search (bdd_double_ht_bucket_t *bucket, bdd_t key)
+bdd_double_ht_bucket_search (bdd_double_ht_bucket_t *bucket, raw_bdd_t key)
 {
     bdd_double_ht_bucket_t *p = bucket;
     while (p != NULL) {
-        if (bdd_equal(p->key, key))
+        if (raw_bdd_equal(p->key, key))
             break;
         p = p->next;
     }
@@ -76,7 +76,7 @@ struct bdd_double_ht_t
 /* bdd_double_ht_t invariants:
  *     - buckets != NULL
  *     - for each i in [0, num_entries), for each key/value entry in
- *       buckets[i], bdd_hash(key) == i.
+ *       buckets[i], raw_bdd_hash(key) == i.
  *     - For all key1/value1, key2/value2 pairs in the hash table, if
  *       key1 == key2, then value1 == value2
  */
@@ -87,9 +87,9 @@ struct bdd_double_ht_t
 /* Hashes the given key and computes the corresponding index for
  * it. */
 static unsigned
-bdd_double_ht_get_hash_index (bdd_double_ht_t *tab, bdd_t key)
+bdd_double_ht_get_hash_index (bdd_double_ht_t *tab, raw_bdd_t key)
 {
-    return bdd_hash (key) % tab->num_buckets;
+    return raw_bdd_hash (key) % tab->num_buckets;
 }
 
 /***********************************************************************/
@@ -206,7 +206,7 @@ double_hash_table_num_buckets (bdd_double_ht_t *tab)
  * replaced. */
 void
 bdd_double_ht_insert (bdd_double_ht_t *tab,
-                  bdd_t key,
+                  raw_bdd_t key,
                   double val)
 {
     unsigned b_idx;
@@ -230,7 +230,7 @@ bdd_double_ht_insert (bdd_double_ht_t *tab,
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
 double *
-bdd_double_ht_lookup (bdd_double_ht_t *tab, bdd_t key)
+bdd_double_ht_lookup (bdd_double_ht_t *tab, raw_bdd_t key)
 {
     unsigned b_idx;
     bdd_double_ht_bucket_t *b;
@@ -239,4 +239,20 @@ bdd_double_ht_lookup (bdd_double_ht_t *tab, bdd_t key)
     b_idx = bdd_double_ht_get_hash_index (tab, key);
     b = bdd_double_ht_bucket_search (tab->buckets[b_idx], key);
     return b != NULL ? &b->value : NULL;
+}
+
+/***********************************************************************/
+/* HASH TABLE MAPPING                                                  */
+/***********************************************************************/
+void
+bdd_double_ht_map_entries (bdd_double_ht_t *tab, bdd_double_ht_map_fun fun)
+{
+    unsigned idx;
+    for (idx = 0; idx < bdd_double_ht_get_num_buckets (tab); idx += 1) {
+        bdd_double_ht_bucket_t *p = tab->buckets[idx];
+        while (p != NULL) {
+            fun (p->key, p->value);
+            p = p->next;
+        }
+    }
 }

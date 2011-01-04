@@ -19,7 +19,7 @@ bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
     unsigned i;
     const unsigned num_entries = up_to_next_power_of_two (num_entries_hint);
     const bdd_ite_cache_entry_t sentinel =
-        { INT_MAX, INT_MAX, INT_MAX, bdd_false };
+        { INT_MAX, INT_MAX, INT_MAX, raw_bdd_false };
 
     tab->num_entries = num_entries;
     tab->entries = (bdd_ite_cache_entry_t *)

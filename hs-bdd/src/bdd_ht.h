@@ -1,13 +1,14 @@
 /* THIS FILE WAS GENERATED FROM A TEMPLATE FILE.  MAKE MODIFICATIONS
 TO THE TEMPLATE INSTEAD. */
 
-/* This module provides a hash table from bdd_t to bdd_t
+/* This module provides a hash table from raw_bdd_t to raw_bdd_t
  * implemented using separate chaining. */
 
 #ifndef BDD_HT_INCLUDED
 #define BDD_HT_INCLUDED
 
-#include "bdd.h"
+#include "bddlib.h"
+#include "raw_bdd.h"
 #include "memory.h"
 
 /* A hash table implemented using separate chaining. */
@@ -45,18 +46,24 @@ bdd_ht_get_load (bdd_ht_t *tab);
 extern void
 bdd_ht_insert (
     bdd_ht_t *tab,
-    bdd_t key,
-    bdd_t val
+    raw_bdd_t key,
+    raw_bdd_t val
     );
 
 /* Retrieves a pointer to the value bound to the specified key.  If no
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-extern bdd_t *
+extern raw_bdd_t *
 bdd_ht_lookup (
     bdd_ht_t *tab,
-    bdd_t key
+    raw_bdd_t key
     );
+
+typedef void (* bdd_ht_map_fun) (raw_bdd_t key, raw_bdd_t val);
+
+/* Applies a function to each key/value entry. */
+extern void
+bdd_ht_map_entries (bdd_ht_t *tab, bdd_ht_map_fun fun);
 
 #endif /* BDD_HT_INCLUDED */

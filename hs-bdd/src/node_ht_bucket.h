@@ -11,7 +11,7 @@
 typedef struct node_ht_bucket
 {
     node_t key;
-    bdd_t value;
+    raw_bdd_t value;
     struct node_ht_bucket *next;
 } node_ht_bucket_t;
 
@@ -54,7 +54,7 @@ node_ht_bucket_pool_malloc (node_ht_bucket_pool_t *pool)
 static inline node_ht_bucket_t *
 node_ht_bucket_create (node_ht_bucket_pool_t *pool,
                   node_t key,
-                  bdd_t value,
+                  raw_bdd_t value,
                   node_ht_bucket_t *next)
 {
     node_ht_bucket_t *bucket = node_ht_bucket_pool_malloc (pool);

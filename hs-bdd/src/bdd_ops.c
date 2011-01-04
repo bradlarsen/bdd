@@ -2,77 +2,97 @@
 #include "bdd_ite_cache.h"
 #include "bdd_double_ht.h"
 #include "bdd_ht.h"
+#include "bdd_rtu_ht.h"
+#include "usr_bdd_ht.h"
 
 unsigned
-bdd_var (bdd_mgr_t *mgr, bdd_t b)
+bdd_var (bdd_mgr_t *mgr, bdd_t *b)
 {
-    return bdd_get_node(mgr, b).var;
+    return raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).var;
 }
 
-bdd_t
-bdd_low (bdd_mgr_t *mgr, bdd_t b)
+bdd_t *
+bdd_low (bdd_mgr_t *mgr, bdd_t *b)
 {
-    return bdd_get_node(mgr, b).low;
+    return raw_to_usr (mgr, raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).low);
 }
 
-bdd_t
-bdd_high (bdd_mgr_t *mgr, bdd_t b)
+bdd_t *
+bdd_high (bdd_mgr_t *mgr, bdd_t *b)
 {
-    return bdd_get_node(mgr, b).high;
+    return raw_to_usr (mgr, raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).high);
 }
 
+void
+bdd_inc_ref (bdd_mgr_t *mgr, bdd_t *b)
+{
+    usr_bdd_entry_t *entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, b);
+    assert (entry != NULL);
+    entry->ref_cnt += 1;
+}
 
-bdd_t
+void
+bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
+{
+    usr_bdd_entry_t *entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, b);
+    assert (entry != NULL);
+    assert (entry->ref_cnt > 0);
+    entry->ref_cnt -= 1;
+}
+
+bdd_t *
 bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
+    raw_bdd_t res;
     assert (i < mgr->num_vars);
-    return make_node_from_parts (mgr, i, bdd_false, bdd_true);
+    res = make_node_from_parts (mgr, i, raw_bdd_false, raw_bdd_true);
+    return raw_to_usr(mgr, res);
 }
 
 
-bdd_t
-bdd_and (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+bdd_t *
+bdd_and (bdd_mgr_t *mgr, bdd_t *b1, bdd_t *b2)
 {
-    return bdd_ite (mgr, b1, b2, bdd_false);
+    return bdd_ite (mgr, b1, b2, bdd_false(mgr));
 }
 
-bdd_t
-bdd_or (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+bdd_t *
+bdd_or (bdd_mgr_t *mgr, bdd_t *b1, bdd_t *b2)
 {
-    return bdd_ite (mgr, b1, bdd_true, b2);
+    return bdd_ite (mgr, b1, bdd_true(mgr), b2);
 }
 
-bdd_t
-bdd_xor (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+bdd_t *
+bdd_xor (bdd_mgr_t *mgr, bdd_t *b1, bdd_t *b2)
 {
-    bdd_t not_b2 = bdd_not (mgr, b2);
+    bdd_t *not_b2 = bdd_not (mgr, b2);
     return bdd_ite (mgr, b1, not_b2, b2);
 }
 
-bdd_t
-bdd_equiv (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+bdd_t *
+bdd_equiv (bdd_mgr_t *mgr, bdd_t *b1, bdd_t *b2)
 {
-    bdd_t not_b2 = bdd_not (mgr, b2);
+    bdd_t *not_b2 = bdd_not (mgr, b2);
     return bdd_ite (mgr, b1, b2, not_b2);
 }
 
-bdd_t
-bdd_nand (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+bdd_t *
+bdd_nand (bdd_mgr_t *mgr, bdd_t *b1, bdd_t *b2)
 {
-    bdd_t not_b2 = bdd_not (mgr, b2);
-    return bdd_ite (mgr, b1, not_b2, bdd_true);
+    bdd_t *not_b2 = bdd_not (mgr, b2);
+    return bdd_ite (mgr, b1, not_b2, bdd_true(mgr));
 }
 
-bdd_t
-bdd_implies (bdd_mgr_t *mgr, bdd_t b1, bdd_t b2)
+bdd_t *
+bdd_implies (bdd_mgr_t *mgr, bdd_t *b1, bdd_t *b2)
 {
-    return bdd_ite (mgr, b1, b2, bdd_true);
+    return bdd_ite (mgr, b1, b2, bdd_true(mgr));
 }
 
-bdd_t
-bdd_not (bdd_mgr_t *mgr, bdd_t b)
+bdd_t *
+bdd_not (bdd_mgr_t *mgr, bdd_t *b)
 {
-    return bdd_ite (mgr, b, bdd_false, bdd_true);
+    return bdd_ite (mgr, b, bdd_false(mgr), bdd_true(mgr));
 }
 
 static inline unsigned
@@ -90,15 +110,15 @@ var_min3 (unsigned x, unsigned y, unsigned z)
 
 typedef struct
 {
-    bdd_t low;
-    bdd_t high;
+    raw_bdd_t low;
+    raw_bdd_t high;
 } quick_restrict_res_t;
 
 /* Given a BDD index, its corresponding node, and a variable no
  * greater than its variable, restricts the BDD with 'var' assigned
  * both false and true. */
 static inline quick_restrict_res_t
-quick_restrict (bdd_t b, node_t b_n, unsigned var)
+quick_restrict (raw_bdd_t b, node_t b_n, unsigned var)
 {
     quick_restrict_res_t result;
     assert (var <= b_n.var);
@@ -113,8 +133,8 @@ quick_restrict (bdd_t b, node_t b_n, unsigned var)
     return result;
 }
 
-bdd_t
-bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
+static raw_bdd_t
+raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 {
     bdd_ite_cache_entry_t *cache_val;
 
@@ -125,16 +145,16 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
     /* put arguments into ``standard triple'' form */
     /* FIXME: there are many more cases that require complement edges */
     if (p == t)
-        t = bdd_true;
+        t = raw_bdd_true;
     if (p == f)
-        f = bdd_false;
+        f = raw_bdd_false;
 
     /* terminal cases */
-    if (p == bdd_true)
+    if (p == raw_bdd_true)
         return t;
-    else if (p == bdd_false)
+    else if (p == raw_bdd_false)
         return f;
-    else if (t == bdd_true && f == bdd_false)
+    else if (t == raw_bdd_true && f == raw_bdd_false)
         return p;
 
     /* check cache, recur if needed */
@@ -146,18 +166,18 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
         node_t p_n, t_n, f_n;
         quick_restrict_res_t p_v, t_v, f_v; /* p, t, and f restricted with
                                              * top_var and !top_var */
-        bdd_t low, high, result;
+        raw_bdd_t low, high, result;
 
-        p_n = bdd_get_node (mgr, p);
-        t_n = bdd_get_node (mgr, t);
-        f_n = bdd_get_node (mgr, f);
+        p_n = raw_bdd_to_node (mgr, p);
+        t_n = raw_bdd_to_node (mgr, t);
+        f_n = raw_bdd_to_node (mgr, f);
         top_var = var_min3 (p_n.var, t_n.var, f_n.var);
         p_v = quick_restrict (p, p_n, top_var);
         t_v = quick_restrict (t, t_n, top_var);
         f_v = quick_restrict (f, f_n, top_var);
 
-        low = bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
-        high = bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
+        low = raw_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
+        high = raw_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
         result = make_node_from_parts (mgr, top_var, low, high);
 
         cache_val->p = p;
@@ -169,22 +189,32 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
     }
 }
 
+bdd_t *
+bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
+{
+    raw_bdd_t p_raw, t_raw, f_raw;
+    p_raw = usr_to_raw (mgr, p);
+    t_raw = usr_to_raw (mgr, t);
+    f_raw = usr_to_raw (mgr, f);
+    return raw_to_usr (mgr, raw_bdd_ite (mgr, p_raw, t_raw, f_raw));
+}
+
 /* This largely follows the pseudocode from Andersen's ``An
  * Introduction to Binary Decision Diagrams'', but with the addition
  * of memoization. */
-static bdd_t
-bdd_res_rec (bdd_mgr_t *mgr,
-             const unsigned var,
-             const bool val,
-             bdd_ht_t *cache,
-             bdd_t b)
+static raw_bdd_t
+raw_bdd_res_rec (bdd_mgr_t *mgr,
+                 const unsigned var,
+                 const boolean val,
+                 bdd_ht_t *cache,
+                 raw_bdd_t b)
 {
-    const bdd_t *cache_val = bdd_ht_lookup (cache, b);
+    const raw_bdd_t *cache_val = bdd_ht_lookup (cache, b);
     if (cache_val != NULL)
         return *cache_val;
     else {
-        bdd_t result;
-        const node_t n = bdd_get_node (mgr, b);
+        raw_bdd_t result;
+        const node_t n = raw_bdd_to_node (mgr, b);
         if (n.var > var)
             result = b;
         else if (n.var == var)
@@ -193,67 +223,71 @@ bdd_res_rec (bdd_mgr_t *mgr,
             result = make_node_from_parts (
                 mgr,
                 n.var,
-                bdd_res_rec (mgr, var, val, cache, n.low),
-                bdd_res_rec (mgr, var, val, cache, n.high)
+                raw_bdd_res_rec (mgr, var, val, cache, n.low),
+                raw_bdd_res_rec (mgr, var, val, cache, n.high)
                 );
         bdd_ht_insert (cache, b, result);
         return result;
     }
 }
 
-bdd_t
-bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, bool val)
+bdd_t *
+bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
 {
-    bdd_ht_t *cache = bdd_ht_create ();
-    const bdd_t r = bdd_res_rec (mgr, var, val, cache, b);
+    bdd_ht_t *cache;
+    raw_bdd_t b_raw;
+    raw_bdd_t res;
+    b_raw = usr_to_raw (mgr, b);
+    cache = bdd_ht_create ();
+    res = raw_bdd_res_rec (mgr, var, val, cache, b_raw);
     bdd_ht_destroy (cache);
-    return r;
+    return raw_to_usr (mgr, res);
 }
 
-bdd_t
-bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b)
+bdd_t *
+bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t *b)
 {
     return bdd_or (mgr,
-                   bdd_restrict (mgr, b, var, false),
-                   bdd_restrict (mgr, b, var, true));
+                   bdd_restrict (mgr, b, var, bfalse),
+                   bdd_restrict (mgr, b, var, btrue));
 }
 
-bdd_t
-bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b)
+bdd_t *
+bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t *b)
 {
     return bdd_and (mgr,
-                    bdd_restrict (mgr, b, var, false),
-                    bdd_restrict (mgr, b, var, true));
+                    bdd_restrict (mgr, b, var, bfalse),
+                    bdd_restrict (mgr, b, var, btrue));
 }
 
-bdd_t
-bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g)
+bdd_t *
+bdd_compose (bdd_mgr_t *mgr, bdd_t *f, unsigned x, bdd_t *g)
 {
-    bdd_t ite_t, ite_f;
-    ite_t = bdd_restrict (mgr, f, x, true);
-    ite_f = bdd_restrict (mgr, f, x, false);
+    bdd_t *ite_t, *ite_f;
+    ite_t = bdd_restrict (mgr, f, x, btrue);
+    ite_f = bdd_restrict (mgr, f, x, bfalse);
     return bdd_ite (mgr, g, ite_t, ite_f);
 }
 
 static double
-bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
+raw_bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, raw_bdd_t b)
 {
-    if (b == bdd_false)
+    if (b == raw_bdd_false)
         return 0;
-    else if (b == bdd_true)
+    else if (b == raw_bdd_true)
         return 1;
     else {
         const double *result = bdd_double_ht_lookup (cache, b);
         if (result != NULL)
             return *result;
         else {
-            const node_t b_node = bdd_get_node(mgr, b);
-            const node_t b_low = bdd_get_node(mgr, b_node.low);
-            const node_t b_high = bdd_get_node(mgr, b_node.high);
+            const node_t b_node = raw_bdd_to_node(mgr, b);
+            const node_t b_low = raw_bdd_to_node(mgr, b_node.low);
+            const node_t b_high = raw_bdd_to_node(mgr, b_node.high);
             const double lhs = pow (2.0, b_low.var - b_node.var - 1) *
-                bdd_sat_count_rec (mgr, cache, b_node.low);
+                raw_bdd_sat_count_rec (mgr, cache, b_node.low);
             const double rhs = pow (2.0, b_high.var - b_node.var - 1) *
-                bdd_sat_count_rec (mgr, cache, b_node.high);
+                raw_bdd_sat_count_rec (mgr, cache, b_node.high);
             const double res = lhs + rhs;
             bdd_double_ht_insert (cache, b, res);
             return res;
@@ -262,28 +296,37 @@ bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, bdd_t b)
 }
 
 double
-bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
+bdd_sat_count (bdd_mgr_t *mgr, bdd_t *b)
 {
+    raw_bdd_t b_raw;
     bdd_double_ht_t *cache;
     double result;
 
+    b_raw = usr_to_raw (mgr, b);
     cache = bdd_double_ht_create ();
     result =
-        pow (2, bdd_get_node(mgr, b).var) *
-        bdd_sat_count_rec (mgr, cache, b);
+        pow (2, raw_bdd_to_node(mgr, b_raw).var) *
+        raw_bdd_sat_count_rec (mgr, cache, b_raw);
     bdd_double_ht_destroy (cache);
     return result;
 }
 
-unsigned
-bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b)
+static unsigned
+raw_bdd_get_num_nodes (bdd_mgr_t *mgr, raw_bdd_t b)
 {
-    if (b == bdd_true || b == bdd_false)
+    if (b == raw_bdd_true || b == raw_bdd_false)
         return 1;
     else {
-        const node_t b_node = bdd_get_node (mgr, b);
+        const node_t b_node = raw_bdd_to_node (mgr, b);
         return
-            bdd_get_num_nodes (mgr, b_node.low) +
-            bdd_get_num_nodes (mgr, b_node.high);
+            raw_bdd_get_num_nodes (mgr, b_node.low) +
+            raw_bdd_get_num_nodes (mgr, b_node.high);
     }
+}
+
+
+unsigned
+bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t *b)
+{
+    return raw_bdd_get_num_nodes (mgr, usr_to_raw (mgr, b));
 }

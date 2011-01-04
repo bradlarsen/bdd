@@ -4,15 +4,15 @@
 #ifndef BDD_ITE_CACHE_INCLUDED
 #define BDD_ITE_CACHE_INCLUDED
 
-#include "bdd.h"
+#include "raw_bdd.h"
 #include "hash_pair.h"
 
 typedef struct
 {
-    bdd_t p;
-    bdd_t t;
-    bdd_t f;
-    bdd_t result;
+    raw_bdd_t p;
+    raw_bdd_t t;
+    raw_bdd_t f;
+    raw_bdd_t result;
 } bdd_ite_cache_entry_t;
 
 typedef struct
@@ -38,7 +38,7 @@ bdd_ite_cache_get_size (bdd_ite_cache_t *tab)
 }
 
 static inline unsigned
-bdd_ite_hash (bdd_t p, bdd_t t, bdd_t f)
+bdd_ite_hash (raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 {
     return (unsigned) hash_pair (p, hash_pair (t, f)) % 999999937u;
 }
@@ -46,7 +46,12 @@ bdd_ite_hash (bdd_t p, bdd_t t, bdd_t f)
 /* Retrieves a pointer to the entry that the given key hashes to.  The
  * pointed-to entry may or may not correspond to the given key. */
 static inline bdd_ite_cache_entry_t *
-bdd_ite_cache_lookup (bdd_ite_cache_t *tab, bdd_t p, bdd_t t, bdd_t f)
+bdd_ite_cache_lookup (
+    bdd_ite_cache_t *tab,
+    raw_bdd_t p,
+    raw_bdd_t t,
+    raw_bdd_t f
+    )
 {
     return &tab->entries[bdd_ite_hash(p, t, f) % tab->num_entries];
 }

@@ -1,4 +1,4 @@
-/* This module provides a hash table from node_t to bdd_t
+/* This module provides a hash table from node_t to raw_bdd_t
  * implemented using separate chaining. */
 
 #ifndef NODE_HT_INCLUDED
@@ -80,7 +80,7 @@ node_ht_double_num_buckets (node_ht_t *tab);
 static inline void
 node_ht_insert (node_ht_t *tab,
                 node_t key,
-                bdd_t val)
+                raw_bdd_t val)
 {
     unsigned b_idx;
     if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
@@ -97,7 +97,7 @@ node_ht_insert (node_ht_t *tab,
  * such entry exists, NULL is returned.  When any modifying hash table
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
-static inline bdd_t *
+static inline raw_bdd_t *
 node_ht_lookup (node_ht_t *tab, node_t key)
 {
     unsigned b_idx;
