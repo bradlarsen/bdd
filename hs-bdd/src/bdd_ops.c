@@ -28,7 +28,19 @@ bdd_inc_ref (bdd_mgr_t *mgr, bdd_t *b)
 {
     usr_bdd_entry_t *entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, b);
     assert (entry != NULL);
+    if (entry->ref_cnt == 0) {
+        assert (mgr->num_unreferenced_bdds > 0);
+        mgr->num_unreferenced_bdds -= 1;
+    }
     entry->ref_cnt += 1;
+}
+
+static float
+usr_bdd_dead_fraction (bdd_mgr_t *mgr)
+{
+    return
+        (float) mgr->num_unreferenced_bdds /
+        (float) usr_bdd_ht_get_num_entries (mgr->usr_bdd_map);
 }
 
 void
@@ -38,6 +50,11 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
     assert (entry != NULL);
     assert (entry->ref_cnt > 0);
     entry->ref_cnt -= 1;
+    if (entry->ref_cnt == 0)
+        mgr->num_unreferenced_bdds += 1;
+
+    if (usr_bdd_dead_fraction (mgr) >= 0.80f)
+        bdd_mgr_perform_gc (mgr);
 }
 
 bdd_t *

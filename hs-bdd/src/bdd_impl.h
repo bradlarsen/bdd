@@ -38,6 +38,8 @@ struct bdd_mgr
     /* A mapping from raw BDD identifiers to user-level BDD
      * identifiers. */
     bdd_rtu_ht_t *raw_bdd_map;
+    /* The number of unreferenced user-level BDD identifiers. */
+    unsigned num_unreferenced_bdds;
 
     /* A cache used to memoize bdd_ite. */
     bdd_ite_cache_t ite_cache;
@@ -81,6 +83,7 @@ intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
     entry.raw_bdd = raw;
     entry.ref_cnt = 0;
     usr_bdd_ht_insert (mgr->usr_bdd_map, usr, entry);
+    mgr->num_unreferenced_bdds += 1;
     return usr;
 }
 

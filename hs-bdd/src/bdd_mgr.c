@@ -49,6 +49,7 @@ bdd_mgr_initialize_with_hint (
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->new_usr_id = 0;
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
+    mgr->num_unreferenced_bdds = 0;
 
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
