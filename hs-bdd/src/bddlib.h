@@ -8,6 +8,7 @@
 #ifndef BDDLIB_INCLUDED
 #define BDDLIB_INCLUDED
 
+#include <stdio.h>
 #include "boolean.h"
 
 /**********************************************************************/
@@ -45,6 +46,22 @@ bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
  * time and space. */
 extern unsigned
 bdd_mgr_get_num_allocated (bdd_mgr_t *mgr);
+
+/**********************************************************************/
+/* Garbage collection-related types and functions                     */
+/**********************************************************************/
+typedef struct
+{
+    unsigned usr_bdd_num_copied;
+    unsigned usr_bdd_num_collected;
+    unsigned raw_bdd_num_copied;
+    unsigned raw_bdd_num_collected;
+} bdd_gc_stats_t;
+
+/* Pretty-prints the garbage collection statistics to the given file
+ * handle. */
+extern void
+bdd_gc_stats_fprint (FILE *handle, bdd_gc_stats_t stats);
 
 /* Performs a garbage collection on the graph represented by the
  * manager. BDDs that are not referenced directly or indirectly will

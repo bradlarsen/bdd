@@ -43,6 +43,8 @@ foreign import ccall "bddlib.h bdd_mgr_get_num_nodes"
 foreign import ccall "bddlib.h bdd_mgr_get_num_allocated"
     bdd_mgr_get_num_allocated :: BddMgr -> IO CUInt
 
+-- * Garbage collection-related types and functions
+
 foreign import ccall "bddlib.h bdd_mgr_perform_gc"
     bdd_mgr_perform_gc :: BddMgr -> IO ()
 
