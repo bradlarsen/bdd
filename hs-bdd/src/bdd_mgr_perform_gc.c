@@ -114,7 +114,7 @@ copy_bdd_rec (
 }
 
 static void
-copy_live_usr_nodes (void *env, bdd_t *key, usr_bdd_entry_t *val)
+copy_live_free_dead_usr_nodes (void *env, bdd_t *key, usr_bdd_entry_t *val)
 {
     bdd_gc_env_t *gc_env = (bdd_gc_env_t *)env;
     if (val->ref_cnt > 0) {
@@ -162,8 +162,6 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     fprintf (stderr, "bdd_mgr_perform_gc begin:\n");
     fprint_gc_info (stderr, mgr);
 
-    /* FIXME: memory leaks lurk here, as true nodes and false nodes
-     * never get freed. */
     bdd_mgr_initialize_with_hint (&dst_mgr,
                                   bdd_mgr_get_num_vars (mgr),
                                   bdd_mgr_get_num_allocated (mgr));
@@ -173,7 +171,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     env.copied_map = bdd_ht_create_with_hint (bdd_mgr_get_num_nodes (mgr));
     usr_bdd_ht_map_entries (mgr->usr_bdd_map,
                             (void *)&env,
-                            copy_live_usr_nodes);
+                            copy_live_free_dead_usr_nodes);
     bdd_mgr_deinitialize_partial (mgr);
     *mgr = dst_mgr;
     bdd_ht_destroy (env.copied_map);

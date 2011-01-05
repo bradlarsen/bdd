@@ -52,9 +52,6 @@ bdd_mgr_initialize_with_hint (
 
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
-
-    add_false_node (mgr);
-    add_true_node (mgr);
 }
 
 bdd_mgr_t *
@@ -62,6 +59,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
     bdd_mgr_initialize_with_hint (mgr, num_vars, capacity_hint);
+    add_false_node (mgr);
+    add_true_node (mgr);
     return mgr;
 }
 
