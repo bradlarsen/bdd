@@ -2,6 +2,7 @@
 #define BDD_IMPL_INCLUDED
 
 #include <assert.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>

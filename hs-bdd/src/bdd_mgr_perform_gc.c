@@ -5,10 +5,17 @@ typedef struct
 {
     bdd_mgr_t *src_mgr;         /* source */
     bdd_mgr_t *dst_mgr;         /* destination */
-    bdd_ht_t *copied_map;       /* keeps track of which nodes have
-                                 * been copied */
     bdd_gc_stats_t stats;       /* collection statistics */
 } bdd_gc_env_t;
+
+/* An important note: The source manager is trashed in the process of
+ * garbage collection.  In order to avoid allocating additional memory
+ * during collection, the node vector of the source manager is used to
+ * map raw_bdd_t from the old manager to raw_bdd_t of the new manager.
+ * This is done as follows: given a node n at index i in the source
+ * manager, if n.var == UINT_MAX, then the node at index i was copied
+ * to index n.low in the destination manager.
+ */
 
 /* Copies the BDD subgraph with the given root from the source to the
  * destination manager, returning the new root. */
@@ -18,16 +25,13 @@ copy_bdd_rec (
     raw_bdd_t old_root
     )
 {
-    raw_bdd_t *existing_bdd;
-
-    existing_bdd = bdd_ht_lookup (env->copied_map, old_root);
-    if (existing_bdd != NULL)
-        return *existing_bdd;
+    node_t old_root_node;
+    raw_bdd_t new_low, new_high, new_root;
+    old_root_node = raw_bdd_to_node (env->src_mgr, old_root);
+    if (old_root_node.var == UINT_MAX)
+        return old_root_node.low;
     else {
-        raw_bdd_t new_low, new_high, new_root;
-        node_t old_root_node;
         env->stats.raw_bdd_num_copied += 1;
-        old_root_node = raw_bdd_to_node (env->src_mgr, old_root);
         if (old_root == raw_bdd_true || old_root == raw_bdd_false) {
             new_low = old_root_node.low;
             new_high = old_root_node.high;
@@ -39,7 +43,9 @@ copy_bdd_rec (
         assert (new_low != new_high);
         new_root = make_node (env->dst_mgr,
                               old_root_node.var, new_low, new_high);
-        bdd_ht_insert (env->copied_map, old_root, new_root);
+        old_root_node.var = UINT_MAX;
+        old_root_node.low = new_root;
+        node_vec_set (&env->src_mgr->nodes_by_idx, old_root, old_root_node);
         return new_root;
     }
 }
@@ -106,14 +112,12 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     dst_mgr.new_usr_id = mgr->new_usr_id;
     env.src_mgr = mgr;
     env.dst_mgr = &dst_mgr;
-    env.copied_map = bdd_ht_create_with_hint (old_num_nodes);
     env.stats = mk_bdd_gc_stats_t ();
     usr_bdd_ht_map_entries (mgr->usr_bdd_map,
                             (void *)&env,
                             copy_live_free_dead_usr_nodes);
     bdd_mgr_deinitialize_partial (mgr);
     *mgr = dst_mgr;
-    bdd_ht_destroy (env.copied_map);
     env.stats.raw_bdd_num_collected = old_num_nodes - env.stats.raw_bdd_num_copied;
     bdd_gc_stats_fprint (stderr, env.stats);
 }
