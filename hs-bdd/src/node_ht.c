@@ -33,15 +33,12 @@ node_ht_create (node_ht_t *tab)
 void
 node_ht_create_with_hint (node_ht_t *tab, unsigned num_buckets_hint)
 {
-    unsigned i;
     const unsigned num_buckets = up_to_next_power_of_two (num_buckets_hint);
 
     tab->num_entries = 0;
     tab->num_buckets = num_buckets;
-    tab->buckets =
-        (node_ht_bucket_t **) checked_malloc (num_buckets * sizeof(node_ht_bucket_t *));
-    for (i = 0; i < num_buckets; i += 1)
-        tab->buckets[i] = NULL;
+    tab->buckets = (node_ht_bucket_t **)
+        checked_calloc (num_buckets, sizeof(node_ht_bucket_t *));
     create_bucket_pool (&tab->pool, num_buckets);
 }
 
