@@ -70,6 +70,11 @@ node_ht_bucket_create (node_ht_bucket_pool_t *pool,
 static inline node_ht_bucket_t *
 node_ht_bucket_search (node_ht_bucket_t *bucket, node_t key)
 {
+    /* TODO: improve the performance of this hash table.
+     * Profiling reveals that some ~50% of the total runtime of the
+     * n-queens program is spent searching through node hash table
+     * buckets (!?).  Perhaps open addressing (e.g., linear probing)
+     * would work better. */
     node_ht_bucket_t *p = bucket;
     while (p != NULL) {
         if (node_equal(p->key, key))
