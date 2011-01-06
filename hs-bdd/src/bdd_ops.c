@@ -53,7 +53,8 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
     if (entry->ref_cnt == 0)
         mgr->num_unreferenced_bdds += 1;
 
-    if (usr_bdd_dead_fraction (mgr) >= 0.80f)
+    /* FIXME: what is a reasonable value for this fraction? */
+    if (usr_bdd_dead_fraction (mgr) >= 0.75f)
         bdd_mgr_perform_gc (mgr);
 }
 

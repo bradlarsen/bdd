@@ -1,6 +1,22 @@
 #include "bdd_impl.h"
 #include "bdd_ht.h"
 
+/* FIXME: rewrite the garbage collection code.
+ *
+ * There are several ways it could be improved.  First, this collector
+ * more-or-less follows Cheney's algorithm (1960), in which the heap
+ * is split into two equal-sized components, with the active heap
+ * switching sides at each collection.  I could improve performance a
+ * bit by keeping these two heaps (i.e., node vector and node hash
+ * table) within each manager.  Second, I could modify the hash tables
+ * for user-level BDDs so that values can be deleted, so that the
+ * entire table need not be copied.  Third, I need to better deal with
+ * copying the terminal nodes.  Fourth, I should bring back the
+ * manager invariant checking code to help smoke out bugs.  Finally, I
+ * should rewrite this code so that it is obvious there are now
+ * bugs---this will require better stating my invariants.
+ */
+
 typedef struct
 {
     bdd_mgr_t *src_mgr;         /* source */
@@ -46,6 +62,8 @@ copy_bdd_rec (
         old_root_node.var = UINT_MAX;
         old_root_node.low = new_root;
         node_vec_set (&env->src_mgr->nodes_by_idx, old_root, old_root_node);
+        assert (old_root != raw_bdd_false || old_root == new_root);
+        assert (old_root != raw_bdd_true || old_root == new_root);
         return new_root;
     }
 }
@@ -113,6 +131,23 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     env.src_mgr = mgr;
     env.dst_mgr = &dst_mgr;
     env.stats = mk_bdd_gc_stats_t ();
+
+    {
+        /* Special case to make sure the terminal nodes are copied
+         * appropriately.  Without this, previously, sometimes the
+         * terminal nodes would be flipped during collection, which
+         * silently gave incorrect results.  This is a hack, and the
+         * GC code should be rewritten. */
+        bdd_t *false_bdd, *true_bdd;
+        usr_bdd_entry_t *false_bdd_entry, *true_bdd_entry;
+        false_bdd = bdd_false (mgr);
+        true_bdd = bdd_true (mgr);
+        false_bdd_entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, false_bdd);
+        true_bdd_entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, true_bdd);
+        copy_live_free_dead_usr_nodes ((void *)&env, false_bdd, false_bdd_entry);
+        copy_live_free_dead_usr_nodes ((void *)&env, true_bdd, true_bdd_entry);
+    }
+
     usr_bdd_ht_map_entries (mgr->usr_bdd_map,
                             (void *)&env,
                             copy_live_free_dead_usr_nodes);
