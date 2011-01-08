@@ -4,8 +4,10 @@
 #ifndef BDD_ITE_CACHE_INCLUDED
 #define BDD_ITE_CACHE_INCLUDED
 
+#include "boolean.h"
 #include "raw_bdd.h"
 #include "hash_pair.h"
+#include <limits.h>
 
 typedef struct
 {
@@ -20,6 +22,15 @@ typedef struct
     unsigned num_entries;
     bdd_ite_cache_entry_t *entries;
 } bdd_ite_cache_t;
+
+/* FIXME: the sentinel used here is bogus. */
+
+/* Is the given entry free, i.e., not holding actual data? */
+static inline boolean
+bdd_ite_cache_entry_is_free (bdd_ite_cache_entry_t *entry)
+{
+    return entry->p == INT_MAX;
+}
 
 /* Initializes a new hash table with a suggested number of entries. */
 extern void

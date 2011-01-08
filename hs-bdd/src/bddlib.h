@@ -48,6 +48,23 @@ extern unsigned
 bdd_mgr_get_num_allocated (bdd_mgr_t *mgr);
 
 /**********************************************************************/
+/* Result cache types and functions                                   */
+/**********************************************************************/
+typedef struct
+{
+    unsigned num_lookups;
+    unsigned num_hits;
+    unsigned num_inserts;
+    unsigned num_replacements;
+} bdd_cache_stats_t;
+
+extern void
+bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats);
+
+extern bdd_cache_stats_t
+bdd_mgr_get_cache_stats (bdd_mgr_t *mgr);
+
+/**********************************************************************/
 /* Garbage collection-related types and functions                     */
 /**********************************************************************/
 typedef struct

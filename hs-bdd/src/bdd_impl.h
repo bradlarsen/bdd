@@ -43,6 +43,8 @@ struct bdd_mgr
 
     /* A cache used to memoize bdd_ite. */
     bdd_ite_cache_t ite_cache;
+    /* Statistics about 'ite_cache'. */
+    bdd_cache_stats_t ite_cache_stats;
 };
 
 /* Initializes the given manager. */
@@ -64,8 +66,7 @@ bdd_mgr_deinitialize_partial (bdd_mgr_t *mgr);
 static inline node_t
 raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
 {
-    node_t res = node_vec_get (&mgr->nodes_by_idx, (unsigned) b);
-    return res;
+    return node_vec_get (&mgr->nodes_by_idx, (unsigned) b);
 }
 
 /* Interns the raw BDD index, mapping it to a new user-level BDD
@@ -123,25 +124,21 @@ make_node (
     if (low == high)
         return low;
     else {
-        node_ht_entry_t *existing_entry;
+        raw_bdd_t *existing_bdd;
         node_t node;
         node.var = var;
         node.low = low;
         node.high = high;
-        existing_entry = node_ht_lookup (&mgr->idxs_by_node, node);
-        if (node_ht_entry_is_unoccupied(existing_entry)) {
+        existing_bdd = node_ht_lookup (&mgr->idxs_by_node, node);
+        if (existing_bdd != NULL)
+            return *existing_bdd;
+        else {
             unsigned idx;
             idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
-            assert (node.low != node.high);
             node_vec_push_back (&mgr->nodes_by_idx, node);
-            node_ht_insert (&mgr->idxs_by_node,
-                            existing_entry,
-                            node,
-                            (raw_bdd_t)idx);
+            node_ht_insert (&mgr->idxs_by_node, node, (raw_bdd_t)idx);
             return (raw_bdd_t)idx;
         }
-        else
-            return existing_entry->val;
     }
 }
 

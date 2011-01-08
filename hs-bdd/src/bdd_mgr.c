@@ -34,6 +34,17 @@ add_true_node (bdd_mgr_t *mgr)
     bdd_inc_ref (mgr, intern_raw_bdd (mgr, usr_true));
 }
 
+static bdd_cache_stats_t
+make_cache_stats ()
+{
+    bdd_cache_stats_t res;
+    res.num_lookups = 0;
+    res.num_hits = 0;
+    res.num_inserts = 0;
+    res.num_replacements = 0;
+    return res;
+}
+
 void
 bdd_mgr_initialize_with_hint (
     bdd_mgr_t *mgr,
@@ -53,6 +64,7 @@ bdd_mgr_initialize_with_hint (
 
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
+    mgr->ite_cache_stats = make_cache_stats ();
 }
 
 bdd_mgr_t *
@@ -116,4 +128,30 @@ unsigned
 bdd_mgr_get_num_allocated (bdd_mgr_t *mgr)
 {
     return node_vec_get_capacity (&mgr->nodes_by_idx);
+}
+
+bdd_cache_stats_t
+bdd_mgr_get_cache_stats (bdd_mgr_t *mgr)
+{
+    return mgr->ite_cache_stats;
+}
+
+void
+bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats)
+{
+    float hit_p, repl_p;
+    if (stats.num_lookups == 0)
+        hit_p = 0.0f;
+    else
+        hit_p = (float) stats.num_hits / (float) stats.num_lookups * 100.0f;
+
+    if (stats.num_inserts == 0)
+        repl_p = 0.0f;
+    else
+        repl_p = (float) stats.num_replacements / (float) stats.num_inserts
+            * 100.0f;
+
+    fprintf (handle, "%u/%u hits (%.0f%%), %u/%u replacements (%.0f%%)",
+             stats.num_hits, stats.num_lookups, hit_p,
+             stats.num_replacements, stats.num_inserts, repl_p);
 }

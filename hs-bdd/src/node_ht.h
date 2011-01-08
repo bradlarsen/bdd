@@ -1,5 +1,5 @@
 /* This module provides a hash table from node_t to raw_bdd_t
- * implemented using linear probing. */
+ * implemented using separate chaining. */
 
 #ifndef NODE_HT_INCLUDED
 #define NODE_HT_INCLUDED
@@ -8,43 +8,30 @@
 #include <stdlib.h>
 
 #include "node.h"
-#include "boolean.h"
+#include "node_ht_bucket.h"
 
-#define NODE_HT_MAX_LOAD 0.75f
+#define NODE_HT_MAX_LOAD 3.00f
 
-/* A node_t/raw_bdd_t entry in the following hash table. */
-typedef struct
-{
-    node_t key;
-    raw_bdd_t val;
-} node_ht_entry_t;
-
-static inline boolean
-node_ht_entry_is_unoccupied (node_ht_entry_t *entry)
-{
-    assert (entry != NULL);
-    return entry->key.low == 0 && entry->key.high == 0;
-}
-
-/* A hash table implemented using linear probing for collision
- * resolution. */
+/* A hash table implemented using separate chaining. */
 typedef struct
 {
     /* the number of entries in the table */
     unsigned num_entries;
-    /* the size in elements of the array */
-    unsigned max_num_entries;
-    /* the array of entries */
-    node_ht_entry_t *store;
+    /* the number of elems in the buckets array */
+    unsigned num_buckets;
+    /* the array of buckets */
+    node_ht_bucket_t **buckets;
+    /* memory pool for buckets */
+    node_ht_bucket_pool_t pool;
 } node_ht_t;
 
-/* Creates and returns a new hash table with a default size. */
+/* Creates and returns a new hash table with a default number of buckets. */
 extern void
 node_ht_create (node_ht_t *tab);
 
-/* Creates and returns a new hash table with a suggested size. */
+/* Creates and returns a new hash table with a suggested number of buckets. */
 extern void
-node_ht_create_with_hint (node_ht_t *tab, unsigned capacity_hint);
+node_ht_create_with_hint (node_ht_t *tab, unsigned num_buckets_hint);
 
 /* Frees the memory used by the given hash table.  It is an error
  * to call this procedure more than once on a hash table. */
@@ -58,11 +45,11 @@ node_ht_get_num_entries (node_ht_t *tab)
     return tab->num_entries;
 }
 
-/* Gets the capacity in number of entries of the hash table. */
+/* Gets the number of buckets in the hash table. */
 static inline unsigned
-node_ht_get_max_num_entries (node_ht_t *tab)
+node_ht_get_num_buckets (node_ht_t *tab)
 {
-    return tab->max_num_entries;
+    return tab->num_buckets;
 }
 
 /* Return the hash table load, defined as the number of entries
@@ -72,47 +59,53 @@ node_ht_get_load (node_ht_t *tab)
 {
     return
         (float) node_ht_get_num_entries (tab) /
-        (float) node_ht_get_max_num_entries (tab);
+        (float) node_ht_get_num_buckets (tab);
 }
 
-/* Returns a pointer to the entry where the given key should go. */
-static inline node_ht_entry_t *
-node_ht_lookup (node_ht_t *tab, node_t key)
+/* Hashes the given key and computes the corresponding index for
+ * it. */
+static inline unsigned
+node_ht_get_hash_index (node_ht_t *tab, node_t key)
 {
-    unsigned i;
-    assert (key.low != key.high);
-    i = node_hash (key) % tab->max_num_entries;
-    while (1) {
-        assert (i < tab->max_num_entries);
-        if (node_ht_entry_is_unoccupied(&tab->store[i]))
-            return &tab->store[i];
-        else if (node_equal(tab->store[i].key, key))
-            return &tab->store[i];
-        i = (i + 1) % tab->max_num_entries;
-    }
+    return node_hash (key) % tab->num_buckets;
 }
 
 extern void
-node_ht_double_size (node_ht_t *tab);
+node_ht_double_num_buckets (node_ht_t *tab);
 
+/* Inserts a binding for the given key and value into the hash table.
+ * Existing values are not searched for, so calling this with the same
+ * key/value inputs multiple times will result in multiple hash table
+ * entries. */
 static inline void
 node_ht_insert (node_ht_t *tab,
-                node_ht_entry_t *pos,
                 node_t key,
                 raw_bdd_t val)
 {
-    assert (key.low != key.high);
-    if (node_ht_entry_is_unoccupied(pos)) {
-        pos->key = key;
-        pos->val = val;
-        tab->num_entries += 1;
-        if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
-            node_ht_double_size (tab);
-    }
-    else {
-        assert( node_equal(pos->key, key) );
-        pos->val = val;
-    }
+    unsigned b_idx;
+    if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
+        node_ht_double_num_buckets (tab);
+    b_idx = node_ht_get_hash_index (tab, key);
+    assert (node_ht_bucket_search (tab->buckets[b_idx], key) == NULL);
+
+    tab->buckets[b_idx] =
+        node_ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
+    tab->num_entries += 1;
+}
+
+/* Retrieves a pointer to the value bound to the specified key.  If no
+ * such entry exists, NULL is returned.  When any modifying hash table
+ * operations are performed upon the table, it is an error to
+ * dereference the pointer returned by this function. */
+static inline raw_bdd_t *
+node_ht_lookup (node_ht_t *tab, node_t key)
+{
+    unsigned b_idx;
+    node_ht_bucket_t *b;
+
+    b_idx = node_ht_get_hash_index (tab, key);
+    b = node_ht_bucket_search (tab->buckets[b_idx], key);
+    return b != NULL ? &b->value : NULL;
 }
 
 #endif /* NODE_HT_INCLUDED */
