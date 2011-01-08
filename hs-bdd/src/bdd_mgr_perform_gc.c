@@ -128,6 +128,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
                                   bdd_mgr_get_num_vars (mgr),
                                   bdd_mgr_get_num_allocated (mgr));
     dst_mgr.new_usr_id = mgr->new_usr_id;
+    dst_mgr.ite_cache_stats = mgr->ite_cache_stats;
     env.src_mgr = mgr;
     env.dst_mgr = &dst_mgr;
     env.stats = mk_bdd_gc_stats_t ();
