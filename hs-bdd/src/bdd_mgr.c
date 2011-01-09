@@ -86,6 +86,9 @@ void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
     if (mgr == NULL) return;
+
+    node_vec_destroy (&mgr->old_nodes_by_idx);
+
     bdd_rtu_ht_map_entries (mgr->raw_bdd_map, NULL, free_usr_bdds);
     bdd_ite_cache_destroy (&mgr->ite_cache);
 
