@@ -20,31 +20,21 @@
 
 struct bdd_mgr
 {
-    /* The number of variables. */
-    unsigned num_vars;
+    unsigned num_vars;                 /* number of variables */
 
-    /* A vector of nodes.  Node 0 is the F terminal and node 1 is the T
-     * terminal. */
-    node_vec_t nodes_by_idx;
-    /* A hash table from nodes to index.  This field and nodes_by_idx
-     * form a one-to-one mapping. */
-    node_ht_t idxs_by_node;
+    node_vec_t nodes_by_idx;           /* index -> node map */
+    node_ht_t idxs_by_node;            /* node -> index map */
+    /* 'nodes_by_idx' and 'idxs_by_node' form a one-to-one mapping */
 
-    /* A mapping from user-level BDD identifiers to raw BDD
-     * identifiers and reference counts. */
-    usr_bdd_ht_t *usr_bdd_map;
-    /* Contains the value of an unused user-level BDD id. */
-    unsigned new_usr_id;
-    /* A mapping from raw BDD identifiers to user-level BDD
-     * identifiers. */
-    bdd_rtu_ht_t *raw_bdd_map;
-    /* The number of unreferenced user-level BDD identifiers. */
-    unsigned num_unreferenced_bdds;
+    usr_bdd_ht_t *usr_bdd_map;         /* user BDD -> raw BDD/ref count map */
+    bdd_rtu_ht_t *raw_bdd_map;         /* raw BDD -> user BDD map */
+    /* 'usr_bdd_map' and 'raw_bdd_map' form a one-to-one mapping */
 
-    /* A cache used to memoize bdd_ite. */
-    bdd_ite_cache_t ite_cache;
-    /* Statistics about 'ite_cache'. */
-    bdd_cache_stats_t ite_cache_stats;
+    unsigned new_usr_id;               /* an unused user-level BDD id */
+    unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
+
+    bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
+    bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
 };
 
 /* Initializes the given manager. */
