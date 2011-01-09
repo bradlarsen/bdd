@@ -62,7 +62,6 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     mgr->num_unreferenced_bdds = 0;
     node_vec_create_with_capacity (&mgr->old_nodes_by_idx, capacity_hint);
-    node_ht_create_with_hint (&mgr->old_idxs_by_node, capacity_hint);
 
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);

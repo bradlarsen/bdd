@@ -96,18 +96,15 @@ gc_usr_bdd (void *env, bdd_t *key, usr_bdd_entry_t *val)
     }
 }
 
+/* FIXME: this is a poorly named function */
 static void
 swap_heaps (bdd_mgr_t *mgr)
 {
     node_vec_t tmp_vec;
-    node_ht_t tmp_ht;
 
     tmp_vec = mgr->old_nodes_by_idx;
-    tmp_ht = mgr->old_idxs_by_node;
     mgr->old_nodes_by_idx = mgr->nodes_by_idx;
-    mgr->old_idxs_by_node = mgr->idxs_by_node;
     mgr->nodes_by_idx = tmp_vec;
-    mgr->idxs_by_node = tmp_ht;
     node_vec_clear (&mgr->nodes_by_idx);
     node_ht_clear (&mgr->idxs_by_node);
 

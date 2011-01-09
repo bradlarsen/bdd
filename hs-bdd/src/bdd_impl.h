@@ -35,7 +35,6 @@ struct bdd_mgr
     /* the next three fields are garbage collection-related */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
     node_vec_t old_nodes_by_idx;       /* alternate index -> node map */
-    node_ht_t old_idxs_by_node;        /* alternate node -> index map */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
