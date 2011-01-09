@@ -10,6 +10,10 @@
 /***********************************************************************/
 typedef struct node_ht_bucket
 {
+    /* FIXME: make this leaner. */
+    /* A pointer into the node vector could be used instead of a
+     * node_t.  The only complication will be handling node vector
+     * resizing. */
     node_t key;
     raw_bdd_t value;
     struct node_ht_bucket *next;
