@@ -113,6 +113,7 @@ swap_heaps (bdd_mgr_t *mgr)
     assert (node_ht_get_num_entries (&mgr->idxs_by_node) == 0);
 }
 
+/* FIXME: enable garbage collection to occur before increasing vector size */
 void
 bdd_mgr_perform_gc (bdd_mgr_t *mgr)
 {

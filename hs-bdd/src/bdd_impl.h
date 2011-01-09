@@ -118,6 +118,7 @@ make_node (
         else {
             unsigned idx;
             idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
+            /* FIXME: eliminate implicit growing, make explicit here */
             node_vec_push_back (&mgr->nodes_by_idx, node);
             node_ht_insert (&mgr->idxs_by_node, node, (raw_bdd_t)idx);
             return (raw_bdd_t)idx;
