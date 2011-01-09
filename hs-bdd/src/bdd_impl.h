@@ -31,25 +31,15 @@ struct bdd_mgr
     /* 'usr_bdd_map' and 'raw_bdd_map' form a one-to-one mapping */
 
     unsigned new_usr_id;               /* an unused user-level BDD id */
+
+    /* the next three fields are garbage collection-related */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
+    node_vec_t old_nodes_by_idx;       /* alternate index -> node map */
+    node_ht_t old_idxs_by_node;        /* alternate node -> index map */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
 };
-
-/* Initializes the given manager. */
-extern void
-bdd_mgr_initialize_with_hint (
-    bdd_mgr_t *mgr,
-    unsigned num_vars,
-    unsigned capacity_hint
-    );
-
-/* De-initializes the given manager, except for freeing the memory
- * allocated to user-level BDDs.  The pointer to the manager itself is
- * not freed. */
-extern void
-bdd_mgr_deinitialize_partial (bdd_mgr_t *mgr);
 
 /* FIXME: inline is not C89 */
 /* Gets the node associated with the given BDD. */
@@ -66,6 +56,7 @@ intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     bdd_t *usr;
     usr_bdd_entry_t entry;
+    assert ((unsigned)raw < bdd_mgr_get_num_nodes (mgr));
     assert (bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw) == NULL);
     usr = (bdd_t *) checked_malloc (sizeof(bdd_t));
     usr->id = mgr->new_usr_id;
@@ -84,7 +75,9 @@ intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
 static inline bdd_t *
 raw_to_usr (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
-    bdd_t **res = bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw);
+    bdd_t **res;
+    assert ((unsigned)raw < bdd_mgr_get_num_nodes (mgr));
+    res = bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw);
     if (res == NULL)
         return intern_raw_bdd (mgr, raw);
     else
@@ -97,6 +90,7 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 {
     usr_bdd_entry_t *res = usr_bdd_ht_lookup (mgr->usr_bdd_map, usr);
     assert (res != NULL);
+    assert ((unsigned)res->raw_bdd < bdd_mgr_get_num_nodes (mgr));
     return res->raw_bdd;
 }
 

@@ -51,6 +51,13 @@ node_vec_get_capacity (node_vec_t *vec)
     return vec->capacity;
 }
 
+/* Eliminates all the entries in the vector. */
+static inline void
+node_vec_clear (node_vec_t *vec)
+{
+    vec->num_elems = 0;
+}
+
 /* Gets the element at the specified index.  The index must be less
  * than the number of used elements of the vector. */
 static inline node_t

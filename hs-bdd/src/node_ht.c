@@ -67,9 +67,7 @@ node_ht_double_num_buckets (node_ht_t *tab)
 
     tab->num_buckets *= 2;
     tab->buckets = (node_ht_bucket_t **)
-        checked_malloc (tab->num_buckets * sizeof(node_ht_bucket_t *));
-    for (i = 0; i < tab->num_buckets; i += 1)
-        tab->buckets[i] = NULL;
+        checked_calloc (tab->num_buckets, sizeof(node_ht_bucket_t *));
     tab->num_entries = 0;
     create_bucket_pool (&tab->pool, tab->num_buckets);
 

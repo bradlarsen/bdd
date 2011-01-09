@@ -1,92 +1,7 @@
+/* BDD garbage collection code. */
+
 #include "bdd_impl.h"
 #include "bdd_ht.h"
-
-/* FIXME: rewrite the garbage collection code.
- *
- * There are several ways it could be improved.  First, this collector
- * more-or-less follows Cheney's algorithm (1960), in which the heap
- * is split into two equal-sized components, with the active heap
- * switching sides at each collection.  I could improve performance a
- * bit by keeping these two heaps (i.e., node vector and node hash
- * table) within each manager.  Second, I could modify the hash tables
- * for user-level BDDs so that values can be deleted, so that the
- * entire table need not be copied.  Third, I need to better deal with
- * copying the terminal nodes.  Fourth, I should bring back the
- * manager invariant checking code to help smoke out bugs.  Finally, I
- * should rewrite this code so that it is obvious there are now
- * bugs---this will require better stating my invariants.
- */
-
-typedef struct
-{
-    bdd_mgr_t *src_mgr;         /* source */
-    bdd_mgr_t *dst_mgr;         /* destination */
-    bdd_gc_stats_t stats;       /* collection statistics */
-} bdd_gc_env_t;
-
-/* An important note: The source manager is trashed in the process of
- * garbage collection.  In order to avoid allocating additional memory
- * during collection, the node vector of the source manager is used to
- * map raw_bdd_t from the old manager to raw_bdd_t of the new manager.
- * This is done as follows: given a node n at index i in the source
- * manager, if n.var == UINT_MAX, then the node at index i was copied
- * to index n.low in the destination manager.
- */
-
-/* Copies the BDD subgraph with the given root from the source to the
- * destination manager, returning the new root. */
-static raw_bdd_t
-copy_bdd_rec (
-    bdd_gc_env_t *env,
-    raw_bdd_t old_root
-    )
-{
-    node_t old_root_node;
-    raw_bdd_t new_low, new_high, new_root;
-    old_root_node = raw_bdd_to_node (env->src_mgr, old_root);
-    if (old_root_node.var == UINT_MAX)
-        return old_root_node.low;
-    else {
-        env->stats.raw_bdd_num_copied += 1;
-        if (old_root == raw_bdd_true || old_root == raw_bdd_false) {
-            new_low = old_root_node.low;
-            new_high = old_root_node.high;
-        }
-        else {
-            new_low = copy_bdd_rec (env, old_root_node.low);
-            new_high = copy_bdd_rec (env, old_root_node.high);
-        }
-        assert (new_low != new_high);
-        new_root = make_node (env->dst_mgr,
-                              old_root_node.var, new_low, new_high);
-        old_root_node.var = UINT_MAX;
-        old_root_node.low = new_root;
-        node_vec_set (&env->src_mgr->nodes_by_idx, old_root, old_root_node);
-        assert (old_root != raw_bdd_false || old_root == new_root);
-        assert (old_root != raw_bdd_true || old_root == new_root);
-        return new_root;
-    }
-}
-
-static void
-copy_live_free_dead_usr_nodes (void *env, bdd_t *key, usr_bdd_entry_t *val)
-{
-    bdd_gc_env_t *gc_env = (bdd_gc_env_t *)env;
-    if (val->ref_cnt > 0) {
-        usr_bdd_entry_t new_entry;
-        gc_env->stats.usr_bdd_num_copied += 1;
-        new_entry.ref_cnt = val->ref_cnt;
-        new_entry.raw_bdd = copy_bdd_rec (gc_env, val->raw_bdd);
-        usr_bdd_ht_insert (gc_env->dst_mgr->usr_bdd_map, key, new_entry);
-        bdd_rtu_ht_insert (gc_env->dst_mgr->raw_bdd_map,
-                           new_entry.raw_bdd,
-                           key);
-    }
-    else {
-        gc_env->stats.usr_bdd_num_collected += 1;
-        checked_free (key);
-    }
-}
 
 void
 bdd_gc_stats_fprint (FILE *handle, bdd_gc_stats_t stats)
@@ -106,7 +21,7 @@ bdd_gc_stats_fprint (FILE *handle, bdd_gc_stats_t stats)
 }
 
 static bdd_gc_stats_t
-mk_bdd_gc_stats_t ()
+make_bdd_gc_stats_t ()
 {
     bdd_gc_stats_t res;
     res.usr_bdd_num_copied = 0;
@@ -116,44 +31,136 @@ mk_bdd_gc_stats_t ()
     return res;
 }
 
+
+
+
+typedef struct
+{
+    bdd_mgr_t *mgr;
+    bdd_gc_stats_t stats;
+} bdd_gc_env_t;
+
+/* Copies the BDD subgraph with the given root from the old BDD heap
+ * space into the new BDD heap space, returning the new index.  The
+ * entry for 'old_root' in the old heap is modified during this copy
+ * to indicate that copying has already been done: if the 'var' field
+ * of the node denoted by 'old_root' equals 'UINT_MAX', then the 'low'
+ * field contains the value of the new index. */
+static raw_bdd_t
+copy_bdd_rec (
+    bdd_gc_env_t *env,
+    raw_bdd_t old_root
+    )
+{
+    node_t old_root_node;
+    raw_bdd_t new_low, new_high, new_root;
+    old_root_node = node_vec_get (&env->mgr->old_nodes_by_idx, (unsigned) old_root);
+    if (old_root_node.var == UINT_MAX)
+        return old_root_node.low;
+    else {
+        env->stats.raw_bdd_num_copied += 1;
+        if (old_root == raw_bdd_true || old_root == raw_bdd_false) {
+            new_low = old_root_node.low;
+            new_high = old_root_node.high;
+        }
+        else {
+            new_low = copy_bdd_rec (env, old_root_node.low);
+            new_high = copy_bdd_rec (env, old_root_node.high);
+        }
+        assert (new_low != new_high);
+        new_root = make_node (env->mgr, old_root_node.var, new_low, new_high);
+        old_root_node.var = UINT_MAX;
+        old_root_node.low = new_root;
+        node_vec_set (&env->mgr->old_nodes_by_idx, old_root, old_root_node);
+        assert (old_root != raw_bdd_false || old_root == new_root);
+        assert (old_root != raw_bdd_true || old_root == new_root);
+        return new_root;
+    }
+}
+
+static void
+gc_usr_bdd (void *env, bdd_t *key, usr_bdd_entry_t *val)
+{
+    bdd_gc_env_t *gc_env = (bdd_gc_env_t *)env;
+    if (val->ref_cnt > 0) {
+        usr_bdd_entry_t new_entry;
+        gc_env->stats.usr_bdd_num_copied += 1;
+        new_entry.ref_cnt = val->ref_cnt;
+        new_entry.raw_bdd = copy_bdd_rec (gc_env, val->raw_bdd);
+        usr_bdd_ht_insert (gc_env->mgr->usr_bdd_map, key, new_entry);
+        bdd_rtu_ht_insert (gc_env->mgr->raw_bdd_map, new_entry.raw_bdd, key);
+    }
+    else {
+        gc_env->stats.usr_bdd_num_collected += 1;
+        checked_free (key);
+    }
+}
+
+static void
+swap_heaps (bdd_mgr_t *mgr)
+{
+    node_vec_t tmp_vec;
+    node_ht_t tmp_ht;
+
+    tmp_vec = mgr->old_nodes_by_idx;
+    tmp_ht = mgr->old_idxs_by_node;
+    mgr->old_nodes_by_idx = mgr->nodes_by_idx;
+    mgr->old_idxs_by_node = mgr->idxs_by_node;
+    mgr->nodes_by_idx = tmp_vec;
+    mgr->idxs_by_node = tmp_ht;
+    node_vec_clear (&mgr->nodes_by_idx);
+    node_ht_clear (&mgr->idxs_by_node);
+
+    assert (bdd_mgr_get_num_nodes (mgr) == 0);
+    assert (node_vec_get_num_elems (&mgr->nodes_by_idx) == 0);
+    assert (node_ht_get_num_entries (&mgr->idxs_by_node) == 0);
+}
+
 void
 bdd_mgr_perform_gc (bdd_mgr_t *mgr)
 {
-    bdd_gc_env_t env;
-    bdd_mgr_t dst_mgr;
+    usr_bdd_ht_t *old_usr_bdd_map;
     unsigned old_num_nodes;
+    bdd_gc_env_t env;
+    bdd_t *false_bdd, *true_bdd; /* FIXME: hack! */
+    usr_bdd_entry_t *false_bdd_entry, *true_bdd_entry; /* FIXME: hack! */
+
+    /* FIXME: hack! */
+    false_bdd = bdd_false (mgr);
+    assert (false_bdd != NULL);
+    true_bdd = bdd_true (mgr);
+    assert (true_bdd != NULL);
+    false_bdd_entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, false_bdd);
+    assert (false_bdd_entry != NULL);
+    true_bdd_entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, true_bdd);
+    assert (true_bdd_entry != NULL);
+    /* end hack */
 
     old_num_nodes = bdd_mgr_get_num_nodes (mgr);
-    bdd_mgr_initialize_with_hint (&dst_mgr,
-                                  bdd_mgr_get_num_vars (mgr),
-                                  bdd_mgr_get_num_allocated (mgr));
-    dst_mgr.new_usr_id = mgr->new_usr_id;
-    dst_mgr.ite_cache_stats = mgr->ite_cache_stats;
-    env.src_mgr = mgr;
-    env.dst_mgr = &dst_mgr;
-    env.stats = mk_bdd_gc_stats_t ();
 
-    {
-        /* Special case to make sure the terminal nodes are copied
-         * appropriately.  Without this, previously, sometimes the
-         * terminal nodes would be flipped during collection, which
-         * silently gave incorrect results.  This is a hack, and the
-         * GC code should be rewritten. */
-        bdd_t *false_bdd, *true_bdd;
-        usr_bdd_entry_t *false_bdd_entry, *true_bdd_entry;
-        false_bdd = bdd_false (mgr);
-        true_bdd = bdd_true (mgr);
-        false_bdd_entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, false_bdd);
-        true_bdd_entry = usr_bdd_ht_lookup (mgr->usr_bdd_map, true_bdd);
-        copy_live_free_dead_usr_nodes ((void *)&env, false_bdd, false_bdd_entry);
-        copy_live_free_dead_usr_nodes ((void *)&env, true_bdd, true_bdd_entry);
-    }
+    env.mgr = mgr;
+    env.stats = make_bdd_gc_stats_t ();
 
-    usr_bdd_ht_map_entries (mgr->usr_bdd_map,
-                            (void *)&env,
-                            copy_live_free_dead_usr_nodes);
-    bdd_mgr_deinitialize_partial (mgr);
-    *mgr = dst_mgr;
+    swap_heaps (mgr);
+    bdd_ite_cache_clear (&mgr->ite_cache);
+
+    /* FIXME: use a hash table that supports deletion to avoid copying */
+    old_usr_bdd_map = mgr->usr_bdd_map;
+    mgr->usr_bdd_map = usr_bdd_ht_create ();
+    bdd_rtu_ht_destroy (mgr->raw_bdd_map);
+    mgr->raw_bdd_map = bdd_rtu_ht_create ();
+    mgr->num_unreferenced_bdds = 0;
+
+    /* FIXME: hack! */
+    /* Without this, sometimes the terminal nodes are flipped during
+     * collection, which silently gives incorrect results. */
+    gc_usr_bdd ((void *)&env, false_bdd, false_bdd_entry);
+    gc_usr_bdd ((void *)&env, true_bdd, true_bdd_entry);
+    /* end hack */
+
+    usr_bdd_ht_map_entries (old_usr_bdd_map, (void *)&env, gc_usr_bdd);
+    usr_bdd_ht_destroy (old_usr_bdd_map);
+
     env.stats.raw_bdd_num_collected = old_num_nodes - env.stats.raw_bdd_num_copied;
     bdd_gc_stats_fprint (stderr, env.stats);
 }

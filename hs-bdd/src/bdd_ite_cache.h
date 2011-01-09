@@ -41,6 +41,10 @@ bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
 extern void
 bdd_ite_cache_destroy (bdd_ite_cache_t *tab);
 
+/* Empties the cache, i.e., assigns all entries back to the sentinel value. */
+extern void
+bdd_ite_cache_clear (bdd_ite_cache_t *tab);
+
 /* Gets the size of the cache. */
 static inline unsigned
 bdd_ite_cache_get_size (bdd_ite_cache_t *tab)

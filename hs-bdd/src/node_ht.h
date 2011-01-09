@@ -70,6 +70,17 @@ node_ht_get_hash_index (node_ht_t *tab, node_t key)
     return node_hash (key) % tab->num_buckets;
 }
 
+/* Eliminates all entries from the table. */
+static inline void
+node_ht_clear (node_ht_t *tab)
+{
+    unsigned i;
+    node_ht_bucket_pool_reset (&tab->pool);
+    tab->num_entries = 0;
+    for (i = 0; i < tab->num_buckets; i += 1)
+        tab->buckets[i] = NULL;
+}
+
 extern void
 node_ht_double_num_buckets (node_ht_t *tab);
 

@@ -51,6 +51,12 @@ node_ht_bucket_pool_malloc (node_ht_bucket_pool_t *pool)
     return &pool->entries[pool->num_entries - 1];
 }
 
+static inline void
+node_ht_bucket_pool_reset (node_ht_bucket_pool_t *pool)
+{
+    pool->num_entries = 0;
+}
+
 static inline node_ht_bucket_t *
 node_ht_bucket_create (node_ht_bucket_pool_t *pool,
                   node_t key,

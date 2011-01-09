@@ -216,11 +216,12 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 bdd_t *
 bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
 {
-    raw_bdd_t p_raw, t_raw, f_raw;
+    raw_bdd_t p_raw, t_raw, f_raw, res_raw;
     p_raw = usr_to_raw (mgr, p);
     t_raw = usr_to_raw (mgr, t);
     f_raw = usr_to_raw (mgr, f);
-    return raw_to_usr (mgr, raw_bdd_ite (mgr, p_raw, t_raw, f_raw));
+    res_raw = raw_bdd_ite (mgr, p_raw, t_raw, f_raw);
+    return raw_to_usr (mgr, res_raw);
 }
 
 /* This largely follows the pseudocode from Andersen's ``An
