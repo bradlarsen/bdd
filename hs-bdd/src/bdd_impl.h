@@ -34,6 +34,7 @@ struct bdd_mgr
 
     /* the next two fields are garbage collection-related */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
+    unsigned next_gc_at_node_count;    /* next node count to GC at */
     node_vec_t old_nodes_by_idx;       /* alternate index -> node map */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */

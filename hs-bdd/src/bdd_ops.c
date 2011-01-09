@@ -35,12 +35,23 @@ bdd_inc_ref (bdd_mgr_t *mgr, bdd_t *b)
     entry->ref_cnt += 1;
 }
 
-static float
-usr_bdd_dead_fraction (bdd_mgr_t *mgr)
+static inline unsigned
+unsigned_max (unsigned x, unsigned y)
 {
-    return
-        (float) mgr->num_unreferenced_bdds /
-        (float) usr_bdd_ht_get_num_entries (mgr->usr_bdd_map);
+    return x > y ? x : y;
+}
+
+static void
+perform_gc_if_needed (bdd_mgr_t *mgr)
+{
+    if (bdd_mgr_get_num_nodes (mgr) >= mgr->next_gc_at_node_count &&
+        mgr->num_unreferenced_bdds > 0)
+    {
+        bdd_mgr_perform_gc (mgr);
+        mgr->next_gc_at_node_count =
+            unsigned_max (bdd_mgr_get_num_nodes (mgr) * 2.0,
+                          mgr->next_gc_at_node_count);
+    }
 }
 
 void
@@ -53,9 +64,7 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
     if (entry->ref_cnt == 0)
         mgr->num_unreferenced_bdds += 1;
 
-    /* FIXME: what is a reasonable value for this fraction? */
-    if (usr_bdd_dead_fraction (mgr) >= 0.75f)
-        bdd_mgr_perform_gc (mgr);
+    perform_gc_if_needed (mgr);
 }
 
 bdd_t *

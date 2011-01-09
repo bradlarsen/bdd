@@ -48,6 +48,8 @@ make_cache_stats ()
 bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
+    /* FIXME: ensure that capacity_hint is a valid size. */
+    /* E.g., is 0 a valid hint size? */
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
 
     mgr->num_vars = num_vars;
@@ -61,6 +63,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     mgr->new_usr_id = 0;
 
     mgr->num_unreferenced_bdds = 0;
+    /* FIXME: use a more reasonable initial gc hint value */
+    mgr->next_gc_at_node_count = capacity_hint * 0.5;
     node_vec_create_with_capacity (&mgr->old_nodes_by_idx, capacity_hint);
 
     /* FIXME: use a more reasonable cache size */
