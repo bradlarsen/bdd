@@ -32,7 +32,7 @@ struct bdd_mgr
 
     unsigned new_usr_id;               /* an unused user-level BDD id */
 
-    /* the next three fields are garbage collection-related */
+    /* the next two fields are garbage collection-related */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
     node_vec_t old_nodes_by_idx;       /* alternate index -> node map */
 
