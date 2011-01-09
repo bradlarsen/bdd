@@ -139,6 +139,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     env.stats = make_bdd_gc_stats_t ();
 
     swap_heaps (mgr);
+    /* FIXME: patch up the cache instead of clearing it */
     bdd_ite_cache_clear (&mgr->ite_cache);
 
     /* FIXME: use a hash table that supports deletion to avoid copying */
