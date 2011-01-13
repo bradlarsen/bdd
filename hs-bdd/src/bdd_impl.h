@@ -23,8 +23,8 @@ struct bdd_mgr
     unsigned num_vars;                 /* number of variables */
 
     node_vec_t nodes_by_idx;           /* index -> node map */
-    node_ht_t idxs_by_node;            /* node -> index map */
-    /* 'nodes_by_idx' and 'idxs_by_node' form a one-to-one mapping */
+    node_ht_t *unique_table;           /* var -> (low, high) -> index map */
+    /* 'nodes_by_idx' and 'unique_table' form a one-to-one mapping */
 
     usr_bdd_ht_t *usr_bdd_map;         /* user BDD -> raw BDD/ref count map */
     bdd_rtu_ht_t *raw_bdd_map;         /* raw BDD -> user BDD map */
@@ -109,19 +109,19 @@ make_node (
         return low;
     else {
         raw_bdd_t *existing_bdd;
-        node_t node;
-        node.var = var;
-        node.low = low;
-        node.high = high;
-        existing_bdd = node_ht_lookup (&mgr->idxs_by_node, node);
+        existing_bdd = node_ht_lookup (&mgr->unique_table[var], low, high);
         if (existing_bdd != NULL)
             return *existing_bdd;
         else {
+            node_t node;
             unsigned idx;
+            node.var = var;
+            node.low = low;
+            node.high = high;
             idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
             /* FIXME: eliminate implicit growing, make explicit here */
             node_vec_push_back (&mgr->nodes_by_idx, node);
-            node_ht_insert (&mgr->idxs_by_node, node, (raw_bdd_t)idx);
+            node_ht_insert (&mgr->unique_table[var], low, high, (raw_bdd_t)idx);
             return (raw_bdd_t)idx;
         }
     }

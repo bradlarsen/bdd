@@ -101,16 +101,17 @@ static void
 swap_heaps (bdd_mgr_t *mgr)
 {
     node_vec_t tmp_vec;
+    unsigned i;
 
     tmp_vec = mgr->old_nodes_by_idx;
     mgr->old_nodes_by_idx = mgr->nodes_by_idx;
     mgr->nodes_by_idx = tmp_vec;
     node_vec_clear (&mgr->nodes_by_idx);
-    node_ht_clear (&mgr->idxs_by_node);
+    for (i = 0; i < mgr->num_vars + 1; i += 1)
+        node_ht_clear (&mgr->unique_table[i]);
 
     assert (bdd_mgr_get_num_nodes (mgr) == 0);
     assert (node_vec_get_num_elems (&mgr->nodes_by_idx) == 0);
-    assert (node_ht_get_num_entries (&mgr->idxs_by_node) == 0);
 }
 
 /* FIXME: enable garbage collection to occur before increasing vector size */

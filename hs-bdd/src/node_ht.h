@@ -8,6 +8,7 @@
 #include <stdlib.h>
 
 #include "node.h"
+#include "hash_pair.h"
 #include "node_ht_bucket.h"
 
 #define NODE_HT_MAX_LOAD 3.00f
@@ -65,9 +66,9 @@ node_ht_get_load (node_ht_t *tab)
 /* Hashes the given key and computes the corresponding index for
  * it. */
 static inline unsigned
-node_ht_get_hash_index (node_ht_t *tab, node_t key)
+node_ht_get_hash_index (node_ht_t *tab, raw_bdd_t key_low, raw_bdd_t key_high)
 {
-    return node_hash (key) % tab->num_buckets;
+    return hash_pair (key_low, key_high) % 999999937u % tab->num_buckets;
 }
 
 /* Eliminates all entries from the table. */
@@ -90,17 +91,22 @@ node_ht_double_num_buckets (node_ht_t *tab);
  * entries. */
 static inline void
 node_ht_insert (node_ht_t *tab,
-                node_t key,
+                raw_bdd_t key_low,
+                raw_bdd_t key_high,
                 raw_bdd_t val)
 {
     unsigned b_idx;
     if (node_ht_get_load(tab) >= NODE_HT_MAX_LOAD)
         node_ht_double_num_buckets (tab);
-    b_idx = node_ht_get_hash_index (tab, key);
-    assert (node_ht_bucket_search (tab->buckets[b_idx], key) == NULL);
+    b_idx = node_ht_get_hash_index (tab, key_low, key_high);
+    assert (node_ht_bucket_search (tab->buckets[b_idx], key_low, key_high) == NULL);
 
     tab->buckets[b_idx] =
-        node_ht_bucket_create (&tab->pool, key, val, tab->buckets[b_idx]);
+        node_ht_bucket_create (&tab->pool,
+                               key_low,
+                               key_high,
+                               val,
+                               tab->buckets[b_idx]);
     tab->num_entries += 1;
 }
 
@@ -109,13 +115,13 @@ node_ht_insert (node_ht_t *tab,
  * operations are performed upon the table, it is an error to
  * dereference the pointer returned by this function. */
 static inline raw_bdd_t *
-node_ht_lookup (node_ht_t *tab, node_t key)
+node_ht_lookup (node_ht_t *tab, raw_bdd_t key_low, raw_bdd_t key_high)
 {
     unsigned b_idx;
     node_ht_bucket_t *b;
 
-    b_idx = node_ht_get_hash_index (tab, key);
-    b = node_ht_bucket_search (tab->buckets[b_idx], key);
+    b_idx = node_ht_get_hash_index (tab, key_low, key_high);
+    b = node_ht_bucket_search (tab->buckets[b_idx], key_low, key_high);
     return b != NULL ? &b->value : NULL;
 }
 

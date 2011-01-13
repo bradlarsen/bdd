@@ -73,7 +73,7 @@ node_ht_double_num_buckets (node_ht_t *tab)
 
     for (i = 0; i < old_num_buckets; i += 1) {
         for (p = old_buckets[i]; p != NULL; p = p->next) {
-            node_ht_insert (tab, p->key, p->value);
+            node_ht_insert (tab, p->key_low, p->key_high, p->value);
         }
     }
     checked_free (old_buckets);

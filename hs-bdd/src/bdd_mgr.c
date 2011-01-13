@@ -45,9 +45,18 @@ make_cache_stats ()
     return res;
 }
 
+static inline unsigned
+umax (unsigned x, unsigned y)
+{
+    return x > y ? x : y;
+}
+
 bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
+    const unsigned table_capacity = umax (32, capacity_hint / num_vars);
+    unsigned i;
+
     /* FIXME: ensure that capacity_hint is a valid size. */
     /* E.g., is 0 a valid hint size? */
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
@@ -55,7 +64,10 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     mgr->num_vars = num_vars;
 
     node_vec_create_with_capacity (&mgr->nodes_by_idx, capacity_hint);
-    node_ht_create_with_hint (&mgr->idxs_by_node, capacity_hint);
+    mgr->unique_table = (node_ht_t *)
+        checked_malloc ((num_vars + 1) * sizeof(node_ht_t));
+    for (i = 0; i < num_vars + 1; i += 1)
+        node_ht_create_with_hint (&mgr->unique_table[i], table_capacity);
 
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
@@ -89,6 +101,8 @@ free_usr_bdds (void *env, raw_bdd_t raw, bdd_t **usr)
 void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
+    unsigned i;
+
     if (mgr == NULL) return;
 
     node_vec_destroy (&mgr->old_nodes_by_idx);
@@ -98,8 +112,10 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
 
     bdd_rtu_ht_destroy (mgr->raw_bdd_map);
     usr_bdd_ht_destroy (mgr->usr_bdd_map);
-    
-    node_ht_destroy (&mgr->idxs_by_node);
+
+    for (i = 0; i < mgr->num_vars + 1; i += 1)
+        node_ht_destroy (&mgr->unique_table[i]);
+    checked_free (mgr->unique_table);
     node_vec_destroy (&mgr->nodes_by_idx);
     checked_free (mgr);
 }

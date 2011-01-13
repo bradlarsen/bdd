@@ -10,11 +10,8 @@
 /***********************************************************************/
 typedef struct node_ht_bucket
 {
-    /* FIXME: make this leaner. */
-    /* A pointer into the node vector could be used instead of a
-     * node_t.  The only complication will be handling node vector
-     * resizing. */
-    node_t key;
+    raw_bdd_t key_low;
+    raw_bdd_t key_high;
     raw_bdd_t value;
     struct node_ht_bucket *next;
 } node_ht_bucket_t;
@@ -63,12 +60,14 @@ node_ht_bucket_pool_reset (node_ht_bucket_pool_t *pool)
 
 static inline node_ht_bucket_t *
 node_ht_bucket_create (node_ht_bucket_pool_t *pool,
-                  node_t key,
-                  raw_bdd_t value,
-                  node_ht_bucket_t *next)
+                       raw_bdd_t key_low,
+                       raw_bdd_t key_high,
+                       raw_bdd_t value,
+                       node_ht_bucket_t *next)
 {
     node_ht_bucket_t *bucket = node_ht_bucket_pool_malloc (pool);
-    bucket->key = key;
+    bucket->key_low = key_low;
+    bucket->key_high = key_high;
     bucket->value = value;
     bucket->next = next;
     return bucket;
@@ -78,7 +77,9 @@ node_ht_bucket_create (node_ht_bucket_pool_t *pool,
  * pointer to the bucket with the matching key is returned if one
  * exists, and NULL returned otherwise. */
 static inline node_ht_bucket_t *
-node_ht_bucket_search (node_ht_bucket_t *bucket, node_t key)
+node_ht_bucket_search (node_ht_bucket_t *bucket,
+                       raw_bdd_t key_low,
+                       raw_bdd_t key_high)
 {
     /* TODO: improve the performance of this hash table.
      * Profiling reveals that some ~50% of the total runtime of the
@@ -87,7 +88,7 @@ node_ht_bucket_search (node_ht_bucket_t *bucket, node_t key)
      * would work better. */
     node_ht_bucket_t *p = bucket;
     while (p != NULL) {
-        if (node_equal(p->key, key))
+        if (key_low == p->key_low && key_high == p->key_high)
             break;
         p = p->next;
     }
