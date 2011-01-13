@@ -1,4 +1,4 @@
-#include "bdd_impl.h"
+#include "bdd_mgr.h"
 
 bdd_t *
 bdd_false (bdd_mgr_t *mgr)
@@ -21,17 +21,19 @@ bdd_mgr_create (unsigned num_vars)
 static void
 add_false_node (bdd_mgr_t *mgr)
 {
-    raw_bdd_t usr_false;
-    usr_false = make_node (mgr, mgr->num_vars, raw_bdd_true, raw_bdd_false);
-    bdd_inc_ref (mgr, intern_raw_bdd (mgr, usr_false));
+    mgr->nodes[0].var = mgr->num_vars;
+    mgr->nodes[0].low = 1;
+    mgr->nodes[0].high = 0;
+    mgr->num_nodes += 1;
 }
 
 static void
 add_true_node (bdd_mgr_t *mgr)
 {
-    raw_bdd_t usr_true;
-    usr_true = make_node (mgr, mgr->num_vars, raw_bdd_false, raw_bdd_true);
-    bdd_inc_ref (mgr, intern_raw_bdd (mgr, usr_true));
+    mgr->nodes[1].var = mgr->num_vars;
+    mgr->nodes[1].low = 0;
+    mgr->nodes[1].high = 1;
+    mgr->num_nodes += 1;
 }
 
 static bdd_cache_stats_t
@@ -45,29 +47,29 @@ make_cache_stats ()
     return res;
 }
 
-static inline unsigned
-umax (unsigned x, unsigned y)
+static unsigned
+up_to_next_power_of_two (unsigned n)
 {
-    return x > y ? x : y;
+    unsigned i;
+    for (i = 1; i <= n; i *= 2) {}
+    return i;
 }
 
 bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
-    const unsigned table_capacity = umax (32, capacity_hint / num_vars);
     unsigned i;
-
-    /* FIXME: ensure that capacity_hint is a valid size. */
-    /* E.g., is 0 a valid hint size? */
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
 
     mgr->num_vars = num_vars;
 
-    node_vec_create_with_capacity (&mgr->nodes_by_idx, capacity_hint);
-    mgr->unique_table = (node_ht_t *)
-        checked_malloc ((num_vars + 1) * sizeof(node_ht_t));
-    for (i = 0; i < num_vars + 1; i += 1)
-        node_ht_create_with_hint (&mgr->unique_table[i], table_capacity);
+    mgr->capacity = up_to_next_power_of_two (capacity_hint);
+    mgr->num_nodes = 0;
+    mgr->nodes = (node_t *) checked_malloc (mgr->capacity * sizeof(node_t));
+    for (i = 0; i < mgr->capacity; i += 1)
+        mgr->nodes[i].var = UINT_MAX;
+
+    mgr->hash_histo = (unsigned *) checked_calloc (mgr->capacity, sizeof(unsigned));
 
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
@@ -76,8 +78,7 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     mgr->num_unreferenced_bdds = 0;
     /* FIXME: use a more reasonable initial gc hint value */
-    mgr->next_gc_at_node_count = capacity_hint * 0.5;
-    node_vec_create_with_capacity (&mgr->old_nodes_by_idx, capacity_hint);
+    mgr->next_gc_at_node_count = mgr->capacity * 0.5;
 
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
@@ -98,14 +99,27 @@ free_usr_bdds (void *env, raw_bdd_t raw, bdd_t **usr)
     checked_free (*usr);
 }
 
+static void
+fprint_hash_histo (FILE *handle, bdd_mgr_t *mgr)
+{
+    unsigned i;
+    unsigned total;
+
+    total = 0;
+    for (i = 0; i < mgr->capacity; i += 1)
+        total += mgr->hash_histo[i];
+
+    fprintf (handle, "histogram of linear probe counts:\n");
+    for (i = 0; i < mgr->capacity; i += 1)
+        if (mgr->hash_histo[i] > 0)
+            fprintf (handle, "  %u: %u (%.1f%%)\n", i, mgr->hash_histo[i],
+                     (float)mgr->hash_histo[i] / (float)total * 100.0f);
+}
+
 void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
-    unsigned i;
-
     if (mgr == NULL) return;
-
-    node_vec_destroy (&mgr->old_nodes_by_idx);
 
     bdd_rtu_ht_map_entries (mgr->raw_bdd_map, NULL, free_usr_bdds);
     bdd_ite_cache_destroy (&mgr->ite_cache);
@@ -113,10 +127,9 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
     bdd_rtu_ht_destroy (mgr->raw_bdd_map);
     usr_bdd_ht_destroy (mgr->usr_bdd_map);
 
-    for (i = 0; i < mgr->num_vars + 1; i += 1)
-        node_ht_destroy (&mgr->unique_table[i]);
-    checked_free (mgr->unique_table);
-    node_vec_destroy (&mgr->nodes_by_idx);
+    fprint_hash_histo (stderr, mgr);
+    checked_free (mgr->hash_histo);
+    checked_free (mgr->nodes);
     checked_free (mgr);
 }
 
@@ -129,13 +142,13 @@ bdd_mgr_get_num_vars (bdd_mgr_t *mgr)
 unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr)
 {
-    return node_vec_get_num_elems(&mgr->nodes_by_idx);
+    return mgr->num_nodes;
 }
 
 unsigned
 bdd_mgr_get_num_allocated (bdd_mgr_t *mgr)
 {
-    return node_vec_get_capacity (&mgr->nodes_by_idx);
+    return mgr->capacity;
 }
 
 bdd_cache_stats_t

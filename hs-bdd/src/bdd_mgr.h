@@ -1,5 +1,5 @@
-#ifndef BDD_IMPL_INCLUDED
-#define BDD_IMPL_INCLUDED
+#ifndef BDD_MGR_INCLUDED
+#define BDD_MGR_INCLUDED
 
 #include <assert.h>
 #include <limits.h>
@@ -7,24 +7,32 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bddlib.h"
-#include "bdd_rtu_ht.h"
-#include "bdd_ite_cache.h"
-#include "memory.h"
-#include "node.h"
-#include "node_vec.h"
-#include "node_ht.h"
-#include "usr_bdd_ht.h"
 #include "bdd.h"
+#include "bdd_ite_cache.h"
+#include "bdd_rtu_ht.h"
+#include "bddlib.h"
+#include "boolean.h"
+#include "hash_pair.h"
+#include "memory.h"
 #include "raw_bdd.h"
+#include "usr_bdd_ht.h"
+
+typedef struct
+{
+    unsigned var;             /* the variable index of the node */
+    raw_bdd_t low;            /* the value if the variable is false */
+    raw_bdd_t high;           /* the value if the variable is true */
+} node_t;
 
 struct bdd_mgr
 {
     unsigned num_vars;                 /* number of variables */
 
-    node_vec_t nodes_by_idx;           /* index -> node map */
-    node_ht_t *unique_table;           /* var -> (low, high) -> index map */
-    /* 'nodes_by_idx' and 'unique_table' form a one-to-one mapping */
+    unsigned capacity;                 /* number of allocated nodes */
+    unsigned num_nodes;                /* number of used nodes */
+    node_t *nodes;                     /* all the nodes */
+
+    unsigned *hash_histo;
 
     usr_bdd_ht_t *usr_bdd_map;         /* user BDD -> raw BDD/ref count map */
     bdd_rtu_ht_t *raw_bdd_map;         /* raw BDD -> user BDD map */
@@ -35,18 +43,15 @@ struct bdd_mgr
     /* the next two fields are garbage collection-related */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
     unsigned next_gc_at_node_count;    /* next node count to GC at */
-    node_vec_t old_nodes_by_idx;       /* alternate index -> node map */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
 };
 
-/* FIXME: inline is not C89 */
-/* Gets the node associated with the given BDD. */
-static inline node_t
-raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
+static inline boolean
+raw_bdd_is_valid (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
-    return node_vec_get (&mgr->nodes_by_idx, (unsigned) b);
+    return (0 <= raw && (unsigned)raw < mgr->capacity);
 }
 
 /* Interns the raw BDD index, mapping it to a new user-level BDD
@@ -56,7 +61,7 @@ intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     bdd_t *usr;
     usr_bdd_entry_t entry;
-    assert ((unsigned)raw < bdd_mgr_get_num_nodes (mgr));
+    assert (raw_bdd_is_valid (mgr, raw));
     assert (bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw) == NULL);
     usr = (bdd_t *) checked_malloc (sizeof(bdd_t));
     usr->id = mgr->new_usr_id;
@@ -76,7 +81,7 @@ static inline bdd_t *
 raw_to_usr (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     bdd_t **res;
-    assert ((unsigned)raw < bdd_mgr_get_num_nodes (mgr));
+    assert (raw_bdd_is_valid (mgr, raw));
     res = bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw);
     if (res == NULL)
         return intern_raw_bdd (mgr, raw);
@@ -90,8 +95,28 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 {
     usr_bdd_entry_t *res = usr_bdd_ht_lookup (mgr->usr_bdd_map, usr);
     assert (res != NULL);
-    assert ((unsigned)res->raw_bdd < bdd_mgr_get_num_nodes (mgr));
+    assert (raw_bdd_is_valid (mgr, res->raw_bdd));
     return res->raw_bdd;
+}
+
+/* Gets the node associated with the given BDD. */
+static inline node_t
+raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
+{
+    assert (raw_bdd_is_valid (mgr, b));
+    return mgr->nodes[(unsigned) b];
+}
+
+static inline boolean
+node_is_empty (node_t n)
+{
+    return n.var == UINT_MAX;
+}
+
+static inline unsigned
+node_hash (unsigned var, raw_bdd_t low, raw_bdd_t high)
+{
+    return hash_pair(var, hash_pair(low, high)) % 999999937;
 }
 
 /* Retrieves the BDD of the node equal to the node with the given
@@ -108,23 +133,30 @@ make_node (
     if (low == high)
         return low;
     else {
-        raw_bdd_t *existing_bdd;
-        existing_bdd = node_ht_lookup (&mgr->unique_table[var], low, high);
-        if (existing_bdd != NULL)
-            return *existing_bdd;
-        else {
-            node_t node;
-            unsigned idx;
-            node.var = var;
-            node.low = low;
-            node.high = high;
-            idx = node_vec_get_num_elems (&mgr->nodes_by_idx);
-            /* FIXME: eliminate implicit growing, make explicit here */
-            node_vec_push_back (&mgr->nodes_by_idx, node);
-            node_ht_insert (&mgr->unique_table[var], low, high, (raw_bdd_t)idx);
-            return (raw_bdd_t)idx;
+        /* try to find existing node */
+        unsigned loop_count;
+        unsigned idx = node_hash (var, low, high) % mgr->capacity;
+        loop_count = 0;
+        while (!node_is_empty(mgr->nodes[idx])) {
+            node_t n = mgr->nodes[idx];
+            loop_count += 1;
+            if (n.var == var && n.low == low && n.high == high) {
+                mgr->hash_histo[loop_count] += 1;
+                return (raw_bdd_t)idx;
+            }
+            idx = (idx + 1) % mgr->capacity;
         }
+        mgr->hash_histo[loop_count] += 1;
+
+        /* FIXME: support automatically growing the node table */
+        /* allocate a new node */
+        assert (mgr->num_nodes < 0.75 * mgr->capacity);
+        mgr->nodes[idx].var = var;
+        mgr->nodes[idx].low = low;
+        mgr->nodes[idx].high = high;
+        mgr->num_nodes += 1;
+        return (raw_bdd_t)idx;
     }
 }
 
-#endif /* BDD_IMPL_INCLUDED */
+#endif /* BDD_MGR_INCLUDED */

@@ -1,4 +1,4 @@
-#include "bdd_impl.h"
+#include "bdd_mgr.h"
 #include "bdd_ite_cache.h"
 #include "bdd_double_ht.h"
 #include "bdd_ht.h"
@@ -165,9 +165,9 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 {
     bdd_ite_cache_entry_t *cache_val;
 
-    assert (0 <= p && (unsigned) p < bdd_mgr_get_num_nodes(mgr));
-    assert (0 <= t && (unsigned) t < bdd_mgr_get_num_nodes(mgr));
-    assert (0 <= f && (unsigned) f < bdd_mgr_get_num_nodes(mgr));
+    assert (raw_bdd_is_valid (mgr, p));
+    assert (raw_bdd_is_valid (mgr, t));
+    assert (raw_bdd_is_valid (mgr, f));
 
     /* put arguments into ``standard triple'' form */
     /* FIXME: there are many more cases that require complement edges */
