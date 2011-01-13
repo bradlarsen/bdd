@@ -68,7 +68,9 @@ node_ht_get_load (node_ht_t *tab)
 static inline unsigned
 node_ht_get_hash_index (node_ht_t *tab, raw_bdd_t key_low, raw_bdd_t key_high)
 {
-    return hash_pair (key_low, key_high) % 999999937u % tab->num_buckets;
+    unsigned idx = hash_pair (key_low, key_high) % 999999937u % tab->num_buckets;
+    assert (idx < tab->num_buckets);
+    return idx;
 }
 
 /* Eliminates all entries from the table. */
