@@ -26,7 +26,7 @@ create_node_array (unsigned capacity)
     fprintf (stderr, "*** creating node array with size %u\n", capacity);
     nodes = (node_t *) checked_malloc (capacity * sizeof(node_t));
     for (i = 0; i < capacity; i += 1)
-        nodes[i].var = UINT_MAX;
+        nodes[i].var = INT_MAX;
     return nodes;
 }
 
@@ -113,6 +113,8 @@ patch_bdd_indirection (
     )
 {
     bdd_t **usr_bdd;
+    assert (!node_is_empty (mgr->nodes[new_i]));
+    assert (!node_is_deleted (mgr->nodes[new_i]));
     usr_bdd = bdd_rtu_ht_lookup (old_raw_bdd_map, old_i);
     if (usr_bdd != NULL) {
         usr_bdd_entry_t new_entry;
@@ -129,13 +131,13 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
     const unsigned old_capacity = mgr->capacity;
     bdd_rtu_ht_t *old_raw_bdd_map;
     usr_bdd_ht_t *old_usr_bdd_map;
+#ifndef NDEBUG
     unsigned *old_hash_histo;
+#endif
     node_t *old_nodes;
     unsigned i;
 
     mgr->capacity = up_to_next_power_of_two (new_capacity_hint);
-    fprintf (stderr, "*** resize to %u\n", mgr->capacity);
-
     old_raw_bdd_map = mgr->raw_bdd_map;
     old_usr_bdd_map = mgr->usr_bdd_map;
     old_nodes = mgr->nodes;
@@ -143,14 +145,17 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
 
     mgr->nodes = create_node_array (mgr->capacity);
     mgr->num_nodes = 0;
+    mgr->num_deleted_nodes = 0;
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
 
+#ifndef NDEBUG
     old_hash_histo = mgr->hash_histo;
     mgr->hash_histo = (unsigned *)
         checked_calloc (mgr->capacity, sizeof(unsigned));
     memcpy (mgr->hash_histo, old_hash_histo, old_capacity * sizeof(unsigned));
     checked_free (old_hash_histo);
+#endif
 
     add_false_node (mgr);
     add_true_node (mgr);
@@ -166,7 +171,7 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
                            raw_bdd_true);
 
     for (i = 2; i < old_capacity; i += 1)
-        if (!node_is_empty(old_nodes[i])) {
+        if (!node_is_empty(old_nodes[i]) && !node_is_deleted(old_nodes[i])) {
             raw_bdd_t new_i = copy_bdd_rec (mgr, old_nodes, i);
             patch_bdd_indirection (mgr,
                                    old_raw_bdd_map,
@@ -226,15 +231,22 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 }
 
 static void
-_bdd_raise_out_of_space (bdd_mgr_t *mgr)
+_bdd_raise_out_of_nodes (bdd_mgr_t *mgr)
 {
-    longjmp (mgr->jump_context, 1);
+    longjmp (mgr->out_of_nodes_cxt, 1);
+}
+
+static inline unsigned
+node_hash (unsigned var, raw_bdd_t low, raw_bdd_t high)
+{
+    return
+        hash_unsigned_pair (var, hash_unsigned_pair(low, high));
 }
 
 raw_bdd_t
 _bdd_make_node (
     bdd_mgr_t *mgr,
-    unsigned var,
+    int var,
     raw_bdd_t low,
     raw_bdd_t high
     )
@@ -244,22 +256,36 @@ _bdd_make_node (
     else {
         /* try to find existing node */
         unsigned loop_count;
-        unsigned idx = node_hash (var, low, high) % mgr->capacity;
+        int free_idx;
+        unsigned idx;
+        free_idx = -1;
+        idx = node_hash (var, low, high) & (mgr->capacity - 1);
         loop_count = 0;
-        while (!node_is_empty(mgr->nodes[idx])) {
+        while (!node_is_empty (mgr->nodes[idx])) {
             node_t n = mgr->nodes[idx];
             loop_count += 1;
+            if (free_idx == -1 && node_is_deleted (mgr->nodes[idx]))
+                free_idx = idx;
             if (n.var == var && n.low == low && n.high == high) {
+#ifndef NDEBUG
                 mgr->hash_histo[loop_count] += 1;
+#endif
                 return idx;
             }
-            idx = (idx + 1) % mgr->capacity;
+            idx = (idx + 1) & (mgr->capacity - 1);
         }
+#ifndef NDEBUG
         mgr->hash_histo[loop_count] += 1;
+#endif
 
-        /* add a new node; grow if needed */
+        /* try to get more space */
         if (mgr->num_nodes >= 0.75 * mgr->capacity)
-            _bdd_raise_out_of_space (mgr);
+            _bdd_raise_out_of_nodes (mgr);
+        else if (free_idx != -1) {
+            /* reuse a deleted node */
+            mgr->num_deleted_nodes -= 1;
+            idx = free_idx;
+        }
 
         assert (mgr->num_nodes < 0.75 * mgr->capacity);
         mgr->nodes[idx].var = var;
@@ -277,12 +303,15 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     mgr->num_vars = num_vars;
 
-    mgr->capacity = up_to_next_power_of_two (capacity_hint);
+    mgr->capacity = up_to_next_power_of_two (capacity_hint + 32);
     mgr->num_nodes = 0;
+    mgr->num_deleted_nodes = 0;
     mgr->nodes = create_node_array (mgr->capacity);
 
+#ifndef NDEBUG
     mgr->hash_histo = (unsigned *)
         checked_calloc (mgr->capacity, sizeof(unsigned));
+#endif
 
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
@@ -312,6 +341,7 @@ free_usr_bdds (void *env, raw_bdd_t raw, bdd_t **usr)
     checked_free (*usr);
 }
 
+#ifndef NDEBUG
 static void
 fprint_hash_histo (FILE *handle, bdd_mgr_t *mgr)
 {
@@ -355,6 +385,7 @@ fprint_hash_histo (FILE *handle, bdd_mgr_t *mgr)
         fputc ('\n', handle);
     }
 }
+#endif
 
 void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
@@ -367,8 +398,10 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
     bdd_rtu_ht_destroy (mgr->raw_bdd_map);
     usr_bdd_ht_destroy (mgr->usr_bdd_map);
 
+#ifndef NDEBUG
     fprint_hash_histo (stderr, mgr);
     checked_free (mgr->hash_histo);
+#endif
     checked_free (mgr->nodes);
     checked_free (mgr);
 }
@@ -415,4 +448,27 @@ bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats)
     fprintf (handle, "%u/%u hits (%.0f%%), %u/%u replacements (%.0f%%)",
              stats.num_hits, stats.num_lookups, hit_p,
              stats.num_replacements, stats.num_inserts, repl_p);
+}
+
+/* FIXME: try garbage collection before resizing */
+void
+_bdd_mgr_get_more_nodes (bdd_mgr_t *mgr)
+{
+    /* if (mgr->num_unreferenced_bdds > 0) { */
+    /*     bdd_gc_stats_t stats = bdd_mgr_perform_gc (mgr); */
+    /*     const float load = (float) mgr->num_nodes / (float) mgr->capacity; */
+    /*     const float delete_load = */
+    /*         (float) mgr->num_deleted_nodes / (float) mgr->capacity; */
+    /*     fprintf (stderr, "!!!! delete load is %f (%u/%u)\n", delete_load, mgr->num_deleted_nodes, mgr->capacity); */
+    /*     if (load > 0.75) { */
+    /*         fprintf (stderr, "!!! GC didn't free enough nodes\n"); */
+    /*         bdd_mgr_resize (mgr, mgr->capacity * 2); */
+    /*     } */
+    /*     else if (delete_load > 0.25) { */
+    /*         fprintf (stderr, "!!! too many dead nodes\n"); */
+    /*         bdd_mgr_resize (mgr, mgr->capacity * 2); */
+    /*     } */
+    /* } */
+    /* else */
+        bdd_mgr_resize (mgr, mgr->capacity * 2);
 }

@@ -83,7 +83,7 @@ bdd_gc_stats_fprint (FILE *handle, bdd_gc_stats_t stats);
 /* Performs a garbage collection on the graph represented by the
  * manager. BDDs that are not referenced directly or indirectly will
  * be freed. */
-extern void
+extern bdd_gc_stats_t
 bdd_mgr_perform_gc (bdd_mgr_t *mgr);
 
 /**********************************************************************/

@@ -21,7 +21,7 @@
 
 typedef struct
 {
-    unsigned var;                      /* variable index of the node */
+    int var;                           /* variable index of the node */
     raw_bdd_t low;                     /* value if the variable is false */
     raw_bdd_t high;                    /* value if the variable is true */
 } node_t;
@@ -32,9 +32,12 @@ struct bdd_mgr
 
     unsigned capacity;                 /* number of allocated nodes */
     unsigned num_nodes;                /* number of used nodes */
+    unsigned num_deleted_nodes;        /* number of deleted nodes */
     node_t *nodes;                     /* all the nodes */
 
+#ifndef NDEBUG
     unsigned *hash_histo;
+#endif
 
     usr_bdd_ht_t *usr_bdd_map;         /* user BDD -> raw BDD/ref count map */
     bdd_rtu_ht_t *raw_bdd_map;         /* raw BDD -> user BDD map */
@@ -43,19 +46,31 @@ struct bdd_mgr
     unsigned new_usr_id;               /* an unused user-level BDD id */
 
     /* the next two fields are garbage collection-related */
-    unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs*/
     unsigned next_gc_at_node_count;    /* next node count to GC at */
+    unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
 
-    jmp_buf jump_context;              /* to handle GC/resize/reorder */
+    jmp_buf out_of_nodes_cxt;          /* to handle GC/resize/reorder */
 };
 
 static inline boolean
 node_is_empty (node_t n)
 {
-    return n.var == UINT_MAX;
+    return n.var == INT_MAX;
+}
+
+static inline boolean
+node_is_deleted (node_t n)
+{
+    return n.var == INT_MAX - 1;
+}
+
+static inline void
+delete_node (node_t *n)
+{
+    n->var = INT_MAX - 1;
 }
 
 static inline boolean
@@ -92,13 +107,6 @@ raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
     return mgr->nodes[b];
 }
 
-static inline unsigned
-node_hash (unsigned var, raw_bdd_t low, raw_bdd_t high)
-{
-    return
-        hash_unsigned_pair (var, hash_unsigned_pair(low, high)) % 999999937u;
-}
-
 /* FIXME: better document what's going on with exceptions */
 /* Retrieves the BDD of the node equal to the node with the given
  * components if one exists, otherwise creates and returns a new BDD.
@@ -107,9 +115,15 @@ node_hash (unsigned var, raw_bdd_t low, raw_bdd_t high)
 extern raw_bdd_t
 _bdd_make_node (
     bdd_mgr_t *mgr,
-    unsigned var,
+    int var,
     raw_bdd_t low,
     raw_bdd_t high
     );
+
+/* Attempts to acquire more nodes for the manager first by performing
+ * garbage collection, and then by doubling capacity if garbage
+ * collection is insufficient. */
+extern void
+_bdd_mgr_get_more_nodes (bdd_mgr_t *mgr);
 
 #endif /* BDD_MGR_INCLUDED */

@@ -64,6 +64,7 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
     if (entry->ref_cnt == 0)
         mgr->num_unreferenced_bdds += 1;
 
+    /* FIXME: eliminate auto-gc on dereference? */
     perform_gc_if_needed (mgr);
 }
 
@@ -72,9 +73,9 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
     raw_bdd_t res;
     assert (i < mgr->num_vars);
-    while (setjmp (mgr->jump_context)) {
+    while (setjmp (mgr->out_of_nodes_cxt)) {
         fprintf (stderr, "!!! resizing in bdd_ith_var\n");
-        bdd_mgr_resize (mgr, mgr->capacity * 2);
+        _bdd_mgr_get_more_nodes (mgr);
     }
     res = _bdd_make_node (mgr, i, raw_bdd_false, raw_bdd_true);
     return raw_to_usr(mgr, res);
@@ -149,7 +150,7 @@ typedef struct
  * greater than its variable, restricts the BDD with 'var' assigned
  * both false and true. */
 static inline quick_restrict_res_t
-quick_restrict (raw_bdd_t b, node_t b_n, unsigned var)
+quick_restrict (raw_bdd_t b, node_t b_n, int var)
 {
     quick_restrict_res_t result;
     assert (var <= b_n.var);
@@ -190,9 +191,13 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 
     /* check cache, recur if needed */
     cache_val = bdd_ite_cache_lookup (&mgr->ite_cache, p, t, f);
+#ifndef NDEBUG
     mgr->ite_cache_stats.num_lookups += 1;
+#endif
     if (cache_val->p == p && cache_val->t == t && cache_val->f == f) {
+#ifndef NDEBUG
         mgr->ite_cache_stats.num_hits += 1;
+#endif
         return cache_val->result;
     }
     else {
@@ -214,9 +219,11 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
         high = raw_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
         result = _bdd_make_node (mgr, top_var, low, high);
 
+#ifndef NDEBUG
         if (!bdd_ite_cache_entry_is_free (cache_val))
             mgr->ite_cache_stats.num_replacements += 1;
         mgr->ite_cache_stats.num_inserts += 1;
+#endif
         cache_val->p = p;
         cache_val->t = t;
         cache_val->f = f;
@@ -231,9 +238,16 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
 {
     raw_bdd_t p_raw, t_raw, f_raw, res_raw;
     /* FIXME: use semantically more explicit exception handling */
-    while (setjmp (mgr->jump_context)) {
+    while (setjmp (mgr->out_of_nodes_cxt)) {
+        /* make sure p, t, and f don't get collected */
+        bdd_inc_ref (mgr, p);
+        bdd_inc_ref (mgr, t);
+        bdd_inc_ref (mgr, f);
         fprintf (stderr, "!!! resizing in bdd_ite\n");
-        bdd_mgr_resize (mgr, mgr->capacity * 2);
+        _bdd_mgr_get_more_nodes (mgr);
+        bdd_dec_ref (mgr, f);
+        bdd_dec_ref (mgr, t);
+        bdd_dec_ref (mgr, p);
     }
     p_raw = usr_to_raw (mgr, p);
     t_raw = usr_to_raw (mgr, t);
@@ -247,7 +261,7 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
  * of memoization. */
 static raw_bdd_t
 raw_bdd_res_rec (bdd_mgr_t *mgr,
-                 const unsigned var,
+                 const int var,
                  const boolean val,
                  bdd_ht_t *cache,
                  raw_bdd_t b)
@@ -282,11 +296,13 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
     raw_bdd_t res;
     cache = NULL;
     /* FIXME: use semantically more explicit exception handling */
-    while (setjmp (mgr->jump_context)) {
-        fprintf (stderr, "!!! resizing in bdd_restrict\n");
-        bdd_mgr_resize (mgr, mgr->capacity * 2);
+    while (setjmp (mgr->out_of_nodes_cxt)) {
         if (cache != NULL)
             bdd_ht_destroy (cache);
+        bdd_inc_ref (mgr, b);
+        fprintf (stderr, "!!! resizing in bdd_restrict\n");
+        _bdd_mgr_get_more_nodes (mgr);
+        bdd_dec_ref (mgr, b);
     }
     b_raw = usr_to_raw (mgr, b);
     cache = bdd_ht_create ();
@@ -298,17 +314,19 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
 bdd_t *
 bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t *b)
 {
-    return bdd_or (mgr,
-                   bdd_restrict (mgr, b, var, bfalse),
-                   bdd_restrict (mgr, b, var, btrue));
+    bdd_t *low, *high;
+    low = bdd_restrict (mgr, b, var, bfalse);
+    high = bdd_restrict (mgr, b, var, btrue);
+    return bdd_or (mgr, low, high);
 }
 
 bdd_t *
 bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t *b)
 {
-    return bdd_and (mgr,
-                    bdd_restrict (mgr, b, var, bfalse),
-                    bdd_restrict (mgr, b, var, btrue));
+    bdd_t *low, *high;
+    low = bdd_restrict (mgr, b, var, bfalse);
+    high = bdd_restrict (mgr, b, var, btrue);
+    return bdd_and (mgr, low, high);
 }
 
 bdd_t *
