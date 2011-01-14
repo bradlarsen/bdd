@@ -67,32 +67,207 @@ up_to_next_power_of_two (unsigned n)
     return i;
 }
 
+/* Copies the BDD subgraph with the given root from the old node array
+ * into the manager, returning the new index.  This must not be called
+ * on a terminal or empty node.
+ * 
+ * The node corresponding to 'old_root' in the old node array is
+ * modified during this copy operation to memoize copying: if the
+ * 'low' field of the node denoted by 'old_root' equals 'UINT_MAX',
+ * the the 'high' field contains the value of the new index. */
+static raw_bdd_t
+copy_bdd_rec (bdd_mgr_t *mgr, node_t *old_nodes, raw_bdd_t old_root)
+{
+    node_t old_root_node;
+    assert (!raw_bdd_is_terminal (old_root));
+    old_root_node = old_nodes[old_root];
+    assert (!node_is_empty (old_root_node));
+    if (old_root_node.low == UINT_MAX)
+        return old_root_node.high;
+    else {
+        raw_bdd_t new_low, new_high, new_root;
+        new_low = raw_bdd_is_terminal (old_root_node.low)
+            ? old_root_node.low
+            : copy_bdd_rec (mgr, old_nodes, old_root_node.low);
+        new_high = raw_bdd_is_terminal (old_root_node.high)
+            ? old_root_node.high
+            : copy_bdd_rec (mgr, old_nodes, old_root_node.high);
+        assert (new_low != new_high);
+        /* FIXME: don't use '_bdd_make_node' here */
+        /* It could (but definitely shouldn't) result in recursive
+         * resizing, and does more work than necessary. */
+        new_root = _bdd_make_node (mgr, old_root_node.var, new_low, new_high);
+        old_nodes[old_root].low = UINT_MAX;
+        old_nodes[old_root].high = new_root;
+        return new_root;
+    }
+}
+
+static void
+patch_bdd_indirection (
+    bdd_mgr_t *mgr,
+    bdd_rtu_ht_t *old_raw_bdd_map,
+    usr_bdd_ht_t *old_usr_bdd_map,
+    raw_bdd_t old_i,
+    raw_bdd_t new_i
+    )
+{
+    bdd_t **usr_bdd;
+    usr_bdd = bdd_rtu_ht_lookup (old_raw_bdd_map, old_i);
+    if (usr_bdd != NULL) {
+        usr_bdd_entry_t new_entry;
+        new_entry = *usr_bdd_ht_lookup (old_usr_bdd_map, *usr_bdd);
+        new_entry.raw_bdd = new_i;
+        usr_bdd_ht_insert (mgr->usr_bdd_map, *usr_bdd, new_entry);
+        bdd_rtu_ht_insert (mgr->raw_bdd_map, new_i, *usr_bdd);
+    }
+}
+
 void
 bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
 {
-    const unsigned new_capacity = up_to_next_power_of_two (new_capacity_hint);
     const unsigned old_capacity = mgr->capacity;
-    const unsigned old_num_nodes = mgr->num_nodes;
-    node_t *old_nodes = mgr->nodes;
+    bdd_rtu_ht_t *old_raw_bdd_map;
+    usr_bdd_ht_t *old_usr_bdd_map;
+    unsigned *old_hash_histo;
+    node_t *old_nodes;
     unsigned i;
-    fprintf (stderr, "*** resize to %u\n", new_capacity);
-    assert (0.75 * new_capacity >= mgr->num_nodes);
 
-    mgr->nodes = create_node_array (new_capacity);
+    mgr->capacity = up_to_next_power_of_two (new_capacity_hint);
+    fprintf (stderr, "*** resize to %u\n", mgr->capacity);
+
+    old_raw_bdd_map = mgr->raw_bdd_map;
+    old_usr_bdd_map = mgr->usr_bdd_map;
+    old_nodes = mgr->nodes;
+    assert (0.75 * mgr->capacity >= mgr->num_nodes);
+
+    mgr->nodes = create_node_array (mgr->capacity);
     mgr->num_nodes = 0;
-    mgr->capacity = new_capacity;
+    mgr->usr_bdd_map = usr_bdd_ht_create ();
+    mgr->raw_bdd_map = bdd_rtu_ht_create ();
+
+    old_hash_histo = mgr->hash_histo;
+    mgr->hash_histo = (unsigned *)
+        checked_calloc (mgr->capacity, sizeof(unsigned));
+    memcpy (mgr->hash_histo, old_hash_histo, old_capacity * sizeof(unsigned));
+    checked_free (old_hash_histo);
+
     add_false_node (mgr);
     add_true_node (mgr);
+    patch_bdd_indirection (mgr,
+                           old_raw_bdd_map,
+                           old_usr_bdd_map,
+                           raw_bdd_false,
+                           raw_bdd_false);
+    patch_bdd_indirection (mgr,
+                           old_raw_bdd_map,
+                           old_usr_bdd_map,
+                           raw_bdd_true,
+                           raw_bdd_true);
 
-    for (i = 2; i < old_capacity; i += 1) {
-        /* FIXME: patch up user BDDs during copy---currently broken! */
-        /* FIXME: make this copying code leaner by not using 'make_node' */
-        node_t n = old_nodes[i];
-        make_node (mgr, n.var, n.low, n.high);
-    }
-    assert (mgr->num_nodes == old_num_nodes);
+    for (i = 2; i < old_capacity; i += 1)
+        if (!node_is_empty(old_nodes[i])) {
+            raw_bdd_t new_i = copy_bdd_rec (mgr, old_nodes, i);
+            patch_bdd_indirection (mgr,
+                                   old_raw_bdd_map,
+                                   old_usr_bdd_map,
+                                   i,
+                                   new_i);
+        }
+    assert (usr_bdd_ht_get_num_entries (old_usr_bdd_map) ==
+            usr_bdd_ht_get_num_entries (mgr->usr_bdd_map));
+    assert (bdd_rtu_ht_get_num_entries (old_raw_bdd_map) ==
+            bdd_rtu_ht_get_num_entries (mgr->raw_bdd_map));
+
+    usr_bdd_ht_destroy (old_usr_bdd_map);
+    bdd_rtu_ht_destroy (old_raw_bdd_map);
     checked_free (old_nodes);
     bdd_ite_cache_clear (&mgr->ite_cache);
+}
+
+bdd_t *
+intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
+{
+    bdd_t *usr;
+    usr_bdd_entry_t entry;
+    assert (raw_bdd_is_valid_and_live (mgr, raw));
+    assert (bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw) == NULL);
+    usr = (bdd_t *) checked_malloc (sizeof(bdd_t));
+    usr->id = mgr->new_usr_id;
+    assert (usr_bdd_ht_lookup (mgr->usr_bdd_map, usr) == NULL);
+    mgr->new_usr_id += 1;
+    bdd_rtu_ht_insert (mgr->raw_bdd_map, raw, usr);
+    entry.raw_bdd = raw;
+    entry.ref_cnt = 0;
+    usr_bdd_ht_insert (mgr->usr_bdd_map, usr, entry);
+    mgr->num_unreferenced_bdds += 1;
+    return usr;
+}
+
+bdd_t *
+raw_to_usr (bdd_mgr_t *mgr, raw_bdd_t raw)
+{
+    bdd_t **res;
+    assert (raw_bdd_is_valid_and_live (mgr, raw));
+    res = bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw);
+    if (res == NULL)
+        return intern_raw_bdd (mgr, raw);
+    else
+        return *res;
+}
+
+raw_bdd_t
+usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
+{
+    usr_bdd_entry_t *res = usr_bdd_ht_lookup (mgr->usr_bdd_map, usr);
+    assert (res != NULL);
+    assert (raw_bdd_is_valid_and_live (mgr, res->raw_bdd));
+    return res->raw_bdd;
+}
+
+static void
+_bdd_raise_out_of_space (bdd_mgr_t *mgr)
+{
+    longjmp (mgr->jump_context, 1);
+}
+
+raw_bdd_t
+_bdd_make_node (
+    bdd_mgr_t *mgr,
+    unsigned var,
+    raw_bdd_t low,
+    raw_bdd_t high
+    )
+{
+    if (low == high)
+        return low;
+    else {
+        /* try to find existing node */
+        unsigned loop_count;
+        unsigned idx = node_hash (var, low, high) % mgr->capacity;
+        loop_count = 0;
+        while (!node_is_empty(mgr->nodes[idx])) {
+            node_t n = mgr->nodes[idx];
+            loop_count += 1;
+            if (n.var == var && n.low == low && n.high == high) {
+                mgr->hash_histo[loop_count] += 1;
+                return idx;
+            }
+            idx = (idx + 1) % mgr->capacity;
+        }
+        mgr->hash_histo[loop_count] += 1;
+
+        /* add a new node; grow if needed */
+        if (mgr->num_nodes >= 0.75 * mgr->capacity)
+            _bdd_raise_out_of_space (mgr);
+
+        assert (mgr->num_nodes < 0.75 * mgr->capacity);
+        mgr->nodes[idx].var = var;
+        mgr->nodes[idx].low = low;
+        mgr->nodes[idx].high = high;
+        mgr->num_nodes += 1;
+        return idx;
+    }
 }
 
 bdd_mgr_t *
@@ -106,7 +281,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     mgr->num_nodes = 0;
     mgr->nodes = create_node_array (mgr->capacity);
 
-    mgr->hash_histo = (unsigned *) checked_calloc (mgr->capacity, sizeof(unsigned));
+    mgr->hash_histo = (unsigned *)
+        checked_calloc (mgr->capacity, sizeof(unsigned));
 
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
@@ -139,18 +315,45 @@ free_usr_bdds (void *env, raw_bdd_t raw, bdd_t **usr)
 static void
 fprint_hash_histo (FILE *handle, bdd_mgr_t *mgr)
 {
-    unsigned i;
+    unsigned i, j;
     unsigned total;
+
+    fprintf (handle, "histogram of linear probe counts:\n");
 
     total = 0;
     for (i = 0; i < mgr->capacity; i += 1)
         total += mgr->hash_histo[i];
 
-    fprintf (handle, "histogram of linear probe counts:\n");
-    for (i = 0; i < mgr->capacity; i += 1)
-        if (mgr->hash_histo[i] > 0)
-            fprintf (handle, "  %u: %u (%.1f%%)\n", i, mgr->hash_histo[i],
-                     (float)mgr->hash_histo[i] / (float)total * 100.0f);
+    i = 0;
+    while (i < mgr->capacity) {
+        int num_printed;
+        unsigned low_i;
+        unsigned num_in_bucket;
+        float frac_in_bucket;
+        low_i = i;
+        num_in_bucket = 0;
+        frac_in_bucket = 0.0f;
+        while (frac_in_bucket < 0.075f && i < mgr->capacity) {
+            frac_in_bucket += (float)mgr->hash_histo[i] / (float)total;
+            num_in_bucket += mgr->hash_histo[i];
+            i += 1;
+        }
+
+        if (low_i == i)
+            num_printed = fprintf (handle, "  %u:", i);
+        else
+            num_printed = fprintf (handle, "  %u--%u:", low_i, i);
+
+        for (j = 0; j < (unsigned)(22 - num_printed); j += 1)
+            fputc (' ', handle);
+
+        fprintf (handle, "%10u (%4.1f%%)  ",
+                 num_in_bucket, frac_in_bucket * 100.0f);
+
+        for (j = 0; j < (unsigned)(frac_in_bucket * 100.0f); j += 3)
+            fputc ('*', handle);
+        fputc ('\n', handle);
+    }
 }
 
 void

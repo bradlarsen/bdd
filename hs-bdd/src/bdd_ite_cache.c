@@ -35,5 +35,5 @@ bdd_ite_cache_clear (bdd_ite_cache_t *tab)
 {
     unsigned i;
     for (i = 0; i < tab->num_entries; i += 1)
-        tab->entries[i].p = INT_MAX;
+        tab->entries[i].p = UINT_MAX;
 }

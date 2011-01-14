@@ -29,7 +29,7 @@ typedef struct
 static inline boolean
 bdd_ite_cache_entry_is_free (bdd_ite_cache_entry_t *entry)
 {
-    return entry->p == INT_MAX;
+    return entry->p == UINT_MAX;
 }
 
 /* Initializes a new hash table with a suggested number of entries. */
@@ -55,7 +55,7 @@ bdd_ite_cache_get_size (bdd_ite_cache_t *tab)
 static inline unsigned
 bdd_ite_hash (raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 {
-    return (unsigned) hash_pair (p, hash_pair (t, f)) % 999999937u;
+    return hash_unsigned_pair (p, hash_unsigned_pair (t, f)) % 999999937u;
 }
 
 /* Retrieves a pointer to the entry that the given key hashes to.  The

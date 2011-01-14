@@ -72,7 +72,11 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
     raw_bdd_t res;
     assert (i < mgr->num_vars);
-    res = make_node (mgr, i, raw_bdd_false, raw_bdd_true);
+    while (setjmp (mgr->jump_context)) {
+        fprintf (stderr, "!!! resizing in bdd_ith_var\n");
+        bdd_mgr_resize (mgr, mgr->capacity * 2);
+    }
+    res = _bdd_make_node (mgr, i, raw_bdd_false, raw_bdd_true);
     return raw_to_usr(mgr, res);
 }
 
@@ -208,7 +212,7 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 
         low = raw_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
         high = raw_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
-        result = make_node (mgr, top_var, low, high);
+        result = _bdd_make_node (mgr, top_var, low, high);
 
         if (!bdd_ite_cache_entry_is_free (cache_val))
             mgr->ite_cache_stats.num_replacements += 1;
@@ -226,6 +230,11 @@ bdd_t *
 bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
 {
     raw_bdd_t p_raw, t_raw, f_raw, res_raw;
+    /* FIXME: use semantically more explicit exception handling */
+    while (setjmp (mgr->jump_context)) {
+        fprintf (stderr, "!!! resizing in bdd_ite\n");
+        bdd_mgr_resize (mgr, mgr->capacity * 2);
+    }
     p_raw = usr_to_raw (mgr, p);
     t_raw = usr_to_raw (mgr, t);
     f_raw = usr_to_raw (mgr, f);
@@ -254,7 +263,7 @@ raw_bdd_res_rec (bdd_mgr_t *mgr,
         else if (n.var == var)
             result = val ? n.high : n.low;
         else /* n.var < var */
-            result = make_node (
+            result = _bdd_make_node (
                 mgr,
                 n.var,
                 raw_bdd_res_rec (mgr, var, val, cache, n.low),
@@ -271,6 +280,14 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
     bdd_ht_t *cache;
     raw_bdd_t b_raw;
     raw_bdd_t res;
+    cache = NULL;
+    /* FIXME: use semantically more explicit exception handling */
+    while (setjmp (mgr->jump_context)) {
+        fprintf (stderr, "!!! resizing in bdd_restrict\n");
+        bdd_mgr_resize (mgr, mgr->capacity * 2);
+        if (cache != NULL)
+            bdd_ht_destroy (cache);
+    }
     b_raw = usr_to_raw (mgr, b);
     cache = bdd_ht_create ();
     res = raw_bdd_res_rec (mgr, var, val, cache, b_raw);

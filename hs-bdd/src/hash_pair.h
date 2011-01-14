@@ -3,7 +3,10 @@
 
 /* The pair hash function from Andersen's ``An introduction to binary
  * decision diagrams''. */
-#define hash_pair(i, j) \
-    ((((i) + (j)) * ((i) + (j) + 1) / 2) + (i))
+static inline unsigned
+hash_unsigned_pair (unsigned i, unsigned j)
+{
+    return ((i + j) * (i + j + 1u) / 2u) + i;
+}
 
 #endif /* HASH_PAIR_INCLUDED */
