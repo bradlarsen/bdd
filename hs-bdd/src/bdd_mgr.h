@@ -120,10 +120,6 @@ _bdd_make_node (
     raw_bdd_t high
     );
 
-/* Attempts to acquire more nodes for the manager first by performing
- * garbage collection, and then by doubling capacity if garbage
- * collection is insufficient. */
-extern void
-_bdd_mgr_get_more_nodes (bdd_mgr_t *mgr);
+#define _bdd_catch_out_of_nodes(mgr) setjmp (mgr->out_of_nodes_cxt)
 
 #endif /* BDD_MGR_INCLUDED */

@@ -449,26 +449,3 @@ bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats)
              stats.num_hits, stats.num_lookups, hit_p,
              stats.num_replacements, stats.num_inserts, repl_p);
 }
-
-/* FIXME: try garbage collection before resizing */
-void
-_bdd_mgr_get_more_nodes (bdd_mgr_t *mgr)
-{
-    /* if (mgr->num_unreferenced_bdds > 0) { */
-    /*     bdd_gc_stats_t stats = bdd_mgr_perform_gc (mgr); */
-    /*     const float load = (float) mgr->num_nodes / (float) mgr->capacity; */
-    /*     const float delete_load = */
-    /*         (float) mgr->num_deleted_nodes / (float) mgr->capacity; */
-    /*     fprintf (stderr, "!!!! delete load is %f (%u/%u)\n", delete_load, mgr->num_deleted_nodes, mgr->capacity); */
-    /*     if (load > 0.75) { */
-    /*         fprintf (stderr, "!!! GC didn't free enough nodes\n"); */
-    /*         bdd_mgr_resize (mgr, mgr->capacity * 2); */
-    /*     } */
-    /*     else if (delete_load > 0.25) { */
-    /*         fprintf (stderr, "!!! too many dead nodes\n"); */
-    /*         bdd_mgr_resize (mgr, mgr->capacity * 2); */
-    /*     } */
-    /* } */
-    /* else */
-        bdd_mgr_resize (mgr, mgr->capacity * 2);
-}
