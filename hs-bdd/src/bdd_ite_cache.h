@@ -19,7 +19,7 @@ typedef struct
 
 typedef struct
 {
-    unsigned num_entries;
+    unsigned num_entries;       /* invariant: always a power of 2 */
     bdd_ite_cache_entry_t *entries;
 } bdd_ite_cache_t;
 
@@ -55,7 +55,7 @@ bdd_ite_cache_get_size (bdd_ite_cache_t *tab)
 static inline unsigned
 bdd_ite_hash (raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 {
-    return hash_unsigned_pair (p, hash_unsigned_pair (t, f)) % 999999937u;
+    return hash_unsigned_pair (p, hash_unsigned_pair (t, f));
 }
 
 /* Retrieves a pointer to the entry that the given key hashes to.  The
@@ -68,7 +68,7 @@ bdd_ite_cache_lookup (
     raw_bdd_t f
     )
 {
-    return &tab->entries[bdd_ite_hash(p, t, f) % tab->num_entries];
+    return &tab->entries[bdd_ite_hash(p, t, f) & (tab->num_entries - 1)];
 }
 
 #endif /* BDD_ITE_CACHE_INCLUDED */
