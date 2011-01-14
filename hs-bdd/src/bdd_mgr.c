@@ -23,7 +23,6 @@ create_node_array (unsigned capacity)
 {
     unsigned i;
     node_t *nodes;
-    fprintf (stderr, "*** creating node array with size %u\n", capacity);
     nodes = (node_t *) checked_malloc (capacity * sizeof(node_t));
     for (i = 0; i < capacity; i += 1)
         nodes[i].var = INT_MAX;
