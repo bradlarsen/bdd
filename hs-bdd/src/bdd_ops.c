@@ -64,7 +64,13 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
             fprintf (stderr, "*** in bdd_ith_var: garbage collecting\n");
             if (mgr->num_unreferenced_bdds > 0)
                 bdd_mgr_perform_gc (mgr);
-            already_interrupted_for_gc = btrue;
+            if (mgr->num_nodes > 0.3 * mgr->capacity) {
+                fprintf (stderr, "*** in bdd_ith_var: doubling after insufficient GC\n");
+
+                bdd_mgr_resize (mgr, mgr->capacity * 2);
+            }
+            else
+                already_interrupted_for_gc = btrue;
         }
         else {
             fprintf (stderr, "*** in bdd_ith_var: doubling\n");
@@ -246,7 +252,13 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
                 bdd_dec_ref (mgr, t);
                 bdd_dec_ref (mgr, p);
             }
-            already_interrupted_for_gc = btrue;
+
+            if (mgr->num_nodes > 0.3 * mgr->capacity) {
+                fprintf (stderr, "*** in bdd_ite: doubling after insufficient GC\n");
+                bdd_mgr_resize (mgr, mgr->capacity * 2);
+            }
+            else
+                already_interrupted_for_gc = btrue;
         }
         else {
             fprintf (stderr, "*** in bdd_ite: doubling\n");
@@ -312,7 +324,14 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
                 bdd_mgr_perform_gc (mgr);
                 bdd_dec_ref (mgr, b);
             }
-            already_interrupted_for_gc = btrue;
+
+            if (mgr->num_nodes > 0.3 * mgr->capacity) {
+                fprintf (stderr, "*** in bdd_restrict: doubling after insufficient GC\n");
+
+                bdd_mgr_resize (mgr, mgr->capacity * 2);
+            }
+            else
+                already_interrupted_for_gc = btrue;
         }
         else {
             fprintf (stderr, "*** in bdd_restrict: doubling\n");
