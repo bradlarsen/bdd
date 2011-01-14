@@ -165,9 +165,9 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 {
     bdd_ite_cache_entry_t *cache_val;
 
-    assert (raw_bdd_is_valid (mgr, p));
-    assert (raw_bdd_is_valid (mgr, t));
-    assert (raw_bdd_is_valid (mgr, f));
+    assert (raw_bdd_is_valid_and_live (mgr, p));
+    assert (raw_bdd_is_valid_and_live (mgr, t));
+    assert (raw_bdd_is_valid_and_live (mgr, f));
 
     /* put arguments into ``standard triple'' form */
     /* FIXME: there are many more cases that require complement edges */

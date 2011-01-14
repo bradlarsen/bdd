@@ -18,6 +18,18 @@ bdd_mgr_create (unsigned num_vars)
     return bdd_mgr_create_with_hint (num_vars, 1024);
 }
 
+static node_t *
+create_node_array (unsigned capacity)
+{
+    unsigned i;
+    node_t *nodes;
+    fprintf (stderr, "*** creating node array with size %u\n", capacity);
+    nodes = (node_t *) checked_malloc (capacity * sizeof(node_t));
+    for (i = 0; i < capacity; i += 1)
+        nodes[i].var = UINT_MAX;
+    return nodes;
+}
+
 static void
 add_false_node (bdd_mgr_t *mgr)
 {
@@ -51,23 +63,48 @@ static unsigned
 up_to_next_power_of_two (unsigned n)
 {
     unsigned i;
-    for (i = 1; i <= n; i *= 2) {}
+    for (i = 1; i < n; i *= 2) {}
     return i;
+}
+
+void
+bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
+{
+    const unsigned new_capacity = up_to_next_power_of_two (new_capacity_hint);
+    const unsigned old_capacity = mgr->capacity;
+    const unsigned old_num_nodes = mgr->num_nodes;
+    node_t *old_nodes = mgr->nodes;
+    unsigned i;
+    fprintf (stderr, "*** resize to %u\n", new_capacity);
+    assert (0.75 * new_capacity >= mgr->num_nodes);
+
+    mgr->nodes = create_node_array (new_capacity);
+    mgr->num_nodes = 0;
+    mgr->capacity = new_capacity;
+    add_false_node (mgr);
+    add_true_node (mgr);
+
+    for (i = 2; i < old_capacity; i += 1) {
+        /* FIXME: patch up user BDDs during copy---currently broken! */
+        /* FIXME: make this copying code leaner by not using 'make_node' */
+        node_t n = old_nodes[i];
+        make_node (mgr, n.var, n.low, n.high);
+    }
+    assert (mgr->num_nodes == old_num_nodes);
+    checked_free (old_nodes);
+    bdd_ite_cache_clear (&mgr->ite_cache);
 }
 
 bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
-    unsigned i;
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
 
     mgr->num_vars = num_vars;
 
     mgr->capacity = up_to_next_power_of_two (capacity_hint);
     mgr->num_nodes = 0;
-    mgr->nodes = (node_t *) checked_malloc (mgr->capacity * sizeof(node_t));
-    for (i = 0; i < mgr->capacity; i += 1)
-        mgr->nodes[i].var = UINT_MAX;
+    mgr->nodes = create_node_array (mgr->capacity);
 
     mgr->hash_histo = (unsigned *) checked_calloc (mgr->capacity, sizeof(unsigned));
 

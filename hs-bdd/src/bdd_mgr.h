@@ -49,10 +49,23 @@ struct bdd_mgr
 };
 
 static inline boolean
-raw_bdd_is_valid (bdd_mgr_t *mgr, raw_bdd_t raw)
+node_is_empty (node_t n)
 {
-    return (0 <= raw && (unsigned)raw < mgr->capacity);
+    return n.var == UINT_MAX;
 }
+
+static inline boolean
+raw_bdd_is_valid_and_live (bdd_mgr_t *mgr, raw_bdd_t raw)
+{
+    return (0 <= raw && (unsigned)raw < mgr->capacity &&
+            !node_is_empty(mgr->nodes[(unsigned)raw]));
+}
+
+/* Adjusts the storage of the given manager so that room for
+ * 'new_capacity' nodes will be allocated.  The number of used nodes
+ * must be less than 3/4 * 'new_capacity_hint'. */
+extern void
+bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint);
 
 /* Interns the raw BDD index, mapping it to a new user-level BDD
  * index with a reference count of 0. */
@@ -61,7 +74,7 @@ intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     bdd_t *usr;
     usr_bdd_entry_t entry;
-    assert (raw_bdd_is_valid (mgr, raw));
+    assert (raw_bdd_is_valid_and_live (mgr, raw));
     assert (bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw) == NULL);
     usr = (bdd_t *) checked_malloc (sizeof(bdd_t));
     usr->id = mgr->new_usr_id;
@@ -81,7 +94,7 @@ static inline bdd_t *
 raw_to_usr (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     bdd_t **res;
-    assert (raw_bdd_is_valid (mgr, raw));
+    assert (raw_bdd_is_valid_and_live (mgr, raw));
     res = bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw);
     if (res == NULL)
         return intern_raw_bdd (mgr, raw);
@@ -95,7 +108,7 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 {
     usr_bdd_entry_t *res = usr_bdd_ht_lookup (mgr->usr_bdd_map, usr);
     assert (res != NULL);
-    assert (raw_bdd_is_valid (mgr, res->raw_bdd));
+    assert (raw_bdd_is_valid_and_live (mgr, res->raw_bdd));
     return res->raw_bdd;
 }
 
@@ -103,14 +116,8 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 static inline node_t
 raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
 {
-    assert (raw_bdd_is_valid (mgr, b));
+    assert (raw_bdd_is_valid_and_live (mgr, b));
     return mgr->nodes[(unsigned) b];
-}
-
-static inline boolean
-node_is_empty (node_t n)
-{
-    return n.var == UINT_MAX;
 }
 
 static inline unsigned
@@ -148,8 +155,10 @@ make_node (
         }
         mgr->hash_histo[loop_count] += 1;
 
-        /* FIXME: support automatically growing the node table */
-        /* allocate a new node */
+        /* add a new node; grow if needed */
+        if (mgr->num_nodes >= 0.75 * mgr->capacity)
+            bdd_mgr_resize (mgr, mgr->capacity * 2);
+
         assert (mgr->num_nodes < 0.75 * mgr->capacity);
         mgr->nodes[idx].var = var;
         mgr->nodes[idx].low = low;
