@@ -49,7 +49,7 @@ typedef struct
 static inline boolean
 node_is_marked (node_t n)
 {
-    return n.var < 0;
+    return n.idx < 0;
 }
 
 static inline void
@@ -58,7 +58,7 @@ mark_node (bdd_mgr_t *mgr, node_t *n)
     assert (!node_is_marked (*n));
     assert (!node_is_deleted (*n));
     assert (!node_is_empty (*n));
-    n->var = n->var - mgr->num_vars - 1;
+    n->idx = n->idx - mgr->num_vars - 1;
     assert (node_is_marked (*n));
     assert (!node_is_deleted (*n));
     assert (!node_is_empty (*n));
@@ -67,12 +67,12 @@ mark_node (bdd_mgr_t *mgr, node_t *n)
 static inline void
 unmark_node (bdd_mgr_t *mgr, node_t *n)
 {
-    if (n->var < 0)
-        n->var += mgr->num_vars + 1;
+    if (n->idx < 0)
+        n->idx += mgr->num_vars + 1;
     assert (!node_is_marked (*n));
 }
 
-/* Mark all the nodes under the given root by making their 'var'
+/* Mark all the nodes under the given root by making their 'idx'
  * fields negative. */
 static void
 mark_bdd_rec (bdd_mgr_t *mgr, raw_bdd_t root)

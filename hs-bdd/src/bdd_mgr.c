@@ -7,14 +7,14 @@ create_node_array (unsigned capacity)
     node_t *nodes;
     nodes = (node_t *) checked_malloc (capacity * sizeof(node_t));
     for (i = 0; i < capacity; i += 1)
-        nodes[i].var = INT_MAX;
+        nodes[i].idx = INT_MAX;
     return nodes;
 }
 
 static void
 add_false_node (bdd_mgr_t *mgr)
 {
-    mgr->nodes[0].var = mgr->num_vars;
+    mgr->nodes[0].idx = mgr->num_vars;
     mgr->nodes[0].low = 1;
     mgr->nodes[0].high = 0;
     mgr->num_nodes += 1;
@@ -23,7 +23,7 @@ add_false_node (bdd_mgr_t *mgr)
 static void
 add_true_node (bdd_mgr_t *mgr)
 {
-    mgr->nodes[1].var = mgr->num_vars;
+    mgr->nodes[1].idx = mgr->num_vars;
     mgr->nodes[1].low = 0;
     mgr->nodes[1].high = 1;
     mgr->num_nodes += 1;
@@ -80,7 +80,7 @@ copy_bdd_rec (bdd_mgr_t *mgr, node_t *old_nodes, raw_bdd_t old_root)
         /* FIXME: don't use '_bdd_make_node' here */
         /* It could (but definitely shouldn't) result in recursive
          * resizing, and does more work than necessary. */
-        new_root = _bdd_make_node (mgr, old_root_node.var, new_low, new_high);
+        new_root = _bdd_make_node (mgr, old_root_node.idx, new_low, new_high);
         old_nodes[old_root].low = UINT_MAX;
         old_nodes[old_root].high = new_root;
         return new_root;
@@ -181,15 +181,15 @@ _bdd_raise_out_of_nodes (bdd_mgr_t *mgr)
 }
 
 static inline unsigned
-node_hash (unsigned var, raw_bdd_t low, raw_bdd_t high)
+node_hash (unsigned idx, raw_bdd_t low, raw_bdd_t high)
 {
-    return hash_unsigned_pair (var, hash_unsigned_pair(low, high));
+    return hash_unsigned_pair (idx, hash_unsigned_pair(low, high));
 }
 
 raw_bdd_t
 _bdd_make_node (
     bdd_mgr_t *mgr,
-    int var,
+    int var_idx,
     raw_bdd_t low,
     raw_bdd_t high
     )
@@ -200,22 +200,22 @@ _bdd_make_node (
         /* try to find existing node */
         unsigned loop_count;
         int free_idx;
-        unsigned idx;
+        unsigned node_idx;
         free_idx = -1;
-        idx = node_hash (var, low, high) & (mgr->capacity - 1);
+        node_idx = node_hash (var_idx, low, high) & (mgr->capacity - 1);
         loop_count = 0;
-        while (!node_is_empty (mgr->nodes[idx])) {
-            node_t n = mgr->nodes[idx];
+        while (!node_is_empty (mgr->nodes[node_idx])) {
+            node_t n = mgr->nodes[node_idx];
             loop_count += 1;
-            if (free_idx == -1 && node_is_deleted (mgr->nodes[idx]))
-                free_idx = idx;
-            if (n.var == var && n.low == low && n.high == high) {
+            if (free_idx == -1 && node_is_deleted (mgr->nodes[node_idx]))
+                free_idx = node_idx;
+            if (n.idx == var_idx && n.low == low && n.high == high) {
 #ifndef NDEBUG
                 mgr->hash_histo[loop_count] += 1;
 #endif
-                return idx;
+                return node_idx;
             }
-            idx = (idx + 1) & (mgr->capacity - 1);
+            node_idx = (node_idx + 1) & (mgr->capacity - 1);
         }
 #ifndef NDEBUG
         mgr->hash_histo[loop_count] += 1;
@@ -227,15 +227,15 @@ _bdd_make_node (
         else if (free_idx != -1) {
             /* reuse a deleted node */
             mgr->num_deleted_nodes -= 1;
-            idx = free_idx;
+            node_idx = free_idx;
         }
 
         assert (mgr->num_nodes < 0.75 * mgr->capacity);
-        mgr->nodes[idx].var = var;
-        mgr->nodes[idx].low = low;
-        mgr->nodes[idx].high = high;
+        mgr->nodes[node_idx].idx = var_idx;
+        mgr->nodes[node_idx].low = low;
+        mgr->nodes[node_idx].high = high;
         mgr->num_nodes += 1;
-        return idx;
+        return node_idx;
     }
 }
 

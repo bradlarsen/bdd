@@ -20,7 +20,7 @@
 
 typedef struct
 {
-    int var;                           /* variable index of the node */
+    int idx;                           /* variable index of the node */
     raw_bdd_t low;                     /* value if the variable is false */
     raw_bdd_t high;                    /* value if the variable is true */
 } node_t;
@@ -58,19 +58,19 @@ struct bdd_mgr
 static inline boolean
 node_is_empty (node_t n)
 {
-    return n.var == INT_MAX;
+    return n.idx == INT_MAX;
 }
 
 static inline boolean
 node_is_deleted (node_t n)
 {
-    return n.var == INT_MAX - 1;
+    return n.idx == INT_MAX - 1;
 }
 
 static inline void
 delete_node (node_t *n)
 {
-    n->var = INT_MAX - 1;
+    n->idx = INT_MAX - 1;
 }
 
 static inline boolean
@@ -101,7 +101,7 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint);
 extern raw_bdd_t
 _bdd_make_node (
     bdd_mgr_t *mgr,
-    int var,
+    int idx,
     raw_bdd_t low,
     raw_bdd_t high
     );

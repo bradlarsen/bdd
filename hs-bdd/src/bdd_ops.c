@@ -57,7 +57,7 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 unsigned
 bdd_var (bdd_mgr_t *mgr, bdd_t *b)
 {
-    return raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).var;
+    return raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).idx;
 }
 
 bdd_t *
@@ -184,7 +184,7 @@ bdd_not (bdd_mgr_t *mgr, bdd_t *b)
 }
 
 static inline unsigned
-var_min3 (unsigned x, unsigned y, unsigned z)
+idx_min3 (unsigned x, unsigned y, unsigned z)
 {
     if (x <= y && x <= z)
         return x;
@@ -203,14 +203,14 @@ typedef struct
 } quick_restrict_res_t;
 
 /* Given a BDD index, its corresponding node, and a variable no
- * greater than its variable, restricts the BDD with 'var' assigned
+ * greater than its variable, restricts the BDD with 'idx' assigned
  * both false and true. */
 static inline quick_restrict_res_t
-quick_restrict (raw_bdd_t b, node_t b_n, int var)
+quick_restrict (raw_bdd_t b, node_t b_n, int idx)
 {
     quick_restrict_res_t result;
-    assert (var <= b_n.var);
-    if (var < b_n.var) {
+    assert (idx <= b_n.idx);
+    if (idx < b_n.idx) {
         result.low = b;
         result.high = b;
     }
@@ -253,23 +253,23 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
         return cache_val->result;
     }
     else {
-        unsigned top_var;
+        unsigned top_idx;
         node_t p_n, t_n, f_n;
         quick_restrict_res_t p_v, t_v, f_v; /* p, t, and f restricted with
-                                             * top_var and !top_var */
+                                             * top_idx and !top_idx */
         raw_bdd_t low, high, result;
 
         p_n = raw_bdd_to_node (mgr, p);
         t_n = raw_bdd_to_node (mgr, t);
         f_n = raw_bdd_to_node (mgr, f);
-        top_var = var_min3 (p_n.var, t_n.var, f_n.var);
-        p_v = quick_restrict (p, p_n, top_var);
-        t_v = quick_restrict (t, t_n, top_var);
-        f_v = quick_restrict (f, f_n, top_var);
+        top_idx = idx_min3 (p_n.idx, t_n.idx, f_n.idx);
+        p_v = quick_restrict (p, p_n, top_idx);
+        t_v = quick_restrict (t, t_n, top_idx);
+        f_v = quick_restrict (f, f_n, top_idx);
 
         low = raw_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
         high = raw_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
-        result = _bdd_make_node (mgr, top_var, low, high);
+        result = _bdd_make_node (mgr, top_idx, low, high);
 
         if (!bdd_ite_cache_entry_is_free (cache_val))
             mgr->ite_cache_stats.num_replacements += 1;
@@ -329,7 +329,7 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
 /* FIXME: use a better cache */
 static raw_bdd_t
 raw_bdd_res_rec (bdd_mgr_t *mgr,
-                 const int var,
+                 const int idx,
                  const boolean val,
                  bdd_ht_t *cache,
                  raw_bdd_t b)
@@ -340,16 +340,16 @@ raw_bdd_res_rec (bdd_mgr_t *mgr,
     else {
         raw_bdd_t result;
         const node_t n = raw_bdd_to_node (mgr, b);
-        if (n.var > var)
+        if (n.idx > idx)
             result = b;
-        else if (n.var == var)
+        else if (n.idx == idx)
             result = val ? n.high : n.low;
-        else /* n.var < var */
+        else /* n.idx < idx */
             result = _bdd_make_node (
                 mgr,
-                n.var,
-                raw_bdd_res_rec (mgr, var, val, cache, n.low),
-                raw_bdd_res_rec (mgr, var, val, cache, n.high)
+                n.idx,
+                raw_bdd_res_rec (mgr, idx, val, cache, n.low),
+                raw_bdd_res_rec (mgr, idx, val, cache, n.high)
                 );
         bdd_ht_insert (cache, b, result);
         return result;
@@ -439,9 +439,9 @@ raw_bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_double_ht_t *cache, raw_bdd_t b)
             const node_t b_node = raw_bdd_to_node(mgr, b);
             const node_t b_low = raw_bdd_to_node(mgr, b_node.low);
             const node_t b_high = raw_bdd_to_node(mgr, b_node.high);
-            const double lhs = pow (2.0, b_low.var - b_node.var - 1) *
+            const double lhs = pow (2.0, b_low.idx - b_node.idx - 1) *
                 raw_bdd_sat_count_rec (mgr, cache, b_node.low);
-            const double rhs = pow (2.0, b_high.var - b_node.var - 1) *
+            const double rhs = pow (2.0, b_high.idx - b_node.idx - 1) *
                 raw_bdd_sat_count_rec (mgr, cache, b_node.high);
             const double res = lhs + rhs;
             bdd_double_ht_insert (cache, b, res);
@@ -460,7 +460,7 @@ bdd_sat_count (bdd_mgr_t *mgr, bdd_t *b)
     b_raw = usr_to_raw (mgr, b);
     cache = bdd_double_ht_create ();
     result =
-        pow (2, raw_bdd_to_node(mgr, b_raw).var) *
+        pow (2, raw_bdd_to_node(mgr, b_raw).idx) *
         raw_bdd_sat_count_rec (mgr, cache, b_raw);
     bdd_double_ht_destroy (cache);
     return result;
