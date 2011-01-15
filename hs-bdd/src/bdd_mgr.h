@@ -80,21 +80,6 @@ raw_bdd_is_valid_and_live (bdd_mgr_t *mgr, raw_bdd_t raw)
     return raw < mgr->capacity && !node_is_empty(mgr->nodes[raw]);
 }
 
-/* Adjusts the storage of the given manager so that room for
- * 'new_capacity' nodes will be allocated.  The number of used nodes
- * must be less than 3/4 * 'new_capacity_hint'. */
-extern void
-bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint);
-
-/* Converts a raw BDD index to a user-level BDD index.  Creates a
- * binding between the two if none exists. */
-extern bdd_t *
-raw_to_usr (bdd_mgr_t *mgr, raw_bdd_t raw);
-
-/* Converts a user-level BDD index to a raw BDD index. */
-extern raw_bdd_t
-usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr);
-
 /* Gets the node associated with the given BDD. */
 static inline node_t
 raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
@@ -102,6 +87,12 @@ raw_bdd_to_node (bdd_mgr_t *mgr, raw_bdd_t b)
     assert (raw_bdd_is_valid_and_live (mgr, b));
     return mgr->nodes[b];
 }
+
+/* Adjusts the storage of the given manager so that room for
+ * 'new_capacity' nodes will be allocated.  The number of used nodes
+ * must be less than 3/4 * 'new_capacity_hint'. */
+extern void
+bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint);
 
 /* FIXME: better document what's going on with exceptions */
 /* Retrieves the BDD of the node equal to the node with the given

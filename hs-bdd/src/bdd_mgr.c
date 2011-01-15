@@ -171,48 +171,6 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
     bdd_ite_cache_clear (&mgr->ite_cache);
 }
 
-/* Interns the raw BDD index, mapping it to a new user-level BDD
- * index with a reference count of 0. */
-static bdd_t *
-intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
-{
-    bdd_t *usr;
-    usr_bdd_entry_t entry;
-    assert (raw_bdd_is_valid_and_live (mgr, raw));
-    assert (bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw) == NULL);
-    usr = (bdd_t *) checked_malloc (sizeof(bdd_t));
-    usr->id = mgr->new_usr_id;
-    assert (usr_bdd_ht_lookup (mgr->usr_bdd_map, usr) == NULL);
-    mgr->new_usr_id += 1;
-    bdd_rtu_ht_insert (mgr->raw_bdd_map, raw, usr);
-    entry.raw_bdd = raw;
-    entry.ref_cnt = 0;
-    usr_bdd_ht_insert (mgr->usr_bdd_map, usr, entry);
-    mgr->num_unreferenced_bdds += 1;
-    return usr;
-}
-
-bdd_t *
-raw_to_usr (bdd_mgr_t *mgr, raw_bdd_t raw)
-{
-    bdd_t **res;
-    assert (raw_bdd_is_valid_and_live (mgr, raw));
-    res = bdd_rtu_ht_lookup (mgr->raw_bdd_map, raw);
-    if (res == NULL)
-        return intern_raw_bdd (mgr, raw);
-    else
-        return *res;
-}
-
-raw_bdd_t
-usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
-{
-    usr_bdd_entry_t *res = usr_bdd_ht_lookup (mgr->usr_bdd_map, usr);
-    assert (res != NULL);
-    assert (raw_bdd_is_valid_and_live (mgr, res->raw_bdd));
-    return res->raw_bdd;
-}
-
 static void
 _bdd_raise_out_of_nodes (bdd_mgr_t *mgr)
 {
