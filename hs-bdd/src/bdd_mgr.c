@@ -1,11 +1,5 @@
 #include "bdd_mgr.h"
 
-bdd_mgr_t *
-bdd_mgr_create (unsigned num_vars)
-{
-    return bdd_mgr_create_with_hint (num_vars, 1024);
-}
-
 static node_t *
 create_node_array (unsigned capacity)
 {
@@ -282,6 +276,12 @@ _bdd_make_node (
         mgr->num_nodes += 1;
         return idx;
     }
+}
+
+bdd_mgr_t *
+bdd_mgr_create (unsigned num_vars)
+{
+    return bdd_mgr_create_with_hint (num_vars, 1024);
 }
 
 bdd_mgr_t *
