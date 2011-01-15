@@ -204,13 +204,9 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 
     /* check cache, recur if needed */
     cache_val = bdd_ite_cache_lookup (&mgr->ite_cache, p, t, f);
-#ifndef NDEBUG
     mgr->ite_cache_stats.num_lookups += 1;
-#endif
     if (cache_val->p == p && cache_val->t == t && cache_val->f == f) {
-#ifndef NDEBUG
         mgr->ite_cache_stats.num_hits += 1;
-#endif
         return cache_val->result;
     }
     else {
@@ -232,11 +228,10 @@ raw_bdd_ite (bdd_mgr_t *mgr, raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
         high = raw_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
         result = _bdd_make_node (mgr, top_var, low, high);
 
-#ifndef NDEBUG
         if (!bdd_ite_cache_entry_is_free (cache_val))
             mgr->ite_cache_stats.num_replacements += 1;
         mgr->ite_cache_stats.num_inserts += 1;
-#endif
+
         cache_val->p = p;
         cache_val->t = t;
         cache_val->f = f;
