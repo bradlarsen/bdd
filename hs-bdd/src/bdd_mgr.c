@@ -410,12 +410,6 @@ bdd_mgr_get_num_allocated (bdd_mgr_t *mgr)
     return mgr->capacity;
 }
 
-bdd_cache_stats_t
-bdd_mgr_get_cache_stats (bdd_mgr_t *mgr)
-{
-    return mgr->ite_cache_stats;
-}
-
 void
 bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats)
 {
@@ -434,4 +428,10 @@ bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats)
     fprintf (handle, "%u/%u hits (%.0f%%), %u/%u replacements (%.0f%%)",
              stats.num_hits, stats.num_lookups, hit_p,
              stats.num_replacements, stats.num_inserts, repl_p);
+}
+
+bdd_cache_stats_t
+bdd_mgr_get_cache_stats (bdd_mgr_t *mgr)
+{
+    return mgr->ite_cache_stats;
 }
