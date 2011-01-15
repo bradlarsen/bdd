@@ -28,16 +28,16 @@ typedef struct
 
 struct bdd_mgr
 {
+    node_t *nodes;                     /* all the nodes */
+
+    bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
+    bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
+
     unsigned num_vars;                 /* number of variables */
 
     unsigned capacity;                 /* number of allocated nodes */
     unsigned num_nodes;                /* number of used nodes */
     unsigned num_deleted_nodes;        /* number of deleted nodes */
-    node_t *nodes;                     /* all the nodes */
-
-#ifndef NDEBUG
-    unsigned *hash_histo;
-#endif
 
     usr_bdd_ht_t *usr_bdd_map;         /* user BDD -> raw BDD/ref count map */
     bdd_rtu_ht_t *raw_bdd_map;         /* raw BDD -> user BDD map */
@@ -49,10 +49,11 @@ struct bdd_mgr
     unsigned next_gc_at_node_count;    /* next node count to GC at */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs */
 
-    bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
-    bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
-
     jmp_buf out_of_nodes_cxt;          /* to handle GC/resize/reorder */
+
+#ifndef NDEBUG
+    unsigned *hash_histo;              /* histogram of number of reprobes */
+#endif
 };
 
 static inline boolean
