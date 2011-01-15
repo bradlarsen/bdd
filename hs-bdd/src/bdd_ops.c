@@ -326,6 +326,7 @@ bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
 /* This largely follows the pseudocode from Andersen's ``An
  * Introduction to Binary Decision Diagrams'', but with the addition
  * of memoization. */
+/* FIXME: use a better cache */
 static raw_bdd_t
 raw_bdd_res_rec (bdd_mgr_t *mgr,
                  const int var,
