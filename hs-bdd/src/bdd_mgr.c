@@ -226,8 +226,7 @@ _bdd_raise_out_of_nodes (bdd_mgr_t *mgr)
 static inline unsigned
 node_hash (unsigned var, raw_bdd_t low, raw_bdd_t high)
 {
-    return
-        hash_unsigned_pair (var, hash_unsigned_pair(low, high));
+    return hash_unsigned_pair (var, hash_unsigned_pair(low, high));
 }
 
 raw_bdd_t
