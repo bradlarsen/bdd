@@ -69,23 +69,10 @@ bdd_mgr_get_cache_stats (bdd_mgr_t *mgr);
 /**********************************************************************/
 /* Garbage collection-related types and functions                     */
 /**********************************************************************/
-typedef struct
-{
-    unsigned usr_bdd_num_copied;
-    unsigned usr_bdd_num_collected;
-    unsigned raw_bdd_num_copied;
-    unsigned raw_bdd_num_collected;
-} bdd_gc_stats_t;
-
-/* Pretty-prints the garbage collection statistics to the file
- * handle. */
-extern void
-bdd_gc_stats_fprint (FILE *handle, bdd_gc_stats_t stats);
-
 /* Performs a garbage collection on the graph represented by the
  * manager, freeing BDDs that are not referenced directly or
  * indirectly. */
-extern bdd_gc_stats_t
+extern void
 bdd_mgr_perform_gc (bdd_mgr_t *mgr);
 
 /**********************************************************************/

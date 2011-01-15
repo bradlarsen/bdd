@@ -2,15 +2,25 @@
 
 #include "bdd_mgr.h"
 
-void
+typedef struct
+{
+    unsigned usr_bdd_num_saved;
+    unsigned usr_bdd_num_collected;
+    unsigned raw_bdd_num_saved;
+    unsigned raw_bdd_num_collected;
+} bdd_gc_stats_t;
+
+/* Pretty-prints the garbage collection statistics to the file
+ * handle. */
+static void
 bdd_gc_stats_fprint (FILE *handle, bdd_gc_stats_t stats)
 {
     double n_usr_nodes, n_raw_nodes, np_usr_nodes, np_raw_nodes;
 
-    n_usr_nodes = stats.usr_bdd_num_copied + stats.usr_bdd_num_collected;
+    n_usr_nodes = stats.usr_bdd_num_saved + stats.usr_bdd_num_collected;
     np_usr_nodes = stats.usr_bdd_num_collected;
 
-    n_raw_nodes = stats.raw_bdd_num_copied + stats.raw_bdd_num_collected;
+    n_raw_nodes = stats.raw_bdd_num_saved + stats.raw_bdd_num_collected;
     np_raw_nodes = stats.raw_bdd_num_collected;
 
     fprintf (handle, "user: %.0f/%.0f (%.2f%%) collected\n",
@@ -23,9 +33,9 @@ static bdd_gc_stats_t
 make_bdd_gc_stats_t ()
 {
     bdd_gc_stats_t res;
-    res.usr_bdd_num_copied = 0;
+    res.usr_bdd_num_saved = 0;
     res.usr_bdd_num_collected = 0;
-    res.raw_bdd_num_copied = 0;
+    res.raw_bdd_num_saved = 0;
     res.raw_bdd_num_collected = 0;
     return res;
 }
@@ -85,7 +95,7 @@ gc_usr_bdd (void *env, bdd_t *key, usr_bdd_entry_t *val)
 {
     bdd_gc_env_t *gc_env = (bdd_gc_env_t *)env;
     if (raw_bdd_is_terminal(val->raw_bdd) || val->ref_cnt > 0) {
-        gc_env->stats.usr_bdd_num_copied += 1;
+        gc_env->stats.usr_bdd_num_saved += 1;
         usr_bdd_ht_insert (gc_env->mgr->usr_bdd_map, key, *val);
         bdd_rtu_ht_insert (gc_env->mgr->raw_bdd_map, val->raw_bdd, key);
         mark_bdd_rec (gc_env->mgr, val->raw_bdd);
@@ -96,7 +106,7 @@ gc_usr_bdd (void *env, bdd_t *key, usr_bdd_entry_t *val)
     }
 }
 
-bdd_gc_stats_t
+void
 bdd_mgr_perform_gc (bdd_mgr_t *mgr)
 {
     bdd_gc_env_t env;
@@ -133,7 +143,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
             env.stats.raw_bdd_num_collected += 1;
         }
         else
-            env.stats.raw_bdd_num_copied += 1;
+            env.stats.raw_bdd_num_saved += 1;
     }
 
     for (i = 0; i < mgr->capacity; i += 1)
@@ -147,6 +157,4 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
 
     bdd_gc_stats_fprint (stderr, env.stats);
     fprintf (stderr, "******** END GC\n");
-
-    return env.stats;
 }
