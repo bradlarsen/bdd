@@ -177,7 +177,9 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
     bdd_ite_cache_clear (&mgr->ite_cache);
 }
 
-bdd_t *
+/* Interns the raw BDD index, mapping it to a new user-level BDD
+ * index with a reference count of 0. */
+static bdd_t *
 intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     bdd_t *usr;

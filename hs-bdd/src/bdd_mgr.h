@@ -86,11 +86,6 @@ raw_bdd_is_valid_and_live (bdd_mgr_t *mgr, raw_bdd_t raw)
 extern void
 bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint);
 
-/* Interns the raw BDD index, mapping it to a new user-level BDD
- * index with a reference count of 0. */
-extern bdd_t *
-intern_raw_bdd (bdd_mgr_t *mgr, raw_bdd_t raw);
-
 /* Converts a raw BDD index to a user-level BDD index.  Creates a
  * binding between the two if none exists. */
 extern bdd_t *
