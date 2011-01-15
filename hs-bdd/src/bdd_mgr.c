@@ -40,12 +40,15 @@ make_cache_stats ()
     return res;
 }
 
+/* Converts the given size hint into the smallest valid size greater
+ * than or equal to the hint.  A valid size is a power of two greater
+ * than or equal to 128. */
 static unsigned
-up_to_next_power_of_two (unsigned n)
+size_hint_to_size (unsigned hint)
 {
     unsigned i;
-    for (i = 1; i < n; i *= 2) {}
-    return i;
+    for (i = 1; i < hint; i *= 2) {}
+    return 128u > i ? 128u : i;
 }
 
 /* Copies the BDD subgraph with the given root from the old node array
@@ -118,7 +121,7 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
     node_t *old_nodes;
     unsigned i;
 
-    mgr->capacity = up_to_next_power_of_two (new_capacity_hint);
+    mgr->capacity = size_hint_to_size (new_capacity_hint);
     old_raw_bdd_map = mgr->raw_bdd_map;
     old_usr_bdd_map = mgr->usr_bdd_map;
     old_nodes = mgr->nodes;
@@ -249,7 +252,7 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     mgr->num_vars = num_vars;
 
-    mgr->capacity = up_to_next_power_of_two (capacity_hint + 32);
+    mgr->capacity = size_hint_to_size (capacity_hint);
     mgr->num_nodes = 0;
     mgr->num_deleted_nodes = 0;
     mgr->nodes = create_node_array (mgr->capacity);
