@@ -23,6 +23,18 @@ bdd_high (bdd_mgr_t *mgr, bdd_t *b)
     return raw_to_usr (mgr, raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).high);
 }
 
+bdd_t *
+bdd_false (bdd_mgr_t *mgr)
+{
+    return raw_to_usr (mgr, raw_bdd_false);
+}
+
+bdd_t *
+bdd_true (bdd_mgr_t *mgr)
+{
+    return raw_to_usr (mgr, raw_bdd_true);
+}
+
 void
 bdd_inc_ref (bdd_mgr_t *mgr, bdd_t *b)
 {

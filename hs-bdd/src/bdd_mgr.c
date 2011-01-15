@@ -1,17 +1,5 @@
 #include "bdd_mgr.h"
 
-bdd_t *
-bdd_false (bdd_mgr_t *mgr)
-{
-    return raw_to_usr (mgr, raw_bdd_false);
-}
-
-bdd_t *
-bdd_true (bdd_mgr_t *mgr)
-{
-    return raw_to_usr (mgr, raw_bdd_true);
-}
-
 bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars)
 {
