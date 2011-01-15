@@ -50,9 +50,23 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
     return res->raw_bdd;
 }
 
-
-
-
+static void
+handle_out_of_nodes (bdd_mgr_t *mgr)
+{
+    if (!mgr->gc_interrupted_already) {
+        fprintf (stderr, "*** garbage collecting\n");
+        if (mgr->num_unreferenced_bdds > 0)
+            bdd_mgr_perform_gc (mgr);
+        mgr->gc_interrupted_already = btrue;
+    }
+    else {
+        unsigned old_capacity = mgr->capacity;
+        fprintf (stderr, "*** doubling: ");
+        bdd_mgr_resize (mgr, mgr->capacity * 2);
+        fprintf (stderr, " went from %u to %u\n", old_capacity, mgr->capacity);
+        mgr->gc_interrupted_already = bfalse;
+    }
+}
 
 unsigned
 bdd_var (bdd_mgr_t *mgr, bdd_t *b)
@@ -110,31 +124,11 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
 bdd_t *
 bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
-    raw_bdd_t res;
-    volatile boolean already_interrupted_for_gc;
-    already_interrupted_for_gc = bfalse;
     assert (i < mgr->num_vars);
-    while (_bdd_catch_out_of_nodes (mgr)) {
-        if (!already_interrupted_for_gc) {
-            fprintf (stderr, "*** in bdd_ith_var: garbage collecting\n");
-            if (mgr->num_unreferenced_bdds > 0)
-                bdd_mgr_perform_gc (mgr);
-            if (mgr->num_nodes > 0.3 * mgr->capacity) {
-                fprintf (stderr, "*** in bdd_ith_var: doubling after insufficient GC\n");
-
-                bdd_mgr_resize (mgr, mgr->capacity * 2);
-            }
-            else
-                already_interrupted_for_gc = btrue;
-        }
-        else {
-            fprintf (stderr, "*** in bdd_ith_var: doubling\n");
-            bdd_mgr_resize (mgr, mgr->capacity * 2);
-            already_interrupted_for_gc = bfalse;
-        }
-    }
-    res = _bdd_make_node (mgr, i, raw_bdd_false, raw_bdd_true);
-    return raw_to_usr(mgr, res);
+    while (_bdd_catch_out_of_nodes (mgr))
+        handle_out_of_nodes (mgr);
+    return raw_to_usr (mgr,
+                       _bdd_make_node (mgr, i, raw_bdd_false, raw_bdd_true));
 }
 
 
@@ -288,33 +282,14 @@ bdd_t *
 bdd_ite (bdd_mgr_t *mgr, bdd_t *p, bdd_t *t, bdd_t *f)
 {
     raw_bdd_t p_raw, t_raw, f_raw, res_raw;
-    volatile boolean already_interrupted_for_gc;
-    already_interrupted_for_gc = bfalse;
     while (_bdd_catch_out_of_nodes (mgr)) {
-        if (!already_interrupted_for_gc) {
-            fprintf (stderr, "*** in bdd_ite: garbage collecting\n");
-            if (mgr->num_unreferenced_bdds > 0) {
-                bdd_inc_ref (mgr, p);
-                bdd_inc_ref (mgr, t);
-                bdd_inc_ref (mgr, f);
-                bdd_mgr_perform_gc (mgr);
-                bdd_dec_ref (mgr, f);
-                bdd_dec_ref (mgr, t);
-                bdd_dec_ref (mgr, p);
-            }
-
-            if (mgr->num_nodes > 0.3 * mgr->capacity) {
-                fprintf (stderr, "*** in bdd_ite: doubling after insufficient GC\n");
-                bdd_mgr_resize (mgr, mgr->capacity * 2);
-            }
-            else
-                already_interrupted_for_gc = btrue;
-        }
-        else {
-            fprintf (stderr, "*** in bdd_ite: doubling\n");
-            bdd_mgr_resize (mgr, mgr->capacity * 2);
-            already_interrupted_for_gc = bfalse;
-        }
+        bdd_inc_ref (mgr, p);
+        bdd_inc_ref (mgr, t);
+        bdd_inc_ref (mgr, f);
+        handle_out_of_nodes (mgr);
+        bdd_dec_ref (mgr, f);
+        bdd_dec_ref (mgr, t);
+        bdd_dec_ref (mgr, p);
     }
     p_raw = usr_to_raw (mgr, p);
     t_raw = usr_to_raw (mgr, t);
@@ -362,33 +337,13 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
     bdd_ht_t *cache;
     raw_bdd_t b_raw;
     raw_bdd_t res;
-    volatile boolean already_interrupted_for_gc;
     cache = NULL;
-    already_interrupted_for_gc = bfalse;
     while (_bdd_catch_out_of_nodes (mgr)) {
         if (cache != NULL)
             bdd_ht_destroy (cache);
-        if (!already_interrupted_for_gc) {
-            fprintf (stderr, "*** in bdd_restrict: garbage collecting\n");
-            if (mgr->num_unreferenced_bdds > 0) {
-                bdd_inc_ref (mgr, b);
-                bdd_mgr_perform_gc (mgr);
-                bdd_dec_ref (mgr, b);
-            }
-
-            if (mgr->num_nodes > 0.3 * mgr->capacity) {
-                fprintf (stderr, "*** in bdd_restrict: doubling after insufficient GC\n");
-
-                bdd_mgr_resize (mgr, mgr->capacity * 2);
-            }
-            else
-                already_interrupted_for_gc = btrue;
-        }
-        else {
-            fprintf (stderr, "*** in bdd_restrict: doubling\n");
-            bdd_mgr_resize (mgr, mgr->capacity * 2);
-            already_interrupted_for_gc = bfalse;
-        }
+        bdd_inc_ref (mgr, b);
+        handle_out_of_nodes (mgr);
+        bdd_dec_ref (mgr, b);
     }
     b_raw = usr_to_raw (mgr, b);
     cache = bdd_ht_create ();

@@ -48,7 +48,8 @@ struct bdd_mgr
     unsigned next_gc_at_node_count;    /* next node count to GC at */
     unsigned num_unreferenced_bdds;    /* number of dead user-level BDDs */
 
-    jmp_buf out_of_nodes_cxt;          /* to handle GC/resize/reorder */
+    jmp_buf out_of_nodes_cxt;          /* to handle out-of-nodes */
+    boolean gc_interrupted_already;
 
 #ifndef NDEBUG
     unsigned *hash_histo;              /* histogram of number of reprobes */

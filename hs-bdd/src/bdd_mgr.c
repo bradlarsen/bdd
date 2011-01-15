@@ -278,6 +278,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
     mgr->ite_cache_stats = make_cache_stats ();
 
+    mgr->gc_interrupted_already = bfalse;
+
     add_false_node (mgr);
     add_true_node (mgr);
 
