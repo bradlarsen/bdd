@@ -75,9 +75,15 @@ delete_node (node_t *n)
 }
 
 static inline boolean
+node_is_live (node_t n)
+{
+    return !node_is_empty (n) && !node_is_deleted (n);
+}
+
+static inline boolean
 raw_bdd_is_valid_and_live (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
-    return raw < mgr->capacity && !node_is_empty(mgr->nodes[raw]);
+    return raw < mgr->capacity && node_is_live (mgr->nodes[raw]);
 }
 
 /* Gets the node associated with the given BDD. */
@@ -136,7 +142,7 @@ do {                                                                    \
     assert (mgr->nodes[1].high == 1);                                   \
     for (_i = 2; _i < mgr->capacity; _i += 1) {                         \
         node_t _n = mgr->nodes[_i];                                     \
-        if (!node_is_empty(_n) && !node_is_deleted(_n)) {               \
+        if (node_is_live (_n)) {                                        \
             node_t _n_low, _n_high;                                     \
             assert (_n.idx >= 0);                                       \
             assert ((unsigned)_n.idx < mgr->num_vars);                  \
@@ -145,14 +151,12 @@ do {                                                                    \
             assert (_n.low < mgr->capacity);                            \
             _n_low = mgr->nodes[_n.low];                                \
             assert (_n_low.idx > _n.idx);                               \
-            assert (!node_is_empty(_n_low));                            \
-            assert (!node_is_deleted(_n_low));                          \
+            assert (node_is_live (_n_low));                             \
                                                                         \
             assert (_n.high < mgr->capacity);                           \
             _n_high = mgr->nodes[_n.high];                              \
             assert (_n_high.idx > _n.idx);                              \
-            assert (!node_is_empty(_n_high));                           \
-            assert (!node_is_deleted(_n_high));                         \
+            assert (node_is_live (_n_high));                            \
         }                                                               \
     }                                                                   \
 } while (0)

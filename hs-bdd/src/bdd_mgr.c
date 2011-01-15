@@ -97,8 +97,7 @@ patch_bdd_indirection (
     )
 {
     bdd_t **usr_bdd;
-    assert (!node_is_empty (raw_bdd_to_node (mgr, new_i)));
-    assert (!node_is_deleted (raw_bdd_to_node (mgr, new_i)));
+    assert (node_is_live (raw_bdd_to_node (mgr, new_i)));
     usr_bdd = bdd_rtu_ht_lookup (old_raw_bdd_map, old_i);
     if (usr_bdd != NULL) {
         usr_bdd_entry_t new_entry;
@@ -157,7 +156,7 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
                            raw_bdd_true);
 
     for (i = 2; i < old_capacity; i += 1)
-        if (!node_is_empty(old_nodes[i]) && !node_is_deleted(old_nodes[i])) {
+        if (node_is_live (old_nodes[i])) {
             raw_bdd_t new_i = copy_bdd_rec (mgr, old_nodes, i);
             patch_bdd_indirection (mgr,
                                    old_raw_bdd_map,

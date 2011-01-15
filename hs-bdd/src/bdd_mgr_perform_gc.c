@@ -56,12 +56,10 @@ static inline void
 mark_node (bdd_mgr_t *mgr, node_t *n)
 {
     assert (!node_is_marked (*n));
-    assert (!node_is_deleted (*n));
-    assert (!node_is_empty (*n));
+    assert (node_is_live (*n));
     n->idx = n->idx - mgr->num_vars - 1;
+    assert (node_is_live (*n));
     assert (node_is_marked (*n));
-    assert (!node_is_deleted (*n));
-    assert (!node_is_empty (*n));
 }
 
 static inline void
@@ -78,14 +76,12 @@ static void
 mark_bdd_rec (bdd_mgr_t *mgr, raw_bdd_t root)
 {
     node_t *root_node = &mgr->nodes[root];
-    assert (!node_is_empty (*root_node));
-    assert (!node_is_deleted (*root_node));
+    assert (node_is_live (*root_node));
     if (!node_is_marked(*root_node)) {
         mark_bdd_rec (mgr, root_node->low);
         mark_bdd_rec (mgr, root_node->high);
         mark_node (mgr, root_node);
-        assert (!node_is_empty (*root_node));
-        assert (!node_is_deleted (*root_node));
+        assert (node_is_live (*root_node));
         assert (node_is_marked (*root_node));
     }
 }
@@ -137,7 +133,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
 
     for (i = 0; i < mgr->capacity; i += 1) {
         node_t *n = &mgr->nodes[i];
-        if (!node_is_empty(*n) && !node_is_deleted(*n) && !node_is_marked(*n)) {
+        if (node_is_live (*n) && !node_is_marked(*n)) {
             mgr->num_nodes -= 1;
             mgr->num_deleted_nodes += 1;
             delete_node (n);
