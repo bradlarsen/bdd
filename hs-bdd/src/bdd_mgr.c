@@ -100,8 +100,8 @@ patch_bdd_indirection (
     )
 {
     bdd_t **usr_bdd;
-    assert (!node_is_empty (mgr->nodes[new_i]));
-    assert (!node_is_deleted (mgr->nodes[new_i]));
+    assert (!node_is_empty (raw_bdd_to_node (mgr, new_i)));
+    assert (!node_is_deleted (raw_bdd_to_node (mgr, new_i)));
     usr_bdd = bdd_rtu_ht_lookup (old_raw_bdd_map, old_i);
     if (usr_bdd != NULL) {
         usr_bdd_entry_t new_entry;
