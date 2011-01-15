@@ -252,6 +252,7 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
 
+    assert (num_vars > 0);
     mgr->num_vars = num_vars;
 
     mgr->capacity = size_hint_to_size (capacity_hint);

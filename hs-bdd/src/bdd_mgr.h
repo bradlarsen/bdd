@@ -128,6 +128,7 @@ _is_power_of_two (unsigned n)
 do {                                                                    \
     unsigned _i;                                                        \
     assert (mgr != NULL);                                               \
+    assert (mgr->num_vars > 0);                                         \
     assert (mgr->capacity >= 2);                                        \
     assert (_is_power_of_two (mgr->capacity));                          \
     assert (mgr->num_nodes <= 0.75 * mgr->capacity);                    \

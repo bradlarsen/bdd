@@ -18,7 +18,7 @@
 typedef struct bdd_mgr bdd_mgr_t;
 
 /* Creates and initializes a new BDD manager with the specified number
- * of variables.  */
+ * of variables, which must be positive. */
 extern bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars);
 
