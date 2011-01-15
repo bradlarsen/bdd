@@ -108,4 +108,55 @@ _bdd_make_node (
 
 #define _bdd_catch_out_of_nodes(mgr) setjmp (mgr->out_of_nodes_cxt)
 
+#ifndef NDEBUG
+static inline boolean
+_is_power_of_two (unsigned n)
+{
+    unsigned i;
+    for (i = 1; i < n; i *= 2) {}
+    return i == n;
+}
+
+#define _bdd_mgr_check_invariants(mgr)                                  \
+do {                                                                    \
+    unsigned _i;                                                        \
+    assert (mgr != NULL);                                               \
+    assert (mgr->capacity >= 2);                                        \
+    assert (_is_power_of_two (mgr->capacity));                          \
+    assert (mgr->num_nodes <= 0.75 * mgr->capacity);                    \
+    assert (mgr->num_nodes + mgr->num_deleted_nodes <= mgr->capacity);  \
+    assert (mgr->nodes[0].idx > 0);                                     \
+    assert ((unsigned)mgr->nodes[0].idx == mgr->num_vars);              \
+    assert (mgr->nodes[0].low == 1);                                    \
+    assert (mgr->nodes[0].high == 0);                                   \
+    assert (mgr->nodes[1].idx > 0);                                     \
+    assert ((unsigned)mgr->nodes[1].idx == mgr->num_vars);              \
+    assert (mgr->nodes[1].low == 0);                                    \
+    assert (mgr->nodes[1].high == 1);                                   \
+    for (_i = 2; _i < mgr->capacity; _i += 1) {                         \
+        node_t _n = mgr->nodes[_i];                                     \
+        if (!node_is_empty(_n) && !node_is_deleted(_n)) {               \
+            node_t _n_low, _n_high;                                     \
+            assert (_n.idx >= 0);                                       \
+            assert ((unsigned)_n.idx < mgr->num_vars);                  \
+            assert (_n.low != _n.high);                                 \
+                                                                        \
+            assert (_n.low < mgr->capacity);                            \
+            _n_low = mgr->nodes[_n.low];                                \
+            assert (_n_low.idx > _n.idx);                               \
+            assert (!node_is_empty(_n_low));                            \
+            assert (!node_is_deleted(_n_low));                          \
+                                                                        \
+            assert (_n.high < mgr->capacity);                           \
+            _n_high = mgr->nodes[_n.high];                              \
+            assert (_n_high.idx > _n.idx);                              \
+            assert (!node_is_empty(_n_high));                           \
+            assert (!node_is_deleted(_n_high));                         \
+        }                                                               \
+    }                                                                   \
+} while (0)
+#else
+#define _bdd_mgr_check_invariants(mgr) do {} while (0)
+#endif
+
 #endif /* BDD_MGR_INCLUDED */

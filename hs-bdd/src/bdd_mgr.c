@@ -121,6 +121,8 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
     node_t *old_nodes;
     unsigned i;
 
+    _bdd_mgr_check_invariants (mgr);
+
     mgr->capacity = size_hint_to_size (new_capacity_hint);
     old_raw_bdd_map = mgr->raw_bdd_map;
     old_usr_bdd_map = mgr->usr_bdd_map;
@@ -172,6 +174,7 @@ bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
     bdd_rtu_ht_destroy (old_raw_bdd_map);
     checked_free (old_nodes);
     bdd_ite_cache_clear (&mgr->ite_cache);
+    _bdd_mgr_check_invariants (mgr);
 }
 
 static void
@@ -278,6 +281,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     add_false_node (mgr);
     add_true_node (mgr);
 
+    _bdd_mgr_check_invariants (mgr);
+
     return mgr;
 }
 
@@ -340,6 +345,8 @@ void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
     if (mgr == NULL) return;
+
+    _bdd_mgr_check_invariants (mgr);
 
     bdd_rtu_ht_map_entries (mgr->raw_bdd_map, NULL, free_usr_bdds);
     bdd_ite_cache_destroy (&mgr->ite_cache);

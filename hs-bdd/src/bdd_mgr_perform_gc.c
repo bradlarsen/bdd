@@ -116,6 +116,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     unsigned i;
 
     fprintf (stderr, "******** BEGIN GC\n");
+    _bdd_mgr_check_invariants (mgr);
     env.mgr = mgr;
     env.stats = make_bdd_gc_stats_t ();
 
@@ -156,5 +157,6 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     bdd_ite_cache_clear (&mgr->ite_cache);
 
     bdd_gc_stats_fprint (stderr, env.stats);
+    _bdd_mgr_check_invariants (mgr);
     fprintf (stderr, "******** END GC\n");
 }
