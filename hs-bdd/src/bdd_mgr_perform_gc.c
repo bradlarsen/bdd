@@ -104,10 +104,7 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     bdd_rtu_ht_t *old_raw_bdd_map;
     unsigned old_num_nodes;
     unsigned i;
-    static boolean collecting = bfalse;
 
-    assert (!collecting);
-    collecting = btrue;
     fprintf (stderr, "******** BEGIN GC\n");
     env.mgr = mgr;
     env.stats = make_bdd_gc_stats_t ();
@@ -151,6 +148,5 @@ bdd_mgr_perform_gc (bdd_mgr_t *mgr)
     bdd_gc_stats_fprint (stderr, env.stats);
     fprintf (stderr, "******** END GC\n");
 
-    collecting = bfalse;
     return env.stats;
 }
