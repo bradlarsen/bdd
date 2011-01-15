@@ -14,7 +14,6 @@
 #include "bdd_rtu_ht.h"
 #include "bddlib.h"
 #include "boolean.h"
-#include "hash_pair.h"
 #include "memory.h"
 #include "raw_bdd.h"
 #include "usr_bdd_ht.h"
