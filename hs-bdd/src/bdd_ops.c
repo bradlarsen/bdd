@@ -418,7 +418,7 @@ bdd_sat_count (bdd_mgr_t *mgr, bdd_t *b)
 static unsigned
 raw_bdd_get_num_nodes (bdd_mgr_t *mgr, raw_bdd_t b)
 {
-    if (b == raw_bdd_true || b == raw_bdd_false)
+    if (raw_bdd_is_terminal (b))
         return 1;
     else {
         const node_t b_node = raw_bdd_to_node (mgr, b);
