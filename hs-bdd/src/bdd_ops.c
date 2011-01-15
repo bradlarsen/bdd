@@ -96,12 +96,6 @@ bdd_inc_ref (bdd_mgr_t *mgr, bdd_t *b)
     entry->ref_cnt += 1;
 }
 
-static inline unsigned
-unsigned_max (unsigned x, unsigned y)
-{
-    return x > y ? x : y;
-}
-
 void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
 {
