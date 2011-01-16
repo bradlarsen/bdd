@@ -53,19 +53,19 @@ usr_to_raw (bdd_mgr_t *mgr, bdd_t *usr)
 static void
 handle_out_of_nodes (bdd_mgr_t *mgr)
 {
-    if (!mgr->gc_interrupted_already) {
-        fprintf (stderr, "*** garbage collecting\n");
-        if (mgr->num_unreferenced_bdds > 0)
-            bdd_mgr_perform_gc (mgr);
-        mgr->gc_interrupted_already = btrue;
-    }
-    else {
+    /* if (!mgr->gc_interrupted_already) { */
+    /*     fprintf (stderr, "*** garbage collecting\n"); */
+    /*     if (mgr->num_unreferenced_bdds > 0) */
+    /*         bdd_mgr_perform_gc (mgr); */
+    /*     mgr->gc_interrupted_already = btrue; */
+    /* } */
+    /* else { */
         unsigned old_capacity = mgr->capacity;
         fprintf (stderr, "*** doubling: ");
         bdd_mgr_resize (mgr, mgr->capacity * 2);
         fprintf (stderr, " went from %u to %u\n", old_capacity, mgr->capacity);
         mgr->gc_interrupted_already = bfalse;
-    }
+    /* } */
 }
 
 unsigned

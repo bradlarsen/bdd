@@ -101,6 +101,7 @@ patch_bdd_indirection (
     usr_bdd = bdd_rtu_ht_lookup (old_raw_bdd_map, old_i);
     if (usr_bdd != NULL) {
         usr_bdd_entry_t new_entry;
+        fprintf (stderr, "!!! patching %u to %u\n", old_i, new_i);
         new_entry = *usr_bdd_ht_lookup (old_usr_bdd_map, *usr_bdd);
         new_entry.raw_bdd = new_i;
         assert (usr_bdd_ht_lookup (mgr->usr_bdd_map, *usr_bdd) == NULL);
