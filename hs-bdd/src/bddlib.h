@@ -47,6 +47,11 @@ bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 extern unsigned
 bdd_mgr_get_num_allocated (bdd_mgr_t *mgr);
 
+/* Swaps the order of variables indexed by i and i+1.  The value of
+ * idx must be less than bdd_mgr_get_num_vars (mgr) - 1. */
+extern void
+bdd_mgr_swap_variables (bdd_mgr_t *mgr, unsigned idx);
+
 /**********************************************************************/
 /* Result cache types and functions                                   */
 /**********************************************************************/
@@ -83,6 +88,10 @@ typedef struct bdd bdd_t;
 /* Gets the variable of the root of the BDD. */
 extern unsigned
 bdd_var (bdd_mgr_t *mgr, bdd_t *b);
+
+/* Gets the variable level of the root of the BDD. */
+extern unsigned
+bdd_level (bdd_mgr_t *mgr, bdd_t *b);
 
 /* Gets the low branch of the root of the BDD. */
 extern bdd_t *

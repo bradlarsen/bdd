@@ -33,6 +33,10 @@ struct bdd_mgr
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
 
     unsigned num_vars;                 /* number of variables */
+    unsigned *idx_to_var;              /* mapping from var index to var */
+    unsigned *var_to_idx;              /* mapping from var to var index */
+    /* idx_to_var and var_to_idx are permutations of [0..num_vars) and
+     * are inverses of each other. */
 
     unsigned capacity;                 /* number of allocated nodes */
     unsigned num_nodes;                /* number of used nodes */
@@ -165,6 +169,10 @@ do {                                                                    \
             assert (_n_high.idx > _n.idx);                              \
             assert (node_is_live (_n_high));                            \
         }                                                               \
+    }                                                                   \
+    for (_i = 0; _i < mgr->num_vars; _i += 1) {                         \
+        assert (mgr->idx_to_var[mgr->var_to_idx[_i]] == _i);            \
+        assert (mgr->var_to_idx[mgr->idx_to_var[_i]] == _i);            \
     }                                                                   \
     for (_i = 0; _i < mgr->capacity; _i += 1)                           \
         for (_j = _i + 1; _j < mgr->capacity; _j += 1)                  \

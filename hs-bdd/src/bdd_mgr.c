@@ -243,6 +243,20 @@ _bdd_make_node (
     }
 }
 
+static void
+create_idx_var_mapping (bdd_mgr_t *mgr)
+{
+    unsigned i;
+    mgr->idx_to_var = (unsigned *)
+        checked_malloc (mgr->num_vars * sizeof(unsigned));
+    mgr->var_to_idx = (unsigned *)
+        checked_malloc (mgr->num_vars * sizeof(unsigned));
+    for (i = 0; i < mgr->num_vars; i += 1) {
+        mgr->idx_to_var[i] = i;
+        mgr->var_to_idx[i] = i;
+    }
+}
+
 bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars)
 {
@@ -266,6 +280,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     mgr->hash_histo = (unsigned *)
         checked_calloc (mgr->capacity, sizeof(unsigned));
 #endif
+
+    create_idx_var_mapping (mgr);
 
     mgr->usr_bdd_map = usr_bdd_ht_create ();
     mgr->raw_bdd_map = bdd_rtu_ht_create ();
@@ -363,6 +379,8 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
     checked_free (mgr->hash_histo);
 #endif
     checked_free (mgr->nodes);
+    checked_free (mgr->idx_to_var);
+    checked_free (mgr->var_to_idx);
     checked_free (mgr);
 }
 

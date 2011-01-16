@@ -71,6 +71,12 @@ handle_out_of_nodes (bdd_mgr_t *mgr)
 unsigned
 bdd_var (bdd_mgr_t *mgr, bdd_t *b)
 {
+    return mgr->idx_to_var[bdd_level (mgr, b)];
+}
+
+unsigned
+bdd_level (bdd_mgr_t *mgr, bdd_t *b)
+{
     return raw_bdd_to_node(mgr, usr_to_raw (mgr, b)).idx;
 }
 
@@ -128,7 +134,10 @@ bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
     while (_bdd_catch_out_of_nodes (mgr))
         handle_out_of_nodes (mgr);
     return raw_to_usr (mgr,
-                       _bdd_make_node (mgr, i, raw_bdd_false, raw_bdd_true));
+                       _bdd_make_node (mgr,
+                                       mgr->var_to_idx[i],
+                                       raw_bdd_false,
+                                       raw_bdd_true));
 }
 
 
@@ -196,9 +205,9 @@ typedef struct
     raw_bdd_t high;
 } quick_restrict_res_t;
 
-/* Given a BDD index, its corresponding node, and a variable no
- * greater than its variable, restricts the BDD with 'idx' assigned
- * both false and true. */
+/* Given a BDD index, its corresponding node, and a variable index no
+ * greater than its variable index, restricts the BDD with the
+ * variable at 'idx' assigned both false and true. */
 static inline quick_restrict_res_t
 quick_restrict (raw_bdd_t b, node_t b_n, int idx)
 {
@@ -347,7 +356,7 @@ bdd_restrict (bdd_mgr_t *mgr, bdd_t *b, unsigned var, boolean val)
     }
     b_raw = usr_to_raw (mgr, b);
     cache = bdd_ht_create ();
-    res = raw_bdd_res_rec (mgr, var, val, cache, b_raw);
+    res = raw_bdd_res_rec (mgr, mgr->var_to_idx[var], val, cache, b_raw);
     bdd_ht_destroy (cache);
     return raw_to_usr (mgr, res);
 }
