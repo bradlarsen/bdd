@@ -103,6 +103,8 @@ patch_bdd_indirection (
         usr_bdd_entry_t new_entry;
         new_entry = *usr_bdd_ht_lookup (old_usr_bdd_map, *usr_bdd);
         new_entry.raw_bdd = new_i;
+        assert (usr_bdd_ht_lookup (mgr->usr_bdd_map, *usr_bdd) == NULL);
+        assert (bdd_rtu_ht_lookup (mgr->raw_bdd_map, new_i) == NULL);
         usr_bdd_ht_insert (mgr->usr_bdd_map, *usr_bdd, new_entry);
         bdd_rtu_ht_insert (mgr->raw_bdd_map, new_i, *usr_bdd);
     }
