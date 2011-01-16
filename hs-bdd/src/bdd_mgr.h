@@ -81,6 +81,12 @@ node_is_live (node_t n)
 }
 
 static inline boolean
+node_equal (node_t n1, node_t n2)
+{
+    return n1.idx == n2.idx && n1.low == n2.low && n1.high == n2.high;
+}
+
+static inline boolean
 raw_bdd_is_valid_and_live (bdd_mgr_t *mgr, raw_bdd_t raw)
 {
     return raw < mgr->capacity && node_is_live (mgr->nodes[raw]);
@@ -126,7 +132,7 @@ _is_power_of_two (unsigned n)
 
 #define _bdd_mgr_check_invariants(mgr)                                  \
 do {                                                                    \
-    unsigned _i;                                                        \
+    unsigned _i, _j;                                                    \
     assert (mgr != NULL);                                               \
     assert (mgr->num_vars > 0);                                         \
     assert (mgr->capacity >= 2);                                        \
@@ -160,6 +166,11 @@ do {                                                                    \
             assert (node_is_live (_n_high));                            \
         }                                                               \
     }                                                                   \
+    for (_i = 0; _i < mgr->capacity; _i += 1)                           \
+        for (_j = _i + 1; _j < mgr->capacity; _j += 1)                  \
+            if (node_is_live (mgr->nodes[_i]) &&                        \
+                node_is_live (mgr->nodes[_j]))                          \
+                assert (!node_equal (mgr->nodes[_i], mgr->nodes[_j]));  \
 } while (0)
 #else
 #define _bdd_mgr_check_invariants(mgr) do {} while (0)
