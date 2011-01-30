@@ -1,25 +1,22 @@
-/* This module provides a size-limited cache from bdd_pair_t to bdd_t
- * implemented using hashing. */
-
+/* This module provides a hash-based cache from pairs of unsigned to unsigned. */
 #ifndef BDD_ITE_CACHE_INCLUDED
 #define BDD_ITE_CACHE_INCLUDED
 
 #include "boolean.h"
-#include "raw_bdd.h"
 #include "hash_pair.h"
 #include <limits.h>
 
 typedef struct
 {
-    raw_bdd_t p;
-    raw_bdd_t t;
-    raw_bdd_t f;
-    raw_bdd_t result;
+    unsigned p;
+    unsigned t;
+    unsigned f;
+    unsigned result;
 } bdd_ite_cache_entry_t;
 
 typedef struct
 {
-    unsigned num_entries;       /* invariant: always a power of 2 */
+    unsigned num_entries;       /* always a power of 2 */
     bdd_ite_cache_entry_t *entries;
 } bdd_ite_cache_t;
 
@@ -53,7 +50,7 @@ bdd_ite_cache_get_size (bdd_ite_cache_t *tab)
 }
 
 static inline unsigned
-bdd_ite_hash (raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
+bdd_ite_hash (unsigned p, unsigned t, unsigned f)
 {
     return hash_unsigned_pair (p, hash_unsigned_pair (t, f));
 }
@@ -63,9 +60,9 @@ bdd_ite_hash (raw_bdd_t p, raw_bdd_t t, raw_bdd_t f)
 static inline bdd_ite_cache_entry_t *
 bdd_ite_cache_lookup (
     bdd_ite_cache_t *tab,
-    raw_bdd_t p,
-    raw_bdd_t t,
-    raw_bdd_t f
+    unsigned p,
+    unsigned t,
+    unsigned f
     )
 {
     return &tab->entries[bdd_ite_hash(p, t, f) & (tab->num_entries - 1)];
