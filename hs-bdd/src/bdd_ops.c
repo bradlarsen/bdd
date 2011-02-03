@@ -33,13 +33,15 @@ bdd_high (bdd_mgr_t *mgr, bdd_t b)
 void
 bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
 {
-    assert (0);
+    fprintf (stderr, "warning: bdd_inc_ref (%p, %u) unimplemented\n",
+             (void *) mgr, b);
 }
 
 void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 {
-    assert (0);
+    fprintf (stderr, "warning: bdd_dec_ref (%p, %u) unimplemented\n",
+             (void *) mgr, b);
 }
 
 bdd_t 

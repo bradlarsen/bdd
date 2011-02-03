@@ -6,8 +6,11 @@ create_node_array (unsigned capacity)
     unsigned i;
     node_t *nodes;
     nodes = (node_t *) checked_malloc (capacity * sizeof(node_t));
-    for (i = 0; i < capacity; i += 1)
+    for (i = 0; i < capacity; i += 1) {
         set_node_empty(&nodes[i]);
+        nodes[i].hash_next = 0;
+        nodes[i].level_next = 0;
+    }
     return nodes;
 }
 
@@ -101,6 +104,17 @@ find_node_on_hash_chain (
     return idx;
 }
 
+static void
+append_hash_chains (bdd_mgr_t *mgr, unsigned x, unsigned y)
+{
+    if (x == y)
+        return;
+
+    while (mgr->nodes[x].hash_next != 0)
+        x = mgr->nodes[x].hash_next;
+    mgr->nodes[x].hash_next = y;
+}
+
 bdd_t
 _bdd_make_node (
     bdd_mgr_t *mgr,
@@ -129,9 +143,12 @@ _bdd_make_node (
 
         /* create a new node */
         node_idx = linear_probe_to_empty_node (mgr, hash_val);
+        fprintf (stderr, "!!! putting (%u, %u, %u) at %u\n",
+                 lvl, low, high, node_idx);
         mgr->nodes[node_idx].lvl = lvl;
         mgr->nodes[node_idx].low = low;
         mgr->nodes[node_idx].high = high;
+        append_hash_chains (mgr, hash_val, node_idx);
         mgr->num_nodes += 1;
         return node_idx;
     }

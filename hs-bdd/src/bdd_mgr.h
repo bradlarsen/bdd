@@ -112,52 +112,56 @@ _is_power_of_two (unsigned n)
     return i == n;
 }
 
-#define _bdd_mgr_check_invariants(mgr)                                  \
-do {                                                                    \
-    unsigned _i, _j;                                                    \
-    assert (mgr != NULL);                                               \
-    assert (mgr->num_vars > 0);                                         \
-    assert (mgr->capacity >= 2);                                        \
-    assert (_is_power_of_two (mgr->capacity));                          \
-    assert (mgr->nodes[0].lvl > 0);                                     \
-    assert (mgr->nodes[0].lvl == mgr->num_vars);                        \
-    assert (mgr->nodes[0].low == 1);                                    \
-    assert (mgr->nodes[0].high == 0);                                   \
-    assert (mgr->nodes[1].lvl > 0);                                     \
-    assert (mgr->nodes[1].lvl == mgr->num_vars);                        \
-    assert (mgr->nodes[1].low == 0);                                    \
-    assert (mgr->nodes[1].high == 1);                                   \
-    for (_i = 2; _i < mgr->capacity; _i += 1) {                         \
-        node_t _n = mgr->nodes[_i];                                     \
-        if (node_is_live (_n)) {                                        \
-            node_t _n_low, _n_high;                                     \
-            assert (_n.lvl >= 0);                                       \
-            assert (_n.lvl < mgr->num_vars);                            \
-            assert (_n.low != _n.high);                                 \
-                                                                        \
-            assert (_n.low < mgr->capacity);                            \
-            _n_low = mgr->nodes[_n.low];                                \
-            assert (_n_low.lvl > _n.lvl);                               \
-            assert (node_is_live (_n_low));                             \
-                                                                        \
-            assert (_n.high < mgr->capacity);                           \
-            _n_high = mgr->nodes[_n.high];                              \
-            assert (_n_high.lvl > _n.lvl);                              \
-            assert (node_is_live (_n_high));                            \
-        }                                                               \
-    }                                                                   \
-    for (_i = 0; _i < mgr->num_vars; _i += 1) {                         \
-        assert (mgr->lvl_to_var[mgr->var_to_lvl[_i]] == _i);            \
-        assert (mgr->var_to_lvl[mgr->lvl_to_var[_i]] == _i);            \
-    }                                                                   \
-    for (_i = 0; _i < mgr->capacity; _i += 1)                           \
-        for (_j = _i + 1; _j < mgr->capacity; _j += 1)                  \
-            if (node_is_live (mgr->nodes[_i]) &&                        \
-                node_is_live (mgr->nodes[_j]))                          \
-                assert (!node_equal (mgr->nodes[_i], mgr->nodes[_j]));  \
-} while (0)
+static inline void
+_bdd_mgr_check_invariants(bdd_mgr_t *mgr)
+{
+    unsigned _i, _j;
+    assert (mgr != NULL);
+    assert (mgr->num_vars > 0);
+    assert (mgr->capacity >= 2);
+    assert (_is_power_of_two (mgr->capacity));
+    assert (mgr->nodes[0].lvl > 0);
+    assert (mgr->nodes[0].lvl == mgr->num_vars);
+    assert (mgr->nodes[0].low == 1);
+    assert (mgr->nodes[0].high == 0);
+    assert (mgr->nodes[1].lvl > 0);
+    assert (mgr->nodes[1].lvl == mgr->num_vars);
+    assert (mgr->nodes[1].low == 0);
+    assert (mgr->nodes[1].high == 1);
+    for (_i = 2; _i < mgr->capacity; _i += 1) {
+        node_t _n = mgr->nodes[_i];
+        if (node_is_live (_n)) {
+            node_t _n_low, _n_high;
+            assert (_n.lvl >= 0);
+            assert (_n.lvl < mgr->num_vars);
+            assert (_n.low != _n.high);
+
+            assert (_n.low < mgr->capacity);
+            _n_low = mgr->nodes[_n.low];
+            assert (_n_low.lvl > _n.lvl);
+            assert (node_is_live (_n_low));
+
+            assert (_n.high < mgr->capacity);
+            _n_high = mgr->nodes[_n.high];
+            assert (_n_high.lvl > _n.lvl);
+            assert (node_is_live (_n_high));
+        }
+    }
+    for (_i = 0; _i < mgr->num_vars; _i += 1) {
+        assert (mgr->lvl_to_var[mgr->var_to_lvl[_i]] == _i);
+        assert (mgr->var_to_lvl[mgr->lvl_to_var[_i]] == _i);
+    }
+    for (_i = 0; _i < mgr->capacity; _i += 1)
+        for (_j = _i + 1; _j < mgr->capacity; _j += 1)
+            if (node_is_live (mgr->nodes[_i]) &&
+                node_is_live (mgr->nodes[_j]))
+                assert (!node_equal (mgr->nodes[_i], mgr->nodes[_j]));
+}
 #else
-#define _bdd_mgr_check_invariants(mgr) do {} while (0)
+static inline void
+_bdd_mgr_check_invariants(bdd_mgr_t *mgr)
+{
+}
 #endif
 
 #endif /* BDD_MGR_INCLUDED */
