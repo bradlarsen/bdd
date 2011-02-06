@@ -33,15 +33,13 @@ bdd_high (bdd_mgr_t *mgr, bdd_t b)
 void
 bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
 {
-    fprintf (stderr, "warning: bdd_inc_ref (%p, %u) unimplemented\n",
-             (void *) mgr, b);
+    /* FIXME: reimplement */
 }
 
 void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 {
-    fprintf (stderr, "warning: bdd_dec_ref (%p, %u) unimplemented\n",
-             (void *) mgr, b);
+    /* FIXME: reimplement */
 }
 
 bdd_t 
