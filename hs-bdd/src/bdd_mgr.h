@@ -27,6 +27,17 @@ struct bdd_mgr
 {
     node_t *nodes;                     /* all the nodes */
 
+    /* TODO: try moving the hash_next node field to a separate array. */
+    /* Does it improve performance?  On my MacBook, putting *all*
+     * fields in separate arrays significantly reduces performance, I
+     * suppose due to less efficient cache use.  The hash fields are
+     * *only* used in _bdd_make_node: we should be able to avoid
+     * hitting the hash_next field at all in the common case where
+     * there are no collisions, and so hitting the hash_next array
+     * will only be done in the slow case, anyway.  Perhaps the
+     * smaller footprint of the nodes array will result in an overall
+     * performance increase. */
+
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
 

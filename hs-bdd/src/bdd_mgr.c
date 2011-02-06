@@ -133,19 +133,14 @@ _bdd_make_node (
         return low;
     else {
         unsigned node_idx;
-        /* try to find existing node */
         const unsigned hash_val =
             node_hash (lvl, low, high) & (mgr->capacity - 1);
-        if (node_on_hash_chain (mgr, lvl, low, high, hash_val, &node_idx)) {
-            const node_t n = mgr->nodes[node_idx];
-            assert (!node_is_empty (n));
-            assert (n.lvl == lvl && n.low == low && n.high == high);
-            return node_idx;
-        }
+
+        if (node_on_hash_chain (mgr, lvl, low, high, hash_val, &node_idx))
+            return node_idx;    /* existing node found */
 
         if (mgr->num_nodes == mgr->capacity - 1)
-            /* out of nodes! */
-            longjmp (mgr->out_of_nodes_cxt, 1);
+            longjmp (mgr->out_of_nodes_cxt, 1); /* out of nodes! */
 
         /* create a new node */
         node_idx = linear_probe_to_empty_node (mgr, hash_val);
@@ -155,7 +150,6 @@ _bdd_make_node (
         if (hash_val != node_idx)
             append_hash_chains (mgr, hash_val, node_idx);
         mgr->num_nodes += 1;
-        /* _bdd_mgr_check_invariants (mgr); */
         return node_idx;
     }
 }
