@@ -72,6 +72,9 @@ node_hash (unsigned lvl, bdd_t low, bdd_t high)
 
 /* Walks down the nodes array from the start index until an empty
  * location is found. */
+/* TODO: investigate the performance of this hash collision resolution
+ * scheme.  As expected with linear probing, when the hash table fills
+ * up, collisions become more and more likely. */
 static bdd_t
 linear_probe_to_empty_node (bdd_mgr_t *mgr, unsigned start)
 {
