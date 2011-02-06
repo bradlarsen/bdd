@@ -20,23 +20,23 @@ typedef struct
     unsigned lvl;              /* level of the node in the DAG */
     bdd_t low;                 /* value if the variable is false */
     bdd_t high;                /* value if the variable is true */
-    unsigned hash_next;        /* index of next node on hash chain */
 } node_t;
+
+typedef struct
+{
+    unsigned node_idx;          /* index into nodes array */
+    unsigned chain_next;        /* index of next pair on hash chain */
+} hash_entry_t;
 
 struct bdd_mgr
 {
     node_t *nodes;                     /* all the nodes */
 
-    /* TODO: try moving the hash_next node field to a separate array. */
-    /* Does it improve performance?  On my MacBook, putting *all*
-     * fields in separate arrays significantly reduces performance, I
-     * suppose due to less efficient cache use.  The hash fields are
-     * *only* used in _bdd_make_node: we should be able to avoid
-     * hitting the hash_next field at all in the common case where
-     * there are no collisions, and so hitting the hash_next array
-     * will only be done in the slow case, anyway.  Perhaps the
-     * smaller footprint of the nodes array will result in an overall
-     * performance increase. */
+    hash_entry_t *hash_entry_pool;     /* pool of hash entries, 1 per node */
+    unsigned *nodes_hash;              /* hash table mapping node to
+                                        * index, values are indexes
+                                        * into hash_entry_pool */
+    unsigned free_hash_entry_idx;      /* index of free hash entry in pool */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
@@ -53,6 +53,12 @@ struct bdd_mgr
 
     jmp_buf out_of_nodes_cxt;          /* for out-of-nodes exception */
 };
+
+static inline unsigned
+_bdd_mgr_num_hash_buckets (bdd_mgr_t *mgr)
+{
+    return mgr->capacity / 2;
+}
 
 static inline boolean
 node_is_empty (node_t n)
@@ -79,9 +85,9 @@ node_equal (node_t n1, node_t n2)
 }
 
 static inline boolean
-bdd_is_valid_and_live (bdd_mgr_t *mgr, bdd_t raw)
+bdd_is_valid_and_live (bdd_mgr_t *mgr, bdd_t b)
 {
-    return raw < mgr->capacity && node_is_live (mgr->nodes[raw]);
+    return b < mgr->capacity && node_is_live (mgr->nodes[b]);
 }
 
 /* Gets the node associated with the given BDD. */
@@ -94,7 +100,7 @@ bdd_to_node (bdd_mgr_t *mgr, bdd_t b)
 
 /* Doubles the size of the storage allocated for nodes. */
 extern void
-_bdd_mgr_double (bdd_mgr_t *mgr);
+_bdd_mgr_double_capacity (bdd_mgr_t *mgr);
 
 /* FIXME: better document what's going on with exceptions */
 /* Retrieves the BDD of the node equal to the node with the given
@@ -128,11 +134,9 @@ _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
     assert (mgr->num_vars > 0);
     assert (mgr->capacity >= 2);
     assert (_is_power_of_two (mgr->capacity));
-    assert (mgr->nodes[0].lvl > 0);
     assert (mgr->nodes[0].lvl == mgr->num_vars);
     assert (mgr->nodes[0].low == 1);
     assert (mgr->nodes[0].high == 0);
-    assert (mgr->nodes[1].lvl > 0);
     assert (mgr->nodes[1].lvl == mgr->num_vars);
     assert (mgr->nodes[1].low == 0);
     assert (mgr->nodes[1].high == 1);

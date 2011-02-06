@@ -3,7 +3,7 @@
 static void
 handle_out_of_nodes (bdd_mgr_t *mgr)
 {
-    _bdd_mgr_double (mgr);
+    _bdd_mgr_double_capacity (mgr);
 }
 
 unsigned

@@ -1,36 +1,38 @@
 #include "bdd_mgr.h"
 
-static node_t *
-create_node_array (unsigned capacity)
+static boolean
+node_on_hash_chain (
+    bdd_mgr_t *mgr,
+    unsigned lvl,
+    bdd_t low,
+    bdd_t high,
+    unsigned chain_idx,
+    unsigned *node_idx
+    );
+
+static void
+node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx);
+
+static inline unsigned
+node_hash_bucket (bdd_mgr_t *mgr, unsigned lvl, bdd_t low, bdd_t high);
+
+static void
+_initialize_nodes (node_t *nodes, unsigned start, unsigned stop)
 {
     unsigned i;
-    node_t *nodes;
-    nodes = (node_t *) checked_malloc (capacity * sizeof(node_t));
-    for (i = 0; i < capacity; i += 1) {
-        set_node_empty(&nodes[i]);
-        nodes[i].hash_next = 0;
-    }
-    return nodes;
+    for (i = start; i < stop; i += 1)
+        set_node_empty (&nodes[i]);
 }
 
+/* Adds a node with the given fields at the given index of the nodes array. */
 static void
-add_false_node (bdd_mgr_t *mgr)
+add_node (bdd_mgr_t *mgr, unsigned idx, unsigned lvl, bdd_t low, bdd_t high)
 {
-    mgr->nodes[0].lvl = mgr->num_vars;
-    mgr->nodes[0].low = 1;
-    mgr->nodes[0].high = 0;
-    mgr->nodes[0].hash_next = 0;
+    mgr->nodes[idx].lvl = lvl;
+    mgr->nodes[idx].low = low;
+    mgr->nodes[idx].high = high;
     mgr->num_nodes += 1;
-}
-
-static void
-add_true_node (bdd_mgr_t *mgr)
-{
-    mgr->nodes[1].lvl = mgr->num_vars;
-    mgr->nodes[1].low = 0;
-    mgr->nodes[1].high = 1;
-    mgr->nodes[1].hash_next = 0;
-    mgr->num_nodes += 1;
+    node_hash_table_insert (mgr, idx, node_hash_bucket (mgr, lvl, low, high));
 }
 
 static bdd_cache_stats_t
@@ -56,79 +58,44 @@ size_hint_to_size (unsigned hint)
 }
 
 static inline unsigned
-node_hash (unsigned lvl, bdd_t low, bdd_t high)
+node_hash_bucket (bdd_mgr_t *mgr, unsigned lvl, bdd_t low, bdd_t high)
 {
-    return hash_unsigned_pair (lvl, hash_unsigned_pair(low, high));
+    return hash_unsigned_pair (lvl, hash_unsigned_pair(low, high)) &
+        (_bdd_mgr_num_hash_buckets (mgr) - 1);
 }
 
-/* Walks down the nodes array from the start index until an empty
- * location is found. */
-/* TODO: investigate the performance of this hash collision resolution
- * scheme.  As expected with linear probing, when the hash table fills
- * up, collisions become more and more likely. */
-static bdd_t
-linear_probe_to_empty_node (bdd_mgr_t *mgr, unsigned start)
-{
-    unsigned i = start;
-    while (!node_is_empty (mgr->nodes[i]))
-        i = (i + 1) & (mgr->capacity - 1);
-    return i;
-}
-
-/* Is a node with the given fields on the hash chain starting at
- * 'start'?  If so, the index of that node is returned through
- * '*node_idx'. */
-static inline boolean
+static boolean
 node_on_hash_chain (
     bdd_mgr_t *mgr,
     unsigned lvl,
     bdd_t low,
     bdd_t high,
-    unsigned start,
+    unsigned chain_idx,
     unsigned *node_idx
     )
 {
-    unsigned idx = start;
-    node_t n = mgr->nodes[idx];
-    do {
+    unsigned pool_idx = mgr->nodes_hash[chain_idx];
+    while (pool_idx != 0) {
+        hash_entry_t e = mgr->hash_entry_pool[pool_idx];
+        node_t n = mgr->nodes[e.node_idx];
         if (n.lvl == lvl && n.low == low && n.high == high) {
-            *node_idx = idx;
+            *node_idx = pool_idx;
             return btrue;
-        } else {
-            idx = n.hash_next;
-            n = mgr->nodes[idx];
         }
-    } while (idx != 0);
-
+        pool_idx = mgr->hash_entry_pool[pool_idx].chain_next;
+    }
     return bfalse;
 }
 
-static boolean
-idx_on_hash_chain (bdd_mgr_t *mgr, unsigned start, unsigned val)
-{
-    unsigned idx = start;
-    do {
-        if (idx == val)
-            return btrue;
-        idx = mgr->nodes[idx].hash_next;
-    } while (idx != 0);
-    return bfalse;
-}
-
-/* Appends the hash chain starting at index y in the nodes array to
- * the end of the hash chain starting at index x. */
 static void
-append_hash_chains (bdd_mgr_t *mgr, unsigned x, unsigned y)
+node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
-    unsigned p = x;
-    assert (y != 0);
-    assert (!idx_on_hash_chain (mgr, x, y));
-    assert (!idx_on_hash_chain (mgr, y, x));
-    while (mgr->nodes[p].hash_next != 0)
-        p = mgr->nodes[p].hash_next;
-    mgr->nodes[p].hash_next = y;
-    assert (idx_on_hash_chain (mgr, x, y));
-    assert (!idx_on_hash_chain (mgr, y, x));
+    hash_entry_t *e = &mgr->hash_entry_pool[mgr->free_hash_entry_idx];
+    assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
+    e->node_idx = node_idx;
+    e->chain_next = mgr->nodes_hash[bucket_idx];
+    mgr->nodes_hash[bucket_idx] = mgr->free_hash_entry_idx;
+    mgr->free_hash_entry_idx += 1;
 }
 
 bdd_t
@@ -144,65 +111,59 @@ _bdd_make_node (
         return low;
     else {
         unsigned node_idx;
-        const unsigned hash_val =
-            node_hash (lvl, low, high) & (mgr->capacity - 1);
+        unsigned bucket_idx = node_hash_bucket (mgr, lvl, low, high);
 
-        if (node_on_hash_chain (mgr, lvl, low, high, hash_val, &node_idx))
+        if (node_on_hash_chain (mgr, lvl, low, high, bucket_idx, &node_idx))
             return node_idx;    /* existing node found */
 
         if (mgr->num_nodes == mgr->capacity - 1)
             longjmp (mgr->out_of_nodes_cxt, 1); /* out of nodes! */
 
         /* create a new node */
-        node_idx = linear_probe_to_empty_node (mgr, hash_val);
-        if (mgr->nodes[node_idx].hash_next != 0)
-            fprintf (stderr, "!!! empty node at %u points to %u\n",
-                     node_idx,
-                     mgr->nodes[node_idx].hash_next);
+        node_idx = mgr->num_nodes;
+        mgr->num_nodes += 1;
         mgr->nodes[node_idx].lvl = lvl;
         mgr->nodes[node_idx].low = low;
         mgr->nodes[node_idx].high = high;
-        if (hash_val != node_idx)
-            append_hash_chains (mgr, hash_val, node_idx);
-        mgr->num_nodes += 1;
+        node_hash_table_insert (mgr, node_idx, bucket_idx);
         return node_idx;
     }
 }
 
 static void
-_bdd_mgr_rehash (bdd_mgr_t *mgr, unsigned max_i)
+_bdd_mgr_rehash (bdd_mgr_t *mgr)
 {
     unsigned i;
-    for (i = 0; i < max_i; i += 1)
-        mgr->nodes[i].hash_next = 0;
-    for (i = 2; i < max_i; i += 1) {
-        node_t n = mgr->nodes[i];
-        if (node_is_live (n)) {
-            unsigned hash =
-                node_hash (n.lvl, n.low, n.high) & (mgr->capacity - 1);
-            if (hash != i) {
-                fprintf (stderr, "!!! append_hash_chains %u %u\n", hash, i);
-                append_hash_chains (mgr, hash, i);
-            }
-        }
+    mgr->free_hash_entry_idx = 0;
+    memset (mgr->nodes_hash, 0,
+            _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
+    for (i = 0; i < mgr->num_nodes; i += 1) {
+        assert (bdd_is_valid_and_live (mgr, i));
+        node_hash_table_insert (mgr, i, node_hash_bucket (mgr,
+                                                          mgr->nodes[i].lvl,
+                                                          mgr->nodes[i].low,
+                                                          mgr->nodes[i].high));
     }
 }
 
 void
-_bdd_mgr_double (bdd_mgr_t *mgr)
+_bdd_mgr_double_capacity (bdd_mgr_t *mgr)
 {
     unsigned old_capacity = mgr->capacity;
-    unsigned i;
-    _bdd_mgr_check_invariants (mgr);
+    fprintf (stderr, "!!! begin double\n");
     mgr->capacity *= 2;
-    mgr->nodes = (node_t *) checked_realloc (mgr->nodes, mgr->capacity);
-    for (i = old_capacity; i < mgr->capacity; i += 1) {
-        mgr->nodes[i].hash_next = 0;
-        set_node_empty(&mgr->nodes[i]);
-    }
-    _bdd_mgr_rehash (mgr, old_capacity);
+    mgr->nodes = (node_t *)
+        checked_realloc (mgr->nodes, mgr->capacity * sizeof (node_t));
+    _initialize_nodes (mgr->nodes, old_capacity, mgr->capacity);
+    mgr->hash_entry_pool = (hash_entry_t *)
+        checked_realloc (mgr->hash_entry_pool,
+                         mgr->capacity * sizeof (hash_entry_t));
+    mgr->nodes_hash = (unsigned *)
+        checked_realloc (mgr->nodes_hash,
+                         _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
+    _bdd_mgr_rehash (mgr);
     bdd_ite_cache_clear (&mgr->ite_cache);
-    _bdd_mgr_check_invariants (mgr);
+    fprintf (stderr, "!!! end double\n");
 }
 
 static void
@@ -217,6 +178,16 @@ create_lvl_var_mapping (bdd_mgr_t *mgr)
         mgr->lvl_to_var[i] = i;
         mgr->var_to_lvl[i] = i;
     }
+}
+
+static void
+create_nodes_hash_table (bdd_mgr_t *mgr)
+{
+    mgr->hash_entry_pool = (hash_entry_t *)
+        checked_malloc (mgr->capacity * sizeof(hash_entry_t));
+    mgr->nodes_hash = (unsigned *)
+        checked_calloc (_bdd_mgr_num_hash_buckets (mgr), sizeof(unsigned));
+    mgr->free_hash_entry_idx = 0;
 }
 
 bdd_mgr_t *
@@ -235,18 +206,20 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     mgr->capacity = size_hint_to_size (capacity_hint);
     mgr->num_nodes = 0;
-    mgr->nodes = create_node_array (mgr->capacity);
+    mgr->nodes = (node_t *) checked_malloc (mgr->capacity * sizeof(node_t));
+    _initialize_nodes (mgr->nodes, 0, mgr->capacity);
 
+    create_nodes_hash_table (mgr);
     create_lvl_var_mapping (mgr);
 
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
     mgr->ite_cache_stats = make_cache_stats ();
 
-    add_false_node (mgr);
-    add_true_node (mgr);
+    add_node (mgr, 0, num_vars, 1, 0); /* false terminal */
+    add_node (mgr, 1, num_vars, 0, 1); /* true terminal */
 
-    /* _bdd_mgr_check_invariants (mgr); */
+    _bdd_mgr_check_invariants (mgr);
 
     return mgr;
 }
@@ -259,7 +232,8 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
     _bdd_mgr_check_invariants (mgr);
 
     bdd_ite_cache_destroy (&mgr->ite_cache);
-
+    checked_free (mgr->nodes_hash);
+    checked_free (mgr->hash_entry_pool);
     checked_free (mgr->nodes);
     checked_free (mgr->lvl_to_var);
     checked_free (mgr->var_to_lvl);
