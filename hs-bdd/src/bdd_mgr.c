@@ -152,11 +152,6 @@ _bdd_make_node (
 
         /* create a new node */
         node_idx = linear_probe_to_empty_node (mgr, hash_val);
-        if (hash_val != node_idx)
-            fprintf (stderr, "!!! COLLISION! %u -> %u (%d)\n",
-                     hash_val, node_idx, (int) node_idx - (int) hash_val);
-        fprintf (stderr, "!!! adding (%u, %u, %u) at %u (hash is %u)\n",
-                 lvl, low, high, node_idx, hash_val);
         mgr->nodes[node_idx].lvl = lvl;
         mgr->nodes[node_idx].low = low;
         mgr->nodes[node_idx].high = high;
