@@ -81,25 +81,32 @@ linear_probe_to_empty_node (bdd_mgr_t *mgr, unsigned start)
     return i;
 }
 
-/* Returns the index for a node with the given components on the hash
- * chain rooted at 'start', or else returns 0 if there is no such
- * node. */
-static bdd_t
-find_node_on_hash_chain (
+/* Is a node with the given fields on the hash chain starting at
+ * 'start'?  If so, the index of that node is returned through
+ * '*node_idx'. */
+static inline boolean
+node_on_hash_chain (
     bdd_mgr_t *mgr,
     unsigned lvl,
     bdd_t low,
     bdd_t high,
-    unsigned start
+    unsigned start,
+    unsigned *node_idx
     )
 {
     unsigned idx = start;
     node_t n = mgr->nodes[idx];
-    while (idx != 0 && !(n.lvl == lvl && n.low == low && n.high == high)) {
-        idx = n.hash_next;
-        n = mgr->nodes[idx];
-    }
-    return idx;
+    do {
+        if (n.lvl == lvl && n.low == low && n.high == high) {
+            *node_idx = idx;
+            return btrue;
+        } else {
+            idx = n.hash_next;
+            n = mgr->nodes[idx];
+        }
+    } while (idx != 0);
+
+    return bfalse;
 }
 
 /* Appends the hash chain starting at index y in the nodes array to
@@ -125,18 +132,11 @@ _bdd_make_node (
     if (low == high)
         return low;
     else {
+        unsigned node_idx;
         /* try to find existing node */
         const unsigned hash_val =
             node_hash (lvl, low, high) & (mgr->capacity - 1);
-        unsigned node_idx =
-            find_node_on_hash_chain (mgr, lvl, low, high, hash_val);
-        /* FIXME: hashing bug here. */
-        /* Because I use 0 as a sentinel, if a node hashes to index 0,
-         * this code treats it as though the node is new, hence
-         * potentially adding it multiple times. */
-        /* We need to be able to distinguish between
-         * hashing-to-index-zero and not-found! */
-        if (node_idx != 0) {
+        if (node_on_hash_chain (mgr, lvl, low, high, hash_val, &node_idx)) {
             const node_t n = mgr->nodes[node_idx];
             assert (!node_is_empty (n));
             assert (n.lvl == lvl && n.low == low && n.high == high);
@@ -206,7 +206,7 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     add_false_node (mgr);
     add_true_node (mgr);
 
-    _bdd_mgr_check_invariants (mgr);
+    /* _bdd_mgr_check_invariants (mgr); */
 
     return mgr;
 }

@@ -132,7 +132,6 @@ _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
         node_t _n = mgr->nodes[_i];
         if (node_is_live (_n)) {
             node_t _n_low, _n_high;
-            assert (_n.lvl >= 0);
             assert (_n.lvl < mgr->num_vars);
             assert (_n.low != _n.high);
 
