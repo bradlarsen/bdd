@@ -55,12 +55,6 @@ size_hint_to_size (unsigned hint)
     return 128u > i ? 128u : i;
 }
 
-void
-_bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint)
-{
-    assert (0);
-}
-
 static inline unsigned
 node_hash (unsigned lvl, bdd_t low, bdd_t high)
 {
@@ -109,15 +103,32 @@ node_on_hash_chain (
     return bfalse;
 }
 
+static boolean
+idx_on_hash_chain (bdd_mgr_t *mgr, unsigned start, unsigned val)
+{
+    unsigned idx = start;
+    do {
+        if (idx == val)
+            return btrue;
+        idx = mgr->nodes[idx].hash_next;
+    } while (idx != 0);
+    return bfalse;
+}
+
 /* Appends the hash chain starting at index y in the nodes array to
  * the end of the hash chain starting at index x. */
 static void
 append_hash_chains (bdd_mgr_t *mgr, unsigned x, unsigned y)
 {
+    unsigned p = x;
     assert (y != 0);
-    while (mgr->nodes[x].hash_next != 0)
-        x = mgr->nodes[x].hash_next;
-    mgr->nodes[x].hash_next = y;
+    assert (!idx_on_hash_chain (mgr, x, y));
+    assert (!idx_on_hash_chain (mgr, y, x));
+    while (mgr->nodes[p].hash_next != 0)
+        p = mgr->nodes[p].hash_next;
+    mgr->nodes[p].hash_next = y;
+    assert (idx_on_hash_chain (mgr, x, y));
+    assert (!idx_on_hash_chain (mgr, y, x));
 }
 
 bdd_t
@@ -144,6 +155,10 @@ _bdd_make_node (
 
         /* create a new node */
         node_idx = linear_probe_to_empty_node (mgr, hash_val);
+        if (mgr->nodes[node_idx].hash_next != 0)
+            fprintf (stderr, "!!! empty node at %u points to %u\n",
+                     node_idx,
+                     mgr->nodes[node_idx].hash_next);
         mgr->nodes[node_idx].lvl = lvl;
         mgr->nodes[node_idx].low = low;
         mgr->nodes[node_idx].high = high;
@@ -152,6 +167,42 @@ _bdd_make_node (
         mgr->num_nodes += 1;
         return node_idx;
     }
+}
+
+static void
+_bdd_mgr_rehash (bdd_mgr_t *mgr, unsigned max_i)
+{
+    unsigned i;
+    for (i = 0; i < max_i; i += 1)
+        mgr->nodes[i].hash_next = 0;
+    for (i = 2; i < max_i; i += 1) {
+        node_t n = mgr->nodes[i];
+        if (node_is_live (n)) {
+            unsigned hash =
+                node_hash (n.lvl, n.low, n.high) & (mgr->capacity - 1);
+            if (hash != i) {
+                fprintf (stderr, "!!! append_hash_chains %u %u\n", hash, i);
+                append_hash_chains (mgr, hash, i);
+            }
+        }
+    }
+}
+
+void
+_bdd_mgr_double (bdd_mgr_t *mgr)
+{
+    unsigned old_capacity = mgr->capacity;
+    unsigned i;
+    _bdd_mgr_check_invariants (mgr);
+    mgr->capacity *= 2;
+    mgr->nodes = (node_t *) checked_realloc (mgr->nodes, mgr->capacity);
+    for (i = old_capacity; i < mgr->capacity; i += 1) {
+        mgr->nodes[i].hash_next = 0;
+        set_node_empty(&mgr->nodes[i]);
+    }
+    _bdd_mgr_rehash (mgr, old_capacity);
+    bdd_ite_cache_clear (&mgr->ite_cache);
+    _bdd_mgr_check_invariants (mgr);
 }
 
 static void

@@ -3,7 +3,7 @@
 static void
 handle_out_of_nodes (bdd_mgr_t *mgr)
 {
-    assert (0);
+    _bdd_mgr_double (mgr);
 }
 
 unsigned

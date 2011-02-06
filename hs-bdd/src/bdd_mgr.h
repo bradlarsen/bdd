@@ -92,11 +92,9 @@ bdd_to_node (bdd_mgr_t *mgr, bdd_t b)
     return mgr->nodes[b];
 }
 
-/* Adjusts the storage of the given manager so that room for
- * 'new_capacity' nodes will be allocated.  The number of used nodes
- * must be less than 3/4 * 'new_capacity_hint'. */
+/* Doubles the size of the storage allocated for nodes. */
 extern void
-_bdd_mgr_resize (bdd_mgr_t *mgr, unsigned new_capacity_hint);
+_bdd_mgr_double (bdd_mgr_t *mgr);
 
 /* FIXME: better document what's going on with exceptions */
 /* Retrieves the BDD of the node equal to the node with the given
