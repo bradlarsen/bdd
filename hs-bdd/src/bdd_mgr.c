@@ -9,7 +9,6 @@ create_node_array (unsigned capacity)
     for (i = 0; i < capacity; i += 1) {
         set_node_empty(&nodes[i]);
         nodes[i].hash_next = 0;
-        nodes[i].level_next = 0;
     }
     return nodes;
 }
@@ -21,7 +20,6 @@ add_false_node (bdd_mgr_t *mgr)
     mgr->nodes[0].low = 1;
     mgr->nodes[0].high = 0;
     mgr->nodes[0].hash_next = 0;
-    mgr->nodes[0].level_next = 0;
     mgr->num_nodes += 1;
 }
 
@@ -32,7 +30,6 @@ add_true_node (bdd_mgr_t *mgr)
     mgr->nodes[1].low = 0;
     mgr->nodes[1].high = 1;
     mgr->nodes[1].hash_next = 0;
-    mgr->nodes[1].level_next = 0;
     mgr->num_nodes += 1;
 }
 

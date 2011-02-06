@@ -21,7 +21,6 @@ typedef struct
     bdd_t low;                 /* value if the variable is false */
     bdd_t high;                /* value if the variable is true */
     unsigned hash_next;        /* index of next node on hash chain */
-    unsigned level_next;       /* index of next node on level chain */
 } node_t;
 
 struct bdd_mgr
