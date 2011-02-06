@@ -94,22 +94,20 @@ find_node_on_hash_chain (
     )
 {
     unsigned idx = start;
-    while (idx != 0) {
-        node_t n = mgr->nodes[idx];
-        if (n.lvl == lvl && n.low == low && n.high == high)
-            break;
-        else
-            idx = n.hash_next;
+    node_t n = mgr->nodes[idx];
+    while (idx != 0 && !(n.lvl == lvl && n.low == low && n.high == high)) {
+        idx = n.hash_next;
+        n = mgr->nodes[idx];
     }
     return idx;
 }
 
+/* Appends the hash chain starting at index y in the nodes array to
+ * the end of the hash chain starting at index x. */
 static void
 append_hash_chains (bdd_mgr_t *mgr, unsigned x, unsigned y)
 {
-    if (x == y)
-        return;
-
+    assert (y != 0);
     while (mgr->nodes[x].hash_next != 0)
         x = mgr->nodes[x].hash_next;
     mgr->nodes[x].hash_next = y;
@@ -123,33 +121,46 @@ _bdd_make_node (
     bdd_t high
     )
 {
+    assert (lvl < mgr->num_vars);
     if (low == high)
         return low;
     else {
         /* try to find existing node */
-        unsigned hash_val, node_idx;
-        hash_val = node_hash (lvl, low, high) & (mgr->capacity - 1);
-        node_idx = find_node_on_hash_chain (mgr, lvl, low, high, hash_val);
+        const unsigned hash_val =
+            node_hash (lvl, low, high) & (mgr->capacity - 1);
+        unsigned node_idx =
+            find_node_on_hash_chain (mgr, lvl, low, high, hash_val);
+        /* FIXME: hashing bug here. */
+        /* Because I use 0 as a sentinel, if a node hashes to index 0,
+         * this code treats it as though the node is new, hence
+         * potentially adding it multiple times. */
+        /* We need to be able to distinguish between
+         * hashing-to-index-zero and not-found! */
         if (node_idx != 0) {
-            node_t n = mgr->nodes[node_idx];
+            const node_t n = mgr->nodes[node_idx];
             assert (!node_is_empty (n));
             assert (n.lvl == lvl && n.low == low && n.high == high);
             return node_idx;
         }
 
         if (mgr->num_nodes == mgr->capacity - 1)
-            /* ensure there are enough nodes */
+            /* out of nodes! */
             longjmp (mgr->out_of_nodes_cxt, 1);
 
         /* create a new node */
         node_idx = linear_probe_to_empty_node (mgr, hash_val);
-        fprintf (stderr, "!!! putting (%u, %u, %u) at %u\n",
-                 lvl, low, high, node_idx);
+        if (hash_val != node_idx)
+            fprintf (stderr, "!!! COLLISION! %u -> %u (%d)\n",
+                     hash_val, node_idx, (int) node_idx - (int) hash_val);
+        fprintf (stderr, "!!! adding (%u, %u, %u) at %u (hash is %u)\n",
+                 lvl, low, high, node_idx, hash_val);
         mgr->nodes[node_idx].lvl = lvl;
         mgr->nodes[node_idx].low = low;
         mgr->nodes[node_idx].high = high;
-        append_hash_chains (mgr, hash_val, node_idx);
+        if (hash_val != node_idx)
+            append_hash_chains (mgr, hash_val, node_idx);
         mgr->num_nodes += 1;
+        /* _bdd_mgr_check_invariants (mgr); */
         return node_idx;
     }
 }
