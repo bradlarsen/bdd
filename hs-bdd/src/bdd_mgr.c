@@ -1,24 +1,5 @@
 #include "bdd_mgr.h"
 
-#ifndef NDEBUG
-#include "node_ht.h"
-void
-_check_no_duplicate_nodes (bdd_mgr_t *mgr)
-{
-    node_ht_t *seen = node_ht_create ();
-    unsigned i;
-
-    for (i = 0; i < mgr->capacity; i += 1) {
-        if (node_is_live (mgr->nodes[i])) {
-            assert (node_ht_lookup (seen, mgr->nodes[i]) == NULL);
-            node_ht_insert (seen, mgr->nodes[i], 1);
-        }
-    }
-
-    node_ht_destroy (seen);
-}
-#endif
-
 static boolean
 node_on_hash_chain (
     bdd_mgr_t *mgr,
