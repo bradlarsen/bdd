@@ -79,7 +79,8 @@ node_on_hash_chain (
         hash_entry_t e = mgr->hash_entry_pool[pool_idx];
         node_t n = mgr->nodes[e.node_idx];
         if (n.lvl == lvl && n.low == low && n.high == high) {
-            *node_idx = pool_idx;
+            assert (e.node_idx + 1 == pool_idx);
+            *node_idx = e.node_idx;
             return btrue;
         }
         pool_idx = mgr->hash_entry_pool[pool_idx].chain_next;
@@ -116,7 +117,7 @@ _bdd_make_node (
         if (node_on_hash_chain (mgr, lvl, low, high, bucket_idx, &node_idx))
             return node_idx;    /* existing node found */
 
-        if (mgr->num_nodes == mgr->capacity - 1)
+        if (mgr->num_nodes == mgr->capacity - 2)
             longjmp (mgr->out_of_nodes_cxt, 1); /* out of nodes! */
 
         /* create a new node */
@@ -134,7 +135,7 @@ static void
 _bdd_mgr_rehash (bdd_mgr_t *mgr)
 {
     unsigned i;
-    mgr->free_hash_entry_idx = 0;
+    mgr->free_hash_entry_idx = 1;
     memset (mgr->nodes_hash, 0,
             _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
     for (i = 0; i < mgr->num_nodes; i += 1) {
@@ -187,7 +188,7 @@ create_nodes_hash_table (bdd_mgr_t *mgr)
         checked_malloc (mgr->capacity * sizeof(hash_entry_t));
     mgr->nodes_hash = (unsigned *)
         checked_calloc (_bdd_mgr_num_hash_buckets (mgr), sizeof(unsigned));
-    mgr->free_hash_entry_idx = 0;
+    mgr->free_hash_entry_idx = 1;
 }
 
 bdd_mgr_t *

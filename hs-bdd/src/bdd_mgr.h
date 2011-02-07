@@ -35,8 +35,10 @@ struct bdd_mgr
     hash_entry_t *hash_entry_pool;     /* pool of hash entries, 1 per node */
     unsigned *nodes_hash;              /* hash table mapping node to
                                         * index, values are indexes
-                                        * into hash_entry_pool */
-    unsigned free_hash_entry_idx;      /* index of free hash entry in pool */
+                                        * into hash_entry_pool, 0 used
+                                        * as end-of-chain value */
+    unsigned free_hash_entry_idx;      /* index of free hash entry in
+                                        * pool; always positive */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
@@ -140,6 +142,8 @@ _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
     assert (mgr->nodes[1].lvl == mgr->num_vars);
     assert (mgr->nodes[1].low == 0);
     assert (mgr->nodes[1].high == 1);
+    assert (mgr->free_hash_entry_idx > 0);
+    assert (mgr->free_hash_entry_idx < mgr->capacity);
     for (_i = 2; _i < mgr->capacity; _i += 1) {
         node_t _n = mgr->nodes[_i];
         if (node_is_live (_n)) {
