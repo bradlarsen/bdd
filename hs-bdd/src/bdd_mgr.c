@@ -80,6 +80,16 @@ node_on_hash_chain (
         node_t n = mgr->nodes[e.node_idx];
         if (n.lvl == lvl && n.low == low && n.high == high) {
             assert (e.node_idx + 1 == pool_idx);
+            /* TODO: use leaner hashing if possible. */
+            /* It seems that e.node_idx + 1 == pool_idx, always.  If
+             * this is indeed the case, even when variable swapping &
+             * GC are implemented again, then we don't in fact need to
+             * store node_idx in hash_entry_t, as it can be derived
+             * from pool_idx.
+             *
+             * Perhaps all my previous hashing difficulties were due
+             * to the fact that there was no explicit representation
+             * for hash buckets. */
             *node_idx = e.node_idx;
             return btrue;
         }
