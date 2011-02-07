@@ -1,5 +1,24 @@
 #include "bdd_mgr.h"
 
+#ifndef NDEBUG
+#include "node_ht.h"
+void
+_check_no_duplicate_nodes (bdd_mgr_t *mgr)
+{
+    node_ht_t *seen = node_ht_create ();
+    unsigned i;
+
+    for (i = 0; i < mgr->capacity; i += 1) {
+        if (node_is_live (mgr->nodes[i])) {
+            assert (node_ht_lookup (seen, mgr->nodes[i]) == NULL);
+            node_ht_insert (seen, mgr->nodes[i], 1);
+        }
+    }
+
+    node_ht_destroy (seen);
+}
+#endif
+
 static boolean
 node_on_hash_chain (
     bdd_mgr_t *mgr,
@@ -162,6 +181,7 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr)
 {
     unsigned old_capacity = mgr->capacity;
     fprintf (stderr, "!!! begin double\n");
+    _bdd_mgr_check_invariants (mgr);
     mgr->capacity *= 2;
     mgr->nodes = (node_t *)
         checked_realloc (mgr->nodes, mgr->capacity * sizeof (node_t));
@@ -174,6 +194,7 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr)
                          _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
     _bdd_mgr_rehash (mgr);
     bdd_ite_cache_clear (&mgr->ite_cache);
+    _bdd_mgr_check_invariants (mgr);
     fprintf (stderr, "!!! end double\n");
 }
 

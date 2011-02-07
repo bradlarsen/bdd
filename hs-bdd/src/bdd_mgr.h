@@ -100,6 +100,12 @@ bdd_to_node (bdd_mgr_t *mgr, bdd_t b)
     return mgr->nodes[b];
 }
 
+static inline unsigned
+node_hash (node_t n)
+{
+    return hash_unsigned_pair (n.lvl, hash_unsigned_pair(n.low, n.high));
+}
+
 /* Doubles the size of the storage allocated for nodes. */
 extern void
 _bdd_mgr_double_capacity (bdd_mgr_t *mgr);
@@ -128,10 +134,13 @@ _is_power_of_two (unsigned n)
     return i == n;
 }
 
+void
+_check_no_duplicate_nodes (bdd_mgr_t *mgr);
+
 static inline void
 _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
 {
-    unsigned _i, _j;
+    unsigned _i;
     assert (mgr != NULL);
     assert (mgr->num_vars > 0);
     assert (mgr->capacity >= 2);
@@ -166,11 +175,7 @@ _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
         assert (mgr->lvl_to_var[mgr->var_to_lvl[_i]] == _i);
         assert (mgr->var_to_lvl[mgr->lvl_to_var[_i]] == _i);
     }
-    for (_i = 0; _i < mgr->capacity; _i += 1)
-        for (_j = _i + 1; _j < mgr->capacity; _j += 1)
-            if (node_is_live (mgr->nodes[_i]) &&
-                node_is_live (mgr->nodes[_j]))
-                assert (!node_equal (mgr->nodes[_i], mgr->nodes[_j]));
+    _check_no_duplicate_nodes (mgr);
 }
 #else
 static inline void
