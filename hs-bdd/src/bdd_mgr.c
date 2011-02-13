@@ -135,7 +135,7 @@ bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
     assert (b < mgr->capacity);
     assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
     assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+    if (mgr->nodes[b].ref_cnt < _BDD_REF_CNT_MAX)
         mgr->nodes[b].ref_cnt += 1;
 }
 
@@ -147,7 +147,7 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
     assert (b > 1 || mgr->nodes[b].ref_cnt > 1);
     assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
     assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+    if (mgr->nodes[b].ref_cnt < _BDD_REF_CNT_MAX)
         mgr->nodes[b].ref_cnt -= 1;
     if (mgr->nodes[b].ref_cnt == 0) {
         /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
@@ -291,6 +291,7 @@ create_nodes_hash_table (bdd_mgr_t *mgr)
 bdd_mgr_t *
 bdd_mgr_create (unsigned num_vars)
 {
+    assert (num_vars <= _BDD_LVL_MAX);
     return bdd_mgr_create_with_hint (num_vars, 1024);
 }
 
@@ -298,6 +299,7 @@ bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
+    assert (num_vars <= _BDD_LVL_MAX);
 
     assert (num_vars > 0);
     mgr->num_vars = num_vars;

@@ -14,11 +14,14 @@
 #include "hash_pair.h"
 #include "memory.h"
 
+#define _BDD_REF_CNT_MAX 0xFF
+#define _BDD_LVL_MAX 0xFFFFFF00
+
 typedef struct
 {
-    unsigned ref_cnt;     /* num refs from user formulae, other nodes,
+    unsigned ref_cnt : 8; /* num refs from user formulae, other nodes,
                              and ITE cache */
-    unsigned lvl;         /* level of the node in the DAG */
+    unsigned lvl : 24;    /* level of the node in the DAG */
     bdd_t low;            /* value if the variable is false */
     bdd_t high;           /* value if the variable is true */
 } node_t;
