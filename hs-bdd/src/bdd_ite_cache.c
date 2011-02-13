@@ -15,7 +15,7 @@ up_to_next_power_of_two (unsigned n)
 void
 bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
 {
-    const unsigned num_entries = up_to_next_power_of_two (num_entries_hint);
+    unsigned num_entries = up_to_next_power_of_two (num_entries_hint);
 
     tab->num_entries = num_entries;
     tab->entries = (bdd_ite_cache_entry_t *)

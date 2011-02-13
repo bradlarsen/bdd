@@ -50,7 +50,7 @@ deref (bdd_t b)
 
 /* Build the requirements for all other fields than (i,j) assuming
    that (i,j) has a queen */
-void build(int i, int j)
+static void build(int i, int j)
 {
     bdd_t a, b, c, d;
     bdd_t ab, abc, abcd, queen_abcd;
@@ -247,8 +247,8 @@ int main(int ac, char **av)
 
     /* Print the results */
     fprintf (stderr, "There are %.0f solutions\n", bdd_sat_count(mgr, queen));
-    fprintf (stderr, "%d nodes in use\n", bdd_mgr_get_num_nodes(mgr));
-    fprintf (stderr, "%d nodes currently allocated\n",
+    fprintf (stderr, "%u nodes in use\n", bdd_mgr_get_num_nodes(mgr));
+    fprintf (stderr, "%u nodes currently allocated\n",
              bdd_mgr_get_num_allocated(mgr));
 
     fprintf (stderr, "result cache: ");

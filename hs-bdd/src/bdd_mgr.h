@@ -4,7 +4,6 @@
 #include <assert.h>
 #include <limits.h>
 #include <math.h>
-#include <setjmp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -17,15 +16,18 @@
 
 typedef struct
 {
-    unsigned lvl;              /* level of the node in the DAG */
-    bdd_t low;                 /* value if the variable is false */
-    bdd_t high;                /* value if the variable is true */
+    unsigned ref_cnt;     /* num refs from user formulae, other nodes,
+                             and ITE cache */
+    unsigned lvl;         /* level of the node in the DAG */
+    bdd_t low;            /* value if the variable is false */
+    bdd_t high;           /* value if the variable is true */
 } node_t;
 
 typedef struct
 {
     unsigned node_idx;          /* index into nodes array */
-    unsigned chain_next;        /* index of next pair on hash chain */
+    unsigned chain_next;        /* one plus index of next hash_entry_t
+                                   on hash chain */
 } hash_entry_t;
 
 struct bdd_mgr
@@ -33,12 +35,10 @@ struct bdd_mgr
     node_t *nodes;                     /* all the nodes */
 
     hash_entry_t *hash_entry_pool;     /* pool of hash entries, 1 per node */
-    unsigned *nodes_hash;              /* hash table mapping node to
-                                        * index, values are indexes
-                                        * into hash_entry_pool, 0 used
-                                        * as end-of-chain value */
-    unsigned free_hash_entry_idx;      /* index of free hash entry in
-                                        * pool; always positive */
+    unsigned *nodes_hash;              /* hash table mapping node to index,
+                                        * values are indexes into
+                                        * hash_entry_pool plus 1, 0 used as
+                                        * end-of-chain value */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
     bdd_cache_stats_t ite_cache_stats; /* stats about 'ite_cache' */
@@ -52,8 +52,6 @@ struct bdd_mgr
     unsigned capacity;                 /* number of allocated nodes, a
                                         * power of 2 */
     unsigned num_nodes;                /* number of used nodes */
-
-    jmp_buf out_of_nodes_cxt;          /* for out-of-nodes exception */
 };
 
 static inline unsigned
@@ -63,15 +61,21 @@ _bdd_mgr_num_hash_buckets (bdd_mgr_t *mgr)
 }
 
 static inline boolean
-node_is_empty (node_t n)
+node_equal (node_t n1, node_t n2)
 {
-    return n.lvl == UINT_MAX;
+    return n1.lvl == n2.lvl && n1.low == n2.low && n1.high == n2.high;
 }
 
-static inline void
-set_node_empty (node_t *n)
+static inline unsigned
+node_hash (node_t n)
 {
-    n->lvl = UINT_MAX;
+    return hash_unsigned_pair (n.lvl, hash_unsigned_pair(n.low, n.high));
+}
+
+static inline boolean
+node_is_empty (node_t n)
+{
+    return n.ref_cnt == 0;
 }
 
 static inline boolean
@@ -81,15 +85,9 @@ node_is_live (node_t n)
 }
 
 static inline boolean
-node_equal (node_t n1, node_t n2)
-{
-    return n1.lvl == n2.lvl && n1.low == n2.low && n1.high == n2.high;
-}
-
-static inline boolean
 bdd_is_valid_and_live (bdd_mgr_t *mgr, bdd_t b)
 {
-    return b < mgr->capacity && node_is_live (mgr->nodes[b]);
+    return b < mgr->capacity && node_is_live(mgr->nodes[b]);
 }
 
 /* Gets the node associated with the given BDD. */
@@ -100,12 +98,6 @@ bdd_to_node (bdd_mgr_t *mgr, bdd_t b)
     return mgr->nodes[b];
 }
 
-static inline unsigned
-node_hash (node_t n)
-{
-    return hash_unsigned_pair (n.lvl, hash_unsigned_pair(n.low, n.high));
-}
-
 /* Doubles the size of the storage allocated for nodes. */
 extern void
 _bdd_mgr_double_capacity (bdd_mgr_t *mgr);
@@ -114,7 +106,8 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr);
 /* Retrieves the BDD of the node equal to the node with the given
  * components if one exists, otherwise creates and returns a new BDD.
  * This function can raise an out-of-space exception, and so callers
- * must set up a handling context. */
+ * must set up a handling context.
+ */
 extern bdd_t
 _bdd_make_node (
     bdd_mgr_t *mgr,
@@ -122,8 +115,6 @@ _bdd_make_node (
     bdd_t low,
     bdd_t high
     );
-
-#define _bdd_catch_out_of_nodes(mgr) setjmp (mgr->out_of_nodes_cxt)
 
 #ifndef NDEBUG
 void

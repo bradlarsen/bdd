@@ -12,6 +12,28 @@ _is_power_of_two (unsigned n)
 }
 
 static void
+_check_reference_counts (bdd_mgr_t *mgr)
+{
+    unsigned i;
+    for (i = 0; i < mgr->capacity; i += 1)
+        if (mgr->nodes[i].ref_cnt > 0) {
+            assert (mgr->nodes[mgr->nodes[i].low].ref_cnt > 0);
+            assert (mgr->nodes[mgr->nodes[i].high].ref_cnt > 0);
+        }
+}
+
+static void
+_check_num_live (bdd_mgr_t *mgr)
+{
+    unsigned num_live = 0;
+    unsigned i;
+    for (i = 0; i < mgr->capacity; i += 1)
+        if (node_is_live (mgr->nodes[i]))
+            num_live += 1;
+    assert (num_live == mgr->num_nodes);
+}
+
+static void
 _check_no_duplicate_nodes (bdd_mgr_t *mgr)
 {
     node_ht_t *seen = node_ht_create ();
@@ -20,7 +42,7 @@ _check_no_duplicate_nodes (bdd_mgr_t *mgr)
     for (i = 0; i < mgr->capacity; i += 1) {
         if (node_is_live (mgr->nodes[i])) {
             assert (node_ht_lookup (seen, mgr->nodes[i]) == NULL);
-            node_ht_insert (seen, mgr->nodes[i], 1);
+            node_ht_insert (seen, mgr->nodes[i], i);
         }
     }
 
@@ -74,9 +96,9 @@ _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
     assert (mgr->num_vars > 0);
     assert (mgr->capacity >= 2);
     assert (_is_power_of_two (mgr->capacity));
-    assert (mgr->free_hash_entry_idx > 0);
-    assert (mgr->free_hash_entry_idx < mgr->capacity);
+    /* _check_num_live (mgr); */
     _check_node_values (mgr);
+    _check_reference_counts (mgr);
     _check_proper_lvl_var_mapping (mgr);
     _check_no_duplicate_nodes (mgr);
 }

@@ -1,11 +1,5 @@
 #include "bdd_mgr.h"
 
-static void
-handle_out_of_nodes (bdd_mgr_t *mgr)
-{
-    _bdd_mgr_double_capacity (mgr);
-}
-
 unsigned
 bdd_var (bdd_mgr_t *mgr, bdd_t b)
 {
@@ -30,24 +24,10 @@ bdd_high (bdd_mgr_t *mgr, bdd_t b)
     return bdd_to_node(mgr, b).high;
 }
 
-void
-bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
-{
-    /* FIXME: reimplement */
-}
-
-void
-bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
-{
-    /* FIXME: reimplement */
-}
-
 bdd_t 
 bdd_ith_var (bdd_mgr_t *mgr, unsigned i)
 {
     assert (i < mgr->num_vars);
-    while (_bdd_catch_out_of_nodes (mgr))
-        handle_out_of_nodes (mgr);
     return _bdd_make_node (mgr,
                            mgr->var_to_lvl[i],
                            bdd_false,
@@ -123,7 +103,7 @@ typedef struct
  * than its level, restricts the BDD with the variable at 'lvl'
  * assigned both false and true. */
 static inline quick_restrict_res_t
-quick_restrict (bdd_t b, node_t b_n, unsigned lvl)
+_quick_restrict (bdd_t b, node_t b_n, unsigned lvl)
 {
     quick_restrict_res_t result;
     assert (lvl <= b_n.lvl);
@@ -139,7 +119,7 @@ quick_restrict (bdd_t b, node_t b_n, unsigned lvl)
 }
 
 static bdd_t
-real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
+_real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 {
     bdd_ite_cache_entry_t *cache_val;
 
@@ -170,27 +150,30 @@ real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
         return cache_val->result;
     }
     else {
-        unsigned top_lvl;
-        node_t p_n, t_n, f_n;
-        quick_restrict_res_t p_v, t_v, f_v; /* p, t, and f restricted with
-                                             * top_lvl and !top_lvl */
-        bdd_t low, high, result;
+        node_t p_n = bdd_to_node (mgr, p);
+        node_t t_n = bdd_to_node (mgr, t);
+        node_t f_n = bdd_to_node (mgr, f);
+        unsigned top_lvl = lvl_min3 (p_n.lvl, t_n.lvl, f_n.lvl);
+        quick_restrict_res_t p_v = _quick_restrict (p, p_n, top_lvl);
+        quick_restrict_res_t t_v = _quick_restrict (t, t_n, top_lvl);
+        quick_restrict_res_t f_v = _quick_restrict (f, f_n, top_lvl);
+        bdd_t low = _real_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
+        bdd_t high = _real_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
+        bdd_t result = _bdd_make_node (mgr, top_lvl, low, high);
 
-        p_n = bdd_to_node (mgr, p);
-        t_n = bdd_to_node (mgr, t);
-        f_n = bdd_to_node (mgr, f);
-        top_lvl = lvl_min3 (p_n.lvl, t_n.lvl, f_n.lvl);
-        p_v = quick_restrict (p, p_n, top_lvl);
-        t_v = quick_restrict (t, t_n, top_lvl);
-        f_v = quick_restrict (f, f_n, top_lvl);
+        bdd_inc_ref (mgr, p);
+        bdd_inc_ref (mgr, t);
+        bdd_inc_ref (mgr, f);
+        bdd_inc_ref (mgr, result);
 
-        low = real_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
-        high = real_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
-        result = _bdd_make_node (mgr, top_lvl, low, high);
-
-        if (!bdd_ite_cache_entry_is_free (cache_val))
-            mgr->ite_cache_stats.num_replacements += 1;
         mgr->ite_cache_stats.num_inserts += 1;
+        if (!bdd_ite_cache_entry_is_free (cache_val)) {
+            bdd_dec_ref (mgr, cache_val->p);
+            bdd_dec_ref (mgr, cache_val->t);
+            bdd_dec_ref (mgr, cache_val->f);
+            bdd_dec_ref (mgr, cache_val->result);
+            mgr->ite_cache_stats.num_replacements += 1;
+        }
 
         cache_val->p = p;
         cache_val->t = t;
@@ -204,26 +187,17 @@ real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 bdd_t 
 bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 {
-    while (_bdd_catch_out_of_nodes (mgr)) {
-        bdd_inc_ref (mgr, p);
-        bdd_inc_ref (mgr, t);
-        bdd_inc_ref (mgr, f);
-        handle_out_of_nodes (mgr);
-        bdd_dec_ref (mgr, f);
-        bdd_dec_ref (mgr, t);
-        bdd_dec_ref (mgr, p);
-    }
-    return real_bdd_ite (mgr, p, t, f);
+    return _real_bdd_ite (mgr, p, t, f);
 }
 
 static bdd_t
 bdd_res_rec (bdd_mgr_t *mgr,
-             const unsigned lvl,
-             const boolean val,
+             unsigned lvl,
+             boolean val,
              bdd_t b)
 {
     bdd_t result;
-    const node_t n = bdd_to_node (mgr, b);
+    node_t n = bdd_to_node (mgr, b);
     if (n.lvl > lvl)
         result = b;
     else if (n.lvl == lvl)
@@ -240,11 +214,6 @@ bdd_res_rec (bdd_mgr_t *mgr,
 bdd_t 
 bdd_restrict (bdd_mgr_t *mgr, bdd_t b, unsigned var, boolean val)
 {
-    while (_bdd_catch_out_of_nodes (mgr)) {
-        bdd_inc_ref (mgr, b);
-        handle_out_of_nodes (mgr);
-        bdd_dec_ref (mgr, b);
-    }
     return bdd_res_rec (mgr, mgr->var_to_lvl[var], val, b);
 }
 
@@ -252,8 +221,8 @@ bdd_t
 bdd_existential (bdd_mgr_t *mgr, unsigned var, bdd_t b)
 {
     bdd_t low, high;
-    low = bdd_restrict (mgr, b, var, bfalse);
-    high = bdd_restrict (mgr, b, var, btrue);
+    low = bdd_restrict (mgr, b, var, 0);
+    high = bdd_restrict (mgr, b, var, 1);
     return bdd_or (mgr, low, high);
 }
 
@@ -261,8 +230,8 @@ bdd_t
 bdd_universal (bdd_mgr_t *mgr, unsigned var, bdd_t b)
 {
     bdd_t low, high;
-    low = bdd_restrict (mgr, b, var, bfalse);
-    high = bdd_restrict (mgr, b, var, btrue);
+    low = bdd_restrict (mgr, b, var, 0);
+    high = bdd_restrict (mgr, b, var, 1);
     return bdd_and (mgr, low, high);
 }
 
@@ -270,39 +239,38 @@ bdd_t
 bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g)
 {
     bdd_t ite_t, ite_f;
-    ite_t = bdd_restrict (mgr, f, x, btrue);
-    ite_f = bdd_restrict (mgr, f, x, bfalse);
+    ite_t = bdd_restrict (mgr, f, x, 1);
+    ite_f = bdd_restrict (mgr, f, x, 0);
     return bdd_ite (mgr, g, ite_t, ite_f);
 }
 
 static double
 bdd_sat_count_rec (bdd_mgr_t *mgr, bdd_t b)
 {
-    if (b == bdd_false)
-        return 0;
-    else if (b == bdd_true)
-        return 1;
+    if (b == bdd_false || b == bdd_true)
+        return b;
     else {
-        const node_t b_node = bdd_to_node(mgr, b);
-        const node_t b_low = bdd_to_node(mgr, b_node.low);
-        const node_t b_high = bdd_to_node(mgr, b_node.high);
-        const double lhs = pow (2.0, b_low.lvl - b_node.lvl - 1) *
-            bdd_sat_count_rec (mgr, b_node.low);
-        const double rhs = pow (2.0, b_high.lvl - b_node.lvl - 1) *
-            bdd_sat_count_rec (mgr, b_node.high);
-        const double res = lhs + rhs;
-        return res;
+        node_t b_node = bdd_to_node(mgr, b);
+        double lhs = bdd_sat_count_rec (mgr, b_node.low);
+        double rhs = bdd_sat_count_rec (mgr, b_node.high);
+        lhs *= pow (2.0, bdd_to_node(mgr, b_node.low).lvl - b_node.lvl - 1);
+        rhs *= pow (2.0, bdd_to_node(mgr, b_node.high).lvl - b_node.lvl - 1);
+        return lhs + rhs;
     }
 }
 
 double
 bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
 {
-    return pow (2, bdd_to_node(mgr, b).lvl) * bdd_sat_count_rec (mgr, b);
+    double count = bdd_sat_count_rec (mgr, b);
+    return count * pow (2, bdd_to_node(mgr, b).lvl);
 }
 
 unsigned
 bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b)
 {
+    /* FIXME: reimplement */
+    (void) mgr;
+    (void) b;
     assert (0);
 }

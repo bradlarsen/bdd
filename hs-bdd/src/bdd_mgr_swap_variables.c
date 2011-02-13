@@ -1,12 +1,12 @@
 #include "bdd_mgr.h"
 
-static inline void
-swap_unsigned (unsigned *i, unsigned *j)
-{
-    unsigned tmp = *i;
-    *i = *j;
-    *j = tmp;
-}
+/* static inline void */
+/* swap_unsigned (unsigned *i, unsigned *j) */
+/* { */
+/*     unsigned tmp = *i; */
+/*     *i = *j; */
+/*     *j = tmp; */
+/* } */
 
 /* static void */
 /* bdd_mgr_var_order_fprint (bdd_mgr_t *mgr, FILE *handle) */
@@ -20,5 +20,8 @@ swap_unsigned (unsigned *i, unsigned *j)
 void
 bdd_mgr_swap_variables (bdd_mgr_t *mgr, unsigned idx)
 {
+    /* FIXME: reimplement */
+    (void) mgr;
+    (void) idx;
     assert (0);
 }
