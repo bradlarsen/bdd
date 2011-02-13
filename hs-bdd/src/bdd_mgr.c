@@ -96,18 +96,18 @@ node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
     mgr->nodes_hash[bucket_idx] = node_idx + 1;
 }
 
-static void
-dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
-{
-    unsigned idx = mgr->nodes_hash[bucket_idx];
-    fprintf (stderr, "    %s hash chain at bucket %u:  ",
-             prefix, bucket_idx);
-    while (idx != 0) {
-        fprintf (stderr, "%u -> ", idx - 1);
-        idx = mgr->hash_entry_pool[idx - 1];
-    }
-    fprintf (stderr, "NULL\n");
-}
+/* static void */
+/* dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx) */
+/* { */
+/*     unsigned idx = mgr->nodes_hash[bucket_idx]; */
+/*     fprintf (stderr, "    %s hash chain at bucket %u:  ", */
+/*              prefix, bucket_idx); */
+/*     while (idx != 0) { */
+/*         fprintf (stderr, "%u -> ", idx - 1); */
+/*         idx = mgr->hash_entry_pool[idx - 1]; */
+/*     } */
+/*     fprintf (stderr, "NULL\n"); */
+/* } */
 
 static void
 node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
