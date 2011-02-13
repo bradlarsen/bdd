@@ -101,14 +101,14 @@ static void
 dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
 {
     unsigned idx = mgr->nodes_hash[bucket_idx];
-    fprintf (stderr, "    %s hash chain at bucket %u:\n        ",
+    fprintf (stderr, "    %s hash chain at bucket %u:  ",
              prefix, bucket_idx);
     while (idx != 0) {
         hash_entry_t e = mgr->hash_entry_pool[idx - 1];
-        fprintf (stderr, "%u@%u -> ", e.chain_next, idx - 1);
+        fprintf (stderr, "%u -> ", idx - 1);
         idx = e.chain_next;
     }
-    fprintf (stderr, "0\n");
+    fprintf (stderr, "NULL\n");
 }
 
 static void
@@ -120,19 +120,18 @@ node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
     assert (mgr->num_nodes > 0);
     assert (cur != 0);
     e = mgr->hash_entry_pool[cur - 1];
-    /* dump_hash_bucket (mgr, "before,", bucket_idx); */
+    dump_hash_bucket (mgr, "before,", bucket_idx);
     while (cur - 1 != node_idx) {
         prev = cur;
         cur = e.chain_next;
         assert (cur != 0);
         e = mgr->hash_entry_pool[cur - 1];
     }
-    /* fprintf (stderr, "    releasing hash entry %u\n", cur - 1); */
     if (prev != 0)
         mgr->hash_entry_pool[prev - 1].chain_next = e.chain_next;
     else
         mgr->nodes_hash[bucket_idx] = e.chain_next;
-    /* dump_hash_bucket (mgr, "after,", bucket_idx); */
+    dump_hash_bucket (mgr, "after, ", bucket_idx);
 }
 
 void
@@ -156,8 +155,8 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
     if (mgr->nodes[b].ref_cnt < UINT_MAX)
         mgr->nodes[b].ref_cnt -= 1;
     if (mgr->nodes[b].ref_cnt == 0) {
-        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
-        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
+        fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n",
+                 b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high);
         assert (b > 1);
         assert (mgr->num_nodes > 0);
         node_hash_table_delete (mgr, b, node_hash_bucket (mgr,
@@ -199,6 +198,10 @@ _bdd_make_node (
     assert (lvl < mgr->num_vars);
     assert (low < mgr->capacity);
     assert (high < mgr->capacity);
+    assert (mgr->nodes[low].lvl > lvl);
+    assert (mgr->nodes[high].lvl > lvl);
+    assert (mgr->nodes[low].ref_cnt > 0);
+    assert (mgr->nodes[high].ref_cnt > 0);
 
     if (low == high)
         return low;
@@ -216,6 +219,8 @@ _bdd_make_node (
 
         /* create a new node */
         node_idx = _bdd_mgr_get_free_index (mgr);
+        assert (node_idx != low);
+        assert (node_idx != high);
         mgr->num_nodes += 1;
         mgr->nodes[node_idx].lvl = lvl;
         bdd_inc_ref (mgr, low);

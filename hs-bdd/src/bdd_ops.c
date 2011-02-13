@@ -158,8 +158,12 @@ _real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
         quick_restrict_res_t t_v = _quick_restrict (t, t_n, top_lvl);
         quick_restrict_res_t f_v = _quick_restrict (f, f_n, top_lvl);
         bdd_t low = _real_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
+        bdd_inc_ref (mgr, low);
         bdd_t high = _real_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
+        bdd_inc_ref (mgr, high);
         bdd_t result = _bdd_make_node (mgr, top_lvl, low, high);
+        bdd_dec_ref (mgr, high);
+        bdd_dec_ref (mgr, low);
 
         bdd_inc_ref (mgr, p);
         bdd_inc_ref (mgr, t);
@@ -187,6 +191,7 @@ _real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 bdd_t 
 bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 {
+    _bdd_mgr_check_invariants (mgr);
     return _real_bdd_ite (mgr, p, t, f);
 }
 
@@ -205,8 +210,12 @@ bdd_res_rec (bdd_mgr_t *mgr,
     else {
         bdd_t low, high;
         low = bdd_res_rec (mgr, lvl, val, n.low);
+        bdd_inc_ref (mgr, low);
         high = bdd_res_rec (mgr, lvl, val, n.high);
+        bdd_inc_ref (mgr, high);
         result = _bdd_make_node (mgr, n.lvl, low, high);
+        bdd_dec_ref (mgr, high);
+        bdd_dec_ref (mgr, low);
     }
     return result;
 }
