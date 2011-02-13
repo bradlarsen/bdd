@@ -170,7 +170,8 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
    time (~30% for 11-queens) in 'bdd_dec_ref' Perhaps deferring &
    batching the actual decrementing will help---say, instead of
    decrementing immediately, the node index is placed on a to-do
-   array, and when that array is full, all nodes on it are freed. */
+   array, and when that array is full, all nodes on it are
+   decremented. */
 void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 {
