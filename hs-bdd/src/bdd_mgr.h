@@ -99,7 +99,6 @@ bdd_to_node (bdd_mgr_t *mgr, bdd_t b)
 extern void
 _bdd_mgr_double_capacity (bdd_mgr_t *mgr);
 
-/* FIXME: better document what's going on with exceptions */
 /* Retrieves the BDD of the node equal to the node with the given
  * components if one exists, otherwise creates and returns a new BDD.
  * This function can raise an out-of-space exception, and so callers
