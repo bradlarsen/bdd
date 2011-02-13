@@ -78,13 +78,12 @@ node_on_hash_chain (
 {
     unsigned idx = mgr->nodes_hash[bucket_idx];
     while (idx != 0) {
-        hash_entry_t e = mgr->hash_entry_pool[idx - 1];
         node_t n = mgr->nodes[idx - 1];
         if (n.lvl == lvl && n.low == low && n.high == high) {
             *node_idx = idx - 1;
             return 1;
         }
-        idx = e.chain_next;
+        idx = mgr->hash_entry_pool[idx - 1];
     }
     return 0;
 }
@@ -92,9 +91,8 @@ node_on_hash_chain (
 static void
 node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
-    hash_entry_t *e = &mgr->hash_entry_pool[node_idx];
     assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
-    e->chain_next = mgr->nodes_hash[bucket_idx];
+    mgr->hash_entry_pool[node_idx] = mgr->nodes_hash[bucket_idx];
     mgr->nodes_hash[bucket_idx] = node_idx + 1;
 }
 
@@ -105,9 +103,8 @@ dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
     fprintf (stderr, "    %s hash chain at bucket %u:  ",
              prefix, bucket_idx);
     while (idx != 0) {
-        hash_entry_t e = mgr->hash_entry_pool[idx - 1];
         fprintf (stderr, "%u -> ", idx - 1);
-        idx = e.chain_next;
+        idx = mgr->hash_entry_pool[idx - 1];
     }
     fprintf (stderr, "NULL\n");
 }
@@ -117,22 +114,19 @@ node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
     unsigned prev = 0;  /* 0 is the sentinel value for the table */
     unsigned cur = mgr->nodes_hash[bucket_idx];
-    hash_entry_t e;
     assert (mgr->num_nodes > 0);
     assert (cur != 0);
-    e = mgr->hash_entry_pool[cur - 1];
-    dump_hash_bucket (mgr, "before,", bucket_idx);
+    /* dump_hash_bucket (mgr, "before,", bucket_idx); */
     while (cur - 1 != node_idx) {
         prev = cur;
-        cur = e.chain_next;
+        cur = mgr->hash_entry_pool[cur - 1];
         assert (cur != 0);
-        e = mgr->hash_entry_pool[cur - 1];
     }
     if (prev != 0)
-        mgr->hash_entry_pool[prev - 1].chain_next = e.chain_next;
+        mgr->hash_entry_pool[prev - 1] = mgr->hash_entry_pool[cur - 1];
     else
-        mgr->nodes_hash[bucket_idx] = e.chain_next;
-    dump_hash_bucket (mgr, "after, ", bucket_idx);
+        mgr->nodes_hash[bucket_idx] = mgr->hash_entry_pool[cur - 1];
+    /* dump_hash_bucket (mgr, "after, ", bucket_idx); */
 }
 
 void
@@ -156,8 +150,8 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
     if (mgr->nodes[b].ref_cnt < UINT_MAX)
         mgr->nodes[b].ref_cnt -= 1;
     if (mgr->nodes[b].ref_cnt == 0) {
-        fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n",
-                 b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high);
+        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
+        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
         assert (b > 1);
         assert (mgr->num_nodes > 0);
         node_hash_table_delete (mgr, b, node_hash_bucket (mgr,
@@ -260,9 +254,9 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr)
     mgr->nodes = (node_t *)
         checked_realloc (mgr->nodes, mgr->capacity * sizeof (node_t));
     _initialize_nodes (mgr->nodes, old_capacity, mgr->capacity);
-    mgr->hash_entry_pool = (hash_entry_t *)
+    mgr->hash_entry_pool = (unsigned *)
         checked_realloc (mgr->hash_entry_pool,
-                         mgr->capacity * sizeof (hash_entry_t));
+                         mgr->capacity * sizeof (unsigned));
     mgr->nodes_hash = (unsigned *)
         checked_realloc (mgr->nodes_hash,
                          _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
@@ -288,8 +282,8 @@ create_lvl_var_mapping (bdd_mgr_t *mgr)
 static void
 create_nodes_hash_table (bdd_mgr_t *mgr)
 {
-    mgr->hash_entry_pool = (hash_entry_t *)
-        checked_malloc (mgr->capacity * sizeof(hash_entry_t));
+    mgr->hash_entry_pool = (unsigned *)
+        checked_malloc (mgr->capacity * sizeof(unsigned));
     mgr->nodes_hash = (unsigned *)
         checked_calloc (_bdd_mgr_num_hash_buckets (mgr), sizeof(unsigned));
 }

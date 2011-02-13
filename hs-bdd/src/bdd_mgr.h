@@ -23,18 +23,15 @@ typedef struct
     bdd_t high;           /* value if the variable is true */
 } node_t;
 
-typedef struct
-{
-    unsigned chain_next;        /* one plus index of next hash_entry_t
-                                   on hash chain */
-} hash_entry_t;
-
 struct bdd_mgr
 {
     node_t *nodes;                     /* all the nodes */
     unsigned last_used_alloc_idx;      /* index last used for a new node */
 
-    hash_entry_t *hash_entry_pool;     /* pool of hash entries, 1 per node */
+    unsigned *hash_entry_pool;
+    /* pool of hash entries, 1 per node; each contains one plus the
+       index of the next entry on the chain; hash_entry_pool[i] is the
+       hash chain index for nodes[i] */
     unsigned *nodes_hash;              /* hash table mapping node to index,
                                         * values are indexes into
                                         * hash_entry_pool plus 1, 0 used as
