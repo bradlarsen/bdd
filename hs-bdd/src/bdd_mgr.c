@@ -78,20 +78,9 @@ node_on_hash_chain (
     unsigned idx = mgr->nodes_hash[bucket_idx];
     while (idx != 0) {
         hash_entry_t e = mgr->hash_entry_pool[idx - 1];
-        node_t n = mgr->nodes[e.node_idx];
+        node_t n = mgr->nodes[idx - 1];
         if (n.lvl == lvl && n.low == low && n.high == high) {
-            assert (e.node_idx + 1 == idx);
-            /* TODO: use leaner hashing if possible. */
-            /* It seems that e.node_idx + 1 == idx, always.  If
-             * this is indeed the case, even when variable swapping &
-             * GC are implemented again, then we don't in fact need to
-             * store node_idx in hash_entry_t, as it can be derived
-             * from idx.
-             *
-             * Perhaps all my previous hashing difficulties were due
-             * to the fact that there was no explicit representation
-             * for hash buckets. */
-            *node_idx = e.node_idx;
+            *node_idx = idx - 1;
             return 1;
         }
         idx = e.chain_next;
@@ -104,7 +93,6 @@ node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
     hash_entry_t *e = &mgr->hash_entry_pool[node_idx];
     assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
-    e->node_idx = node_idx;
     e->chain_next = mgr->nodes_hash[bucket_idx];
     mgr->nodes_hash[bucket_idx] = node_idx + 1;
 }
@@ -113,13 +101,14 @@ static void
 dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
 {
     unsigned idx = mgr->nodes_hash[bucket_idx];
-    fprintf (stderr, "    %s hash chain at bucket %u:\n      ", prefix, bucket_idx);
+    fprintf (stderr, "    %s hash chain at bucket %u:\n        ",
+             prefix, bucket_idx);
     while (idx != 0) {
         hash_entry_t e = mgr->hash_entry_pool[idx - 1];
-        fprintf (stderr, "(%u, %u)@%u -> ", e.node_idx, e.chain_next, idx - 1);
+        fprintf (stderr, "%u@%u -> ", e.chain_next, idx - 1);
         idx = e.chain_next;
     }
-    fprintf (stderr, "\n");
+    fprintf (stderr, "0\n");
 }
 
 static void
@@ -131,19 +120,19 @@ node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
     assert (mgr->num_nodes > 0);
     assert (cur != 0);
     e = mgr->hash_entry_pool[cur - 1];
-    dump_hash_bucket (mgr, "before,", bucket_idx);
-    while (e.node_idx != node_idx) {
+    /* dump_hash_bucket (mgr, "before,", bucket_idx); */
+    while (cur - 1 != node_idx) {
         prev = cur;
         cur = e.chain_next;
         assert (cur != 0);
         e = mgr->hash_entry_pool[cur - 1];
     }
-    fprintf (stderr, "    releasing hash entry %u\n", cur - 1);
+    /* fprintf (stderr, "    releasing hash entry %u\n", cur - 1); */
     if (prev != 0)
         mgr->hash_entry_pool[prev - 1].chain_next = e.chain_next;
     else
         mgr->nodes_hash[bucket_idx] = e.chain_next;
-    dump_hash_bucket (mgr, "after,", bucket_idx);
+    /* dump_hash_bucket (mgr, "after,", bucket_idx); */
 }
 
 void
@@ -167,8 +156,8 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
     if (mgr->nodes[b].ref_cnt < UINT_MAX)
         mgr->nodes[b].ref_cnt -= 1;
     if (mgr->nodes[b].ref_cnt == 0) {
-        fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n",
-                 b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high);
+        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
+        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
         assert (b > 1);
         assert (mgr->num_nodes > 0);
         node_hash_table_delete (mgr, b, node_hash_bucket (mgr,
@@ -185,7 +174,7 @@ void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 {
     _bdd_dec_ref_rec (mgr, b);
-    _bdd_mgr_check_invariants (mgr);
+    /* _bdd_mgr_check_invariants (mgr); */
 }
 
 static unsigned
@@ -207,8 +196,6 @@ _bdd_make_node (
     bdd_t high
     )
 {
-    static last_idx = 0;
-
     assert (lvl < mgr->num_vars);
     assert (low < mgr->capacity);
     assert (high < mgr->capacity);
@@ -229,9 +216,6 @@ _bdd_make_node (
 
         /* create a new node */
         node_idx = _bdd_mgr_get_free_index (mgr);
-        if (node_idx != last_idx + 1)
-            fprintf (stderr, "!!! allocating a node at %u\n", node_idx);
-        last_idx = node_idx;
         mgr->num_nodes += 1;
         mgr->nodes[node_idx].lvl = lvl;
         bdd_inc_ref (mgr, low);
@@ -239,7 +223,7 @@ _bdd_make_node (
         bdd_inc_ref (mgr, high);
         mgr->nodes[node_idx].high = high;
         node_hash_table_insert (mgr, node_idx, bucket_idx);
-        _bdd_mgr_check_invariants (mgr);
+        /* _bdd_mgr_check_invariants (mgr); */
         return node_idx;
     }
 }

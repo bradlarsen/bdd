@@ -25,7 +25,6 @@ typedef struct
 
 typedef struct
 {
-    unsigned node_idx;          /* index into nodes array */
     unsigned chain_next;        /* one plus index of next hash_entry_t
                                    on hash chain */
 } hash_entry_t;
