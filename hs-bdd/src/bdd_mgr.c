@@ -34,6 +34,7 @@ add_node (bdd_mgr_t *mgr, unsigned idx, unsigned lvl, bdd_t low, bdd_t high)
     mgr->nodes[idx].high = high;
     mgr->num_nodes += 1;
     node_hash_table_insert (mgr, idx, node_hash_bucket (mgr, lvl, low, high));
+    mgr->last_used_alloc_idx = idx;
 }
 
 static bdd_cache_stats_t
@@ -179,11 +180,12 @@ bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 static unsigned
 _bdd_mgr_get_free_index (bdd_mgr_t *mgr)
 {
-    unsigned i = mgr->num_nodes;
     unsigned mask = mgr->capacity - 1;
+    unsigned i = (mgr->last_used_alloc_idx + 1) & mask;
     assert (mgr->num_nodes < mgr->capacity - 1);
     while (!node_is_empty (mgr->nodes[i]))
         i = (i + 1) & mask;
+    mgr->last_used_alloc_idx = i;
     return i;
 }
 
@@ -317,6 +319,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
     mgr->ite_cache_stats = make_cache_stats ();
+
+    mgr->last_used_alloc_idx = 0;
 
     add_node (mgr, 0, num_vars, 1, 0); /* false terminal */
     add_node (mgr, 1, num_vars, 0, 1); /* true terminal */

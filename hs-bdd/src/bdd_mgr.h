@@ -32,6 +32,7 @@ typedef struct
 struct bdd_mgr
 {
     node_t *nodes;                     /* all the nodes */
+    unsigned last_used_alloc_idx;      /* index last used for a new node */
 
     hash_entry_t *hash_entry_pool;     /* pool of hash entries, 1 per node */
     unsigned *nodes_hash;              /* hash table mapping node to index,
