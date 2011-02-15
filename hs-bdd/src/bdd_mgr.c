@@ -83,7 +83,7 @@ node_on_hash_chain (
             *node_idx = idx - 1;
             return 1;
         }
-        idx = mgr->hash_entry_pool[idx - 1];
+        idx = mgr->nodes[idx - 1].hash_next;
     }
     return 0;
 }
@@ -92,7 +92,7 @@ static void
 node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
     assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
-    mgr->hash_entry_pool[node_idx] = mgr->nodes_hash[bucket_idx];
+    mgr->nodes[node_idx].hash_next = mgr->nodes_hash[bucket_idx];
     mgr->nodes_hash[bucket_idx] = node_idx + 1;
 }
 
@@ -119,13 +119,13 @@ node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
     /* dump_hash_bucket (mgr, "before,", bucket_idx); */
     while (cur - 1 != node_idx) {
         prev = cur;
-        cur = mgr->hash_entry_pool[cur - 1];
+        cur = mgr->nodes[cur - 1].hash_next;
         assert (cur != 0);
     }
     if (prev != 0)
-        mgr->hash_entry_pool[prev - 1] = mgr->hash_entry_pool[cur - 1];
+        mgr->nodes[prev - 1].hash_next = mgr->nodes[cur - 1].hash_next;
     else
-        mgr->nodes_hash[bucket_idx] = mgr->hash_entry_pool[cur - 1];
+        mgr->nodes_hash[bucket_idx] = mgr->nodes[cur - 1].hash_next;
     /* dump_hash_bucket (mgr, "after, ", bucket_idx); */
 }
 
@@ -262,9 +262,6 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr)
     mgr->nodes = (node_t *)
         checked_realloc (mgr->nodes, mgr->capacity * sizeof (node_t));
     _initialize_nodes (mgr->nodes, old_capacity, mgr->capacity);
-    mgr->hash_entry_pool = (unsigned *)
-        checked_realloc (mgr->hash_entry_pool,
-                         mgr->capacity * sizeof (unsigned));
     mgr->nodes_hash = (unsigned *)
         checked_realloc (mgr->nodes_hash,
                          _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
@@ -290,8 +287,6 @@ create_lvl_var_mapping (bdd_mgr_t *mgr)
 static void
 create_nodes_hash_table (bdd_mgr_t *mgr)
 {
-    mgr->hash_entry_pool = (unsigned *)
-        checked_malloc (mgr->capacity * sizeof(unsigned));
     mgr->nodes_hash = (unsigned *)
         checked_calloc (_bdd_mgr_num_hash_buckets (mgr), sizeof(unsigned));
 }
@@ -341,7 +336,6 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
 
     bdd_ite_cache_destroy (&mgr->ite_cache);
     checked_free (mgr->nodes_hash);
-    checked_free (mgr->hash_entry_pool);
     checked_free (mgr->nodes);
     checked_free (mgr->lvl_to_var);
     checked_free (mgr->var_to_lvl);

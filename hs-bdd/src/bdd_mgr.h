@@ -21,6 +21,8 @@ typedef struct
     unsigned lvl;         /* level of the node in the DAG */
     bdd_t low;            /* value if the variable is false */
     bdd_t high;           /* value if the variable is true */
+    unsigned hash_next;   /* one plus index of next node on hash
+                           * chain, 0 means end-of-chain */
 } node_t;
 
 struct bdd_mgr
@@ -28,13 +30,9 @@ struct bdd_mgr
     node_t *nodes;                     /* all the nodes */
     unsigned last_used_alloc_idx;      /* index last used for a new node */
 
-    unsigned *hash_entry_pool;
-    /* pool of hash entries, 1 per node; each contains one plus the
-       index of the next entry on the chain; hash_entry_pool[i] is the
-       hash chain index for nodes[i] */
-    unsigned *nodes_hash;              /* hash table mapping node to index,
-                                        * values are indexes into
-                                        * hash_entry_pool plus 1, 0 used as
+    unsigned *nodes_hash;              /* hash table mapping node to
+                                        * index, values are indexes
+                                        * into nodes plus 1, 0 used as
                                         * end-of-chain value */
 
     bdd_ite_cache_t ite_cache;         /* cache to memoize if-then-else op. */
