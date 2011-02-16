@@ -14,6 +14,9 @@
 #include "hash_pair.h"
 #include "memory.h"
 
+#define _BDD_MAX_REF_CNT UINT_MAX
+#define _BDD_MAX_NUM_VARS UINT_MAX
+
 typedef struct
 {
     unsigned ref_cnt;     /* num refs from user formulae, other nodes,
@@ -112,7 +115,7 @@ _bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
     assert (b < mgr->capacity);
     assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
     assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+    if (mgr->nodes[b].ref_cnt < _BDD_MAX_REF_CNT)
         mgr->nodes[b].ref_cnt += 1;
 }
 
@@ -120,7 +123,7 @@ static inline void
 _bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 {
     assert (mgr->nodes[b].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+    if (mgr->nodes[b].ref_cnt < _BDD_MAX_REF_CNT)
         mgr->nodes[b].ref_cnt -= 1;
 }
 
