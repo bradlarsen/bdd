@@ -109,9 +109,13 @@ dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
     fprintf (stderr, "NULL\n");
 }
 
-static void
-node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
+void
+node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx)
 {
+    unsigned bucket_idx = node_hash_bucket (mgr,
+                                            mgr->nodes[node_idx].lvl,
+                                            mgr->nodes[node_idx].low,
+                                            mgr->nodes[node_idx].high);
     unsigned prev = 0;  /* 0 is the sentinel value for the table */
     unsigned cur = mgr->nodes_hash[bucket_idx];
     assert (mgr->num_nodes > 0);
@@ -127,56 +131,6 @@ node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
     else
         mgr->nodes_hash[bucket_idx] = mgr->nodes[cur - 1].hash_next;
     /* dump_hash_bucket (mgr, "after, ", bucket_idx); */
-}
-
-void
-bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
-{
-    assert (b < mgr->capacity);
-    assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
-    assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
-        mgr->nodes[b].ref_cnt += 1;
-}
-
-static void
-_bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
-{
-    assert (b < mgr->capacity);
-    assert (mgr->nodes[b].ref_cnt > 0);
-    assert (b > 1 || mgr->nodes[b].ref_cnt > 1);
-    assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
-    assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
-        mgr->nodes[b].ref_cnt -= 1;
-    if (mgr->nodes[b].ref_cnt == 0) {
-        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
-        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
-        assert (b > 1);
-        assert (mgr->num_nodes > 0);
-        node_hash_table_delete (mgr, b, node_hash_bucket (mgr,
-                                                          mgr->nodes[b].lvl,
-                                                          mgr->nodes[b].low,
-                                                          mgr->nodes[b].high));
-        mgr->num_nodes -= 1;
-        _bdd_dec_ref_rec (mgr, mgr->nodes[b].low);
-        _bdd_dec_ref_rec (mgr, mgr->nodes[b].high);
-    }
-}
-
-/* TODO: speed up this code */
-/* The old GC'd implementation was quite a bit faster.  This purely
-   reference-counted implementation ends up spending a big chunk of
-   time (~30% for 11-queens) in 'bdd_dec_ref' Perhaps deferring &
-   batching the actual decrementing will help---say, instead of
-   decrementing immediately, the node index is placed on a to-do
-   array, and when that array is full, all nodes on it are
-   decremented. */
-void
-bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
-{
-    _bdd_dec_ref_rec (mgr, b);
-    /* _bdd_mgr_check_invariants (mgr); */
 }
 
 static unsigned
@@ -227,9 +181,9 @@ _bdd_make_node (
         assert (node_idx != high);
         mgr->num_nodes += 1;
         mgr->nodes[node_idx].lvl = lvl;
-        bdd_inc_ref (mgr, low);
+        _bdd_inc_ref (mgr, low);
         mgr->nodes[node_idx].low = low;
-        bdd_inc_ref (mgr, high);
+        _bdd_inc_ref (mgr, high);
         mgr->nodes[node_idx].high = high;
         node_hash_table_insert (mgr, node_idx, bucket_idx);
         /* _bdd_mgr_check_invariants (mgr); */

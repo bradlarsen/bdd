@@ -110,6 +110,48 @@ _bdd_make_node (
     bdd_t high
     );
 
+static inline void
+_bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
+{
+    assert (b < mgr->capacity);
+    assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
+    assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
+    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+        mgr->nodes[b].ref_cnt += 1;
+}
+
+static inline void
+_bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
+{
+    assert (mgr->nodes[b].ref_cnt > 0);
+    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+        mgr->nodes[b].ref_cnt -= 1;
+}
+
+static inline void
+_bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
+{
+    void node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx);
+
+    assert (b < mgr->capacity);
+    assert (mgr->nodes[b].ref_cnt > 0);
+    assert (b > 1 || mgr->nodes[b].ref_cnt > 1);
+    assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
+    assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
+    if (mgr->nodes[b].ref_cnt < UINT_MAX)
+        mgr->nodes[b].ref_cnt -= 1;
+    if (mgr->nodes[b].ref_cnt == 0) {
+        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
+        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
+        assert (b > 1);
+        assert (mgr->num_nodes > 0);
+        node_hash_table_delete (mgr, b);
+        mgr->num_nodes -= 1;
+        _bdd_dec_ref_rec (mgr, mgr->nodes[b].low);
+        _bdd_dec_ref_rec (mgr, mgr->nodes[b].high);
+    }
+}
+
 #ifndef NDEBUG
 void
 _bdd_mgr_check_invariants(bdd_mgr_t *mgr);

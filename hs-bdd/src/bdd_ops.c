@@ -1,5 +1,17 @@
 #include "bdd_mgr.h"
 
+void
+bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
+{
+    _bdd_inc_ref (mgr, b);
+}
+
+void
+bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
+{
+    _bdd_dec_ref_rec (mgr, b);
+}
+
 unsigned
 bdd_var (bdd_mgr_t *mgr, bdd_t b)
 {
@@ -148,8 +160,7 @@ _real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
     if (cache_val->p == p && cache_val->t == t && cache_val->f == f) {
         mgr->ite_cache_stats.num_hits += 1;
         return cache_val->result;
-    }
-    else {
+    } else {
         node_t p_n = bdd_to_node (mgr, p);
         node_t t_n = bdd_to_node (mgr, t);
         node_t f_n = bdd_to_node (mgr, f);
@@ -159,25 +170,38 @@ _real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
         quick_restrict_res_t f_v = _quick_restrict (f, f_n, top_lvl);
         bdd_t low, high, result;
         low = _real_bdd_ite (mgr, p_v.low, t_v.low, f_v.low);
-        bdd_inc_ref (mgr, low);
+        _bdd_inc_ref (mgr, low);
         high = _real_bdd_ite (mgr, p_v.high, t_v.high, f_v.high);
-        bdd_inc_ref (mgr, high);
+        _bdd_inc_ref (mgr, high);
         result = _bdd_make_node (mgr, top_lvl, low, high);
-        bdd_dec_ref (mgr, high);
-        bdd_dec_ref (mgr, low);
-
-        bdd_inc_ref (mgr, p);
-        bdd_inc_ref (mgr, t);
-        bdd_inc_ref (mgr, f);
-        bdd_inc_ref (mgr, result);
+        _bdd_dec_ref (mgr, high);
+        _bdd_dec_ref (mgr, low);
 
         mgr->ite_cache_stats.num_inserts += 1;
+
         if (!bdd_ite_cache_entry_is_free (cache_val)) {
-            bdd_dec_ref (mgr, cache_val->p);
-            bdd_dec_ref (mgr, cache_val->t);
-            bdd_dec_ref (mgr, cache_val->f);
-            bdd_dec_ref (mgr, cache_val->result);
             mgr->ite_cache_stats.num_replacements += 1;
+            if (p != cache_val->p) {
+                _bdd_inc_ref (mgr, p);
+                _bdd_dec_ref_rec (mgr, cache_val->p);
+            }
+            if (t != cache_val->t) {
+                _bdd_inc_ref (mgr, t);
+                _bdd_dec_ref_rec (mgr, cache_val->t);
+            }
+            if (f != cache_val->f) {
+                _bdd_inc_ref (mgr, f);
+                _bdd_dec_ref_rec (mgr, cache_val->f);
+            }
+            if (result != cache_val->result) {
+                _bdd_inc_ref (mgr, result);
+                _bdd_dec_ref_rec (mgr, cache_val->result);
+            }
+        } else {
+            _bdd_inc_ref (mgr, p);
+            _bdd_inc_ref (mgr, t);
+            _bdd_inc_ref (mgr, f);
+            _bdd_inc_ref (mgr, result);
         }
 
         cache_val->p = p;
@@ -211,12 +235,12 @@ bdd_res_rec (bdd_mgr_t *mgr,
     else {
         bdd_t low, high;
         low = bdd_res_rec (mgr, lvl, val, n.low);
-        bdd_inc_ref (mgr, low);
+        _bdd_inc_ref (mgr, low);
         high = bdd_res_rec (mgr, lvl, val, n.high);
-        bdd_inc_ref (mgr, high);
+        _bdd_inc_ref (mgr, high);
         result = _bdd_make_node (mgr, n.lvl, low, high);
-        bdd_dec_ref (mgr, high);
-        bdd_dec_ref (mgr, low);
+        _bdd_dec_ref (mgr, high);
+        _bdd_dec_ref (mgr, low);
     }
     return result;
 }
