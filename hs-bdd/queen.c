@@ -186,7 +186,7 @@ int main(int ac, char **av)
     }
 
     /* Initialize with 100000 nodes, 10000 cache entries and NxN variables */
-    mgr = bdd_mgr_create_with_hint(N*N, 1024);
+    mgr = bdd_mgr_create_with_hint(N*N, 1024 * 1024 * 16);
 
     fprintf (stderr, "initialized manager\n");
 
