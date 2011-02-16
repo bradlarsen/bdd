@@ -1,16 +1,10 @@
 #include "bdd_mgr.h"
 
-static boolean
-node_on_hash_chain (
-    bdd_mgr_t *mgr,
-    unsigned lvl,
-    bdd_t low,
-    bdd_t high,
-    unsigned chain_idx,
-    unsigned *node_idx
-    );
+/* Doubles the size of the storage allocated for nodes. */
+void
+_bdd_mgr_double_capacity (bdd_mgr_t *mgr);
 
-static void
+static inline void
 node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx);
 
 static inline unsigned
@@ -26,9 +20,15 @@ _initialize_nodes (node_t *nodes, unsigned start, unsigned stop)
 
 /* Adds a node with the given fields at the given index of the nodes array. */
 static void
-add_node (bdd_mgr_t *mgr, unsigned idx, unsigned lvl, bdd_t low, bdd_t high)
+add_terminal_node (
+    bdd_mgr_t *mgr,
+    unsigned idx,
+    unsigned lvl,
+    bdd_t low,
+    bdd_t high
+    )
 {
-    mgr->nodes[idx].ref_cnt = 1;
+    mgr->nodes[idx].ref_cnt = UINT_MAX;
     mgr->nodes[idx].lvl = lvl;
     mgr->nodes[idx].low = low;
     mgr->nodes[idx].high = high;
@@ -44,7 +44,6 @@ make_cache_stats ()
     res.num_lookups = 0;
     res.num_hits = 0;
     res.num_inserts = 0;
-    res.num_replacements = 0;
     return res;
 }
 
@@ -66,7 +65,7 @@ node_hash_bucket (bdd_mgr_t *mgr, unsigned lvl, bdd_t low, bdd_t high)
     return hash_unsigned_pair (lvl, hash_unsigned_pair(low, high)) & mask;
 }
 
-static boolean
+static inline boolean
 node_on_hash_chain (
     bdd_mgr_t *mgr,
     unsigned lvl,
@@ -88,7 +87,7 @@ node_on_hash_chain (
     return 0;
 }
 
-static void
+static inline void
 node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
     assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
@@ -273,8 +272,8 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 
     mgr->last_used_alloc_idx = 0;
 
-    add_node (mgr, 0, num_vars, 1, 0); /* false terminal */
-    add_node (mgr, 1, num_vars, 0, 1); /* true terminal */
+    add_terminal_node (mgr, 0, num_vars, 1, 0); /* false terminal */
+    add_terminal_node (mgr, 1, num_vars, 0, 1); /* true terminal */
 
     _bdd_mgr_check_invariants (mgr);
 
@@ -317,21 +316,14 @@ bdd_mgr_get_num_allocated (bdd_mgr_t *mgr)
 void
 bdd_cache_stats_fprint (FILE *handle, bdd_cache_stats_t stats)
 {
-    float hit_p, repl_p;
+    float hit_p;
     if (stats.num_lookups == 0)
         hit_p = 0.0f;
     else
         hit_p = (float) stats.num_hits / (float) stats.num_lookups * 100.0f;
 
-    if (stats.num_inserts == 0)
-        repl_p = 0.0f;
-    else
-        repl_p = (float) stats.num_replacements / (float) stats.num_inserts
-            * 100.0f;
-
-    fprintf (handle, "%u/%u hits (%.0f%%), %u/%u replacements (%.0f%%)",
-             stats.num_hits, stats.num_lookups, hit_p,
-             stats.num_replacements, stats.num_inserts, repl_p);
+    fprintf (handle, "%u/%u hits (%.1f%%)",
+             stats.num_hits, stats.num_lookups, hit_p);
 }
 
 bdd_cache_stats_t

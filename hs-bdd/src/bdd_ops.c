@@ -179,35 +179,26 @@ _real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 
         mgr->ite_cache_stats.num_inserts += 1;
 
-        if (!bdd_ite_cache_entry_is_free (cache_val)) {
-            mgr->ite_cache_stats.num_replacements += 1;
-            if (p != cache_val->p) {
-                _bdd_inc_ref (mgr, p);
-                _bdd_dec_ref_rec (mgr, cache_val->p);
-            }
-            if (t != cache_val->t) {
-                _bdd_inc_ref (mgr, t);
-                _bdd_dec_ref_rec (mgr, cache_val->t);
-            }
-            if (f != cache_val->f) {
-                _bdd_inc_ref (mgr, f);
-                _bdd_dec_ref_rec (mgr, cache_val->f);
-            }
-            if (result != cache_val->result) {
-                _bdd_inc_ref (mgr, result);
-                _bdd_dec_ref_rec (mgr, cache_val->result);
-            }
-        } else {
+        if (p != cache_val->p) {
+            _bdd_dec_ref_rec (mgr, cache_val->p);
             _bdd_inc_ref (mgr, p);
-            _bdd_inc_ref (mgr, t);
-            _bdd_inc_ref (mgr, f);
-            _bdd_inc_ref (mgr, result);
+            cache_val->p = p;
         }
-
-        cache_val->p = p;
-        cache_val->t = t;
-        cache_val->f = f;
-        cache_val->result = result;
+        if (t != cache_val->t) {
+            _bdd_dec_ref_rec (mgr, cache_val->t);
+            _bdd_inc_ref (mgr, t);
+            cache_val->t = t;
+        }
+        if (f != cache_val->f) {
+            _bdd_dec_ref_rec (mgr, cache_val->f);
+            _bdd_inc_ref (mgr, f);
+            cache_val->f = f;
+        }
+        if (result != cache_val->result) {
+            _bdd_dec_ref_rec (mgr, cache_val->result);
+            _bdd_inc_ref (mgr, result);
+            cache_val->result = result;
+        }
 
         return result;
     }
@@ -306,5 +297,5 @@ bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b)
     /* FIXME: reimplement */
     (void) mgr;
     (void) b;
-    assert (0);
+    abort ();
 }

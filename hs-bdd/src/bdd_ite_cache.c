@@ -3,6 +3,7 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
 
 static unsigned
 up_to_next_power_of_two (unsigned n)
@@ -19,9 +20,7 @@ bdd_ite_cache_create_with_hint (bdd_ite_cache_t *tab, unsigned num_entries_hint)
 
     tab->num_entries = num_entries;
     tab->entries = (bdd_ite_cache_entry_t *)
-        checked_malloc (sizeof(bdd_ite_cache_entry_t) * num_entries);
-
-    bdd_ite_cache_clear (tab);
+        checked_calloc (sizeof(bdd_ite_cache_entry_t), num_entries);
 }
 
 void
@@ -33,7 +32,5 @@ bdd_ite_cache_destroy (bdd_ite_cache_t *tab)
 void
 bdd_ite_cache_clear (bdd_ite_cache_t *tab)
 {
-    unsigned i;
-    for (i = 0; i < tab->num_entries; i += 1)
-        tab->entries[i].p = UINT_MAX;
+    memset (tab->entries, 0, tab->num_entries * sizeof (bdd_ite_cache_entry_t));
 }

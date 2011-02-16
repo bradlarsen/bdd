@@ -93,10 +93,6 @@ bdd_to_node (bdd_mgr_t *mgr, bdd_t b)
     return mgr->nodes[b];
 }
 
-/* Doubles the size of the storage allocated for nodes. */
-extern void
-_bdd_mgr_double_capacity (bdd_mgr_t *mgr);
-
 /* Retrieves the BDD of the node equal to the node with the given
  * components if one exists, otherwise creates and returns a new BDD.
  * This function can raise an out-of-space exception, and so callers
@@ -138,8 +134,7 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
     assert (b > 1 || mgr->nodes[b].ref_cnt > 1);
     assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
     assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    if (mgr->nodes[b].ref_cnt < UINT_MAX)
-        mgr->nodes[b].ref_cnt -= 1;
+    _bdd_dec_ref (mgr, b);
     if (mgr->nodes[b].ref_cnt == 0) {
         /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
         /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */

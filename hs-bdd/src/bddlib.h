@@ -60,7 +60,6 @@ typedef struct
     unsigned num_lookups;       /* the number of cache lookups */
     unsigned num_hits;          /* the number of cache hits */
     unsigned num_inserts;       /* the number of cache insertions */
-    unsigned num_replacements;  /* the number of cache replacements */
 } bdd_cache_stats_t;
 
 /* Pretty-prints the cache statistics to the file handle. */
