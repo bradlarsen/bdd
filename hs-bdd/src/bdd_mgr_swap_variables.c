@@ -125,8 +125,7 @@ bdd_mgr_swap_variables (bdd_mgr_t *mgr, unsigned idx)
                     &mgr->var_to_lvl[mgr->lvl_to_var[idx + 1]]);
     _swap_unsigned (&mgr->lvl_to_var[idx], &mgr->lvl_to_var[idx + 1]);
 
-    fprintf (stderr, "!!! %u nodes in use\n", bdd_mgr_get_num_nodes (mgr));
     /* _bdd_mgr_var_order_fprint (mgr, stderr); */
-    _bdd_mgr_check_invariants (mgr);
+    /* _bdd_mgr_check_invariants (mgr); */
     /* fprintf (stderr, "*** end swap %u ***\n", idx); */
 }

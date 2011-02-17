@@ -179,7 +179,6 @@ _bdd_make_node (
         _bdd_inc_ref (mgr, high);
         mgr->nodes[node_idx].high = high;
         _node_ht_bucket_insert (mgr, node_idx, bucket_idx);
-        /* _bdd_mgr_check_invariants (mgr); */
         return node_idx;
     }
 }
@@ -200,7 +199,6 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr)
 {
     unsigned old_capacity = mgr->capacity;
     fprintf (stderr, "!!! begin double\n");
-    _bdd_mgr_check_invariants (mgr);
     mgr->capacity *= 2;
     mgr->nodes = (node_t *)
         checked_realloc (mgr->nodes, mgr->capacity * sizeof (node_t));
@@ -209,7 +207,6 @@ _bdd_mgr_double_capacity (bdd_mgr_t *mgr)
         checked_realloc (mgr->nodes_hash,
                          _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
     _bdd_mgr_rehash (mgr);
-    _bdd_mgr_check_invariants (mgr);
     fprintf (stderr, "!!! end double\n");
 }
 

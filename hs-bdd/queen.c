@@ -30,6 +30,7 @@
 #include <assert.h>
 
 #include "bddlib.h"
+#include "bdd_mgr.h"
 
 int N;                   /* Size of the chess board */
 bdd_t **X;               /* BDD variable array */
@@ -171,8 +172,6 @@ static void build(int i, int j)
 static void
 print_results ()
 {
-    void _bdd_mgr_var_order_fprint (bdd_mgr_t *mgr, FILE *handle);
-
     _bdd_mgr_var_order_fprint (mgr, stderr);
     fprintf (stderr, "There are %.0f solutions\n", bdd_sat_count(mgr, queen));
     fprintf (stderr, "%u nodes in use\n", bdd_mgr_get_num_nodes(mgr));
@@ -188,6 +187,7 @@ randomly_swap_variable_order ()
         unsigned idx = rand () % (N * N - 1);
         bdd_mgr_swap_variables (mgr, idx);
     }
+    _bdd_mgr_check_invariants (mgr);
 }
 
 static void
@@ -197,6 +197,7 @@ random_test_var_swapping ()
     for (i = 0; i < 128; i += 1) {
         double old_num_solutions = bdd_sat_count (mgr, queen);
         randomly_swap_variable_order ();
+        fprintf (stderr, "shuffle %u: ", i);
         print_results ();
         assert (bdd_sat_count (mgr, queen) == old_num_solutions);
     }
@@ -219,7 +220,7 @@ int main(int ac, char **av)
         return 1;
     }
 
-    mgr = bdd_mgr_create_with_hint(N*N, 1024 * 128);
+    mgr = bdd_mgr_create_with_hint(N*N, 128);
 
     fprintf (stderr, "initialized manager\n");
 
