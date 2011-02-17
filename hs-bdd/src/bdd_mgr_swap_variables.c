@@ -21,29 +21,25 @@ _bdd_mgr_var_order_fprint (bdd_mgr_t *mgr, FILE *handle)
 static void
 _swap_node_in_place (bdd_mgr_t *mgr, unsigned idx0, bdd_t f)
 {
+    assert (f > 1);
     unsigned idx1 = idx0 + 1;
+
     bdd_t f0 = mgr->nodes[f].low;
     bdd_t f1 = mgr->nodes[f].high;
-    bdd_t f00 = mgr->nodes[f0].low;
-    bdd_t f01 = mgr->nodes[f0].high;
-    bdd_t f10 = mgr->nodes[f1].low;
-    bdd_t f11 = mgr->nodes[f1].high;
-    bdd_t new_f0, new_f1;
-    assert (f00 != f01);
-    assert (f10 != f11);
-    new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
-    assert (new_f0 != f);
-    if (new_f0 != f0) {
-        _bdd_inc_ref (mgr, new_f0);
-        _bdd_dec_ref_rec (mgr, f0);
-    }
-    new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
-    assert (new_f1 != f);
-    if (new_f1 != f1) {
-        _bdd_inc_ref (mgr, new_f1);
-        _bdd_dec_ref_rec (mgr, f1);
-    }
+    bdd_t f00 = mgr->nodes[f0].lvl == idx1 ? mgr->nodes[f0].low : f0;
+    bdd_t f01 = mgr->nodes[f0].lvl == idx1 ? mgr->nodes[f0].high : f0;
+    bdd_t f10 = mgr->nodes[f1].lvl == idx1 ? mgr->nodes[f1].low : f1;
+    bdd_t f11 = mgr->nodes[f1].lvl == idx1 ? mgr->nodes[f1].high : f1;
+
+    bdd_t new_f0 = _bdd_make_node (mgr, idx1, f00, f01);
+    _bdd_inc_ref (mgr, new_f0);
+    _bdd_dec_ref_rec (mgr, f0);
+
+    bdd_t new_f1 = _bdd_make_node (mgr, idx1, f10, f11);
+    _bdd_inc_ref (mgr, new_f1);
+    _bdd_dec_ref_rec (mgr, f1);
     assert (new_f0 != new_f1);
+
     _node_ht_delete (mgr, f);
     mgr->nodes[f].low = new_f0;
     mgr->nodes[f].high = new_f1;

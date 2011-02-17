@@ -207,7 +207,7 @@ _real_bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 bdd_t 
 bdd_ite (bdd_mgr_t *mgr, bdd_t p, bdd_t t, bdd_t f)
 {
-    _bdd_mgr_check_invariants (mgr);
+    /* _bdd_mgr_check_invariants (mgr); */
     return _real_bdd_ite (mgr, p, t, f);
 }
 
