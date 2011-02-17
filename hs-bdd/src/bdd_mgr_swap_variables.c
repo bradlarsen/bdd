@@ -8,7 +8,7 @@ _swap_unsigned (unsigned *i, unsigned *j)
     *j = tmp;
 }
 
-static void
+void
 _bdd_mgr_var_order_fprint (bdd_mgr_t *mgr, FILE *handle)
 {
     unsigned i;
@@ -31,19 +31,22 @@ _swap_node_in_place (bdd_mgr_t *mgr, unsigned idx0, bdd_t f)
     bdd_t f10 = mgr->nodes[f1].lvl == idx1 ? mgr->nodes[f1].low : f1;
     bdd_t f11 = mgr->nodes[f1].lvl == idx1 ? mgr->nodes[f1].high : f1;
 
-    bdd_t new_f0 = _bdd_make_node (mgr, idx1, f00, f01);
+    bdd_t new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
     _bdd_inc_ref (mgr, new_f0);
     _bdd_dec_ref_rec (mgr, f0);
 
-    bdd_t new_f1 = _bdd_make_node (mgr, idx1, f10, f11);
+    bdd_t new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
     _bdd_inc_ref (mgr, new_f1);
     _bdd_dec_ref_rec (mgr, f1);
-    assert (new_f0 != new_f1);
 
-    _node_ht_delete (mgr, f);
-    mgr->nodes[f].low = new_f0;
-    mgr->nodes[f].high = new_f1;
-    _node_ht_insert (mgr, f);
+    assert (new_f0 != new_f1);
+    if (new_f0 != f0 || new_f1 != f1) {
+        fprintf (stderr, "!!! CHANGED!\n");
+        _node_ht_delete (mgr, f);
+        mgr->nodes[f].low = new_f0;
+        mgr->nodes[f].high = new_f1;
+        _node_ht_insert (mgr, f);
+    }
 }
 
 static void
@@ -59,31 +62,46 @@ print_node (bdd_mgr_t *mgr, bdd_t b, char *prefix, char *suffix)
              suffix);
 }
 
+static void
+_clear_ite_cache (bdd_mgr_t *mgr)
+{
+    unsigned i;
+    for (i = 0; i < mgr->ite_cache.num_entries; i += 1) {
+        _bdd_dec_ref_rec (mgr, mgr->ite_cache.entries[i].p);
+        _bdd_dec_ref_rec (mgr, mgr->ite_cache.entries[i].t);
+        _bdd_dec_ref_rec (mgr, mgr->ite_cache.entries[i].f);
+        _bdd_dec_ref_rec (mgr, mgr->ite_cache.entries[i].result);
+    }
+    bdd_ite_cache_clear (&mgr->ite_cache);
+}
+
 void
 bdd_mgr_swap_variables (bdd_mgr_t *mgr, unsigned idx)
 {
     unsigned i;
+    /* _clear_ite_cache (mgr); */
     assert (idx < mgr->num_vars - 1);
-    fprintf (stderr, "*** begin swap %u ***\n", idx);
-    _bdd_mgr_var_order_fprint (mgr, stderr);
+    /* fprintf (stderr, "*** begin swap %u ***\n", idx); */
+    /* _bdd_mgr_var_order_fprint (mgr, stderr); */
 
     for (i = 0; i < mgr->capacity; i += 1)
         if (node_is_live (mgr->nodes[i]) && mgr->nodes[i].lvl == idx) {
-            fprintf (stderr, "!!! swapping node %u:\n", i);
-            print_node (mgr, i, "    ", "\n");
-            print_node (mgr, mgr->nodes[i].low, "        ", "\n");
-            print_node (mgr, mgr->nodes[i].high, "        ", "\n");
+            /* fprintf (stderr, "!!! swapping node %u:\n", i); */
+            /* print_node (mgr, i, "    ", "\n"); */
+            /* print_node (mgr, mgr->nodes[i].low, "        ", "\n"); */
+            /* print_node (mgr, mgr->nodes[i].high, "        ", "\n"); */
             _swap_node_in_place (mgr, idx, i);
-            print_node (mgr, i, "    ", "\n");
-            print_node (mgr, mgr->nodes[i].low, "        ", "\n");
-            print_node (mgr, mgr->nodes[i].high, "        ", "\n");
+            /* print_node (mgr, i, "    ", "\n"); */
+            /* print_node (mgr, mgr->nodes[i].low, "        ", "\n"); */
+            /* print_node (mgr, mgr->nodes[i].high, "        ", "\n"); */
         }
 
     _swap_unsigned (&mgr->var_to_lvl[mgr->lvl_to_var[idx]],
                     &mgr->var_to_lvl[mgr->lvl_to_var[idx + 1]]);
     _swap_unsigned (&mgr->lvl_to_var[idx], &mgr->lvl_to_var[idx + 1]);
 
-    _bdd_mgr_var_order_fprint (mgr, stderr);
+    fprintf (stderr, "!!! %u nodes in use\n", bdd_mgr_get_num_nodes (mgr));
+    /* _bdd_mgr_var_order_fprint (mgr, stderr); */
     _bdd_mgr_check_invariants (mgr);
-    fprintf (stderr, "*** end swap %u ***\n", idx);
+    /* fprintf (stderr, "*** end swap %u ***\n", idx); */
 }

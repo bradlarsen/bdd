@@ -27,6 +27,7 @@
 **************************************************************************/
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "bddlib.h"
 
@@ -167,6 +168,39 @@ static void build(int i, int j)
     deref (a);
 }
 
+static void
+print_results ()
+{
+    void _bdd_mgr_var_order_fprint (bdd_mgr_t *mgr, FILE *handle);
+
+    _bdd_mgr_var_order_fprint (mgr, stderr);
+    fprintf (stderr, "There are %.0f solutions\n", bdd_sat_count(mgr, queen));
+    fprintf (stderr, "%u nodes in use\n", bdd_mgr_get_num_nodes(mgr));
+    fprintf (stderr, "%u nodes currently allocated\n",
+             bdd_mgr_get_num_allocated(mgr));
+}
+
+static void
+randomly_swap_variable_order ()
+{
+    int num_swaps;
+    for (num_swaps = 0; num_swaps < 2 * N * N; num_swaps += 1) {
+        unsigned idx = rand () % (N * N - 1);
+        bdd_mgr_swap_variables (mgr, idx);
+    }
+}
+
+static void
+random_test_var_swapping ()
+{
+    unsigned i;
+    for (i = 0; i < 128; i += 1) {
+        double old_num_solutions = bdd_sat_count (mgr, queen);
+        randomly_swap_variable_order ();
+        print_results ();
+        assert (bdd_sat_count (mgr, queen) == old_num_solutions);
+    }
+}
 
 int main(int ac, char **av)
 {
@@ -185,7 +219,7 @@ int main(int ac, char **av)
         return 1;
     }
 
-    mgr = bdd_mgr_create_with_hint(N*N, 1024 * 1024 * 16);
+    mgr = bdd_mgr_create_with_hint(N*N, 1024);
 
     fprintf (stderr, "initialized manager\n");
 
@@ -240,15 +274,12 @@ int main(int ac, char **av)
         {
             fprintf (stderr, "Adding position %d, %d\n", i, j);
             build(i,j);
-            bdd_mgr_swap_variables (mgr, 0);
         }
     }
 
-    /* Print the results */
-    fprintf (stderr, "There are %.0f solutions\n", bdd_sat_count(mgr, queen));
-    fprintf (stderr, "%u nodes in use\n", bdd_mgr_get_num_nodes(mgr));
-    fprintf (stderr, "%u nodes currently allocated\n",
-             bdd_mgr_get_num_allocated(mgr));
+    print_results ();
+
+    random_test_var_swapping ();
 
     fprintf (stderr, "result cache: ");
     bdd_cache_stats_fprint (stderr, bdd_mgr_get_cache_stats (mgr));
