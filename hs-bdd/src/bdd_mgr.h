@@ -127,27 +127,48 @@ _bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
         mgr->nodes[b].ref_cnt -= 1;
 }
 
-static inline void
-_bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
-{
-    void node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx);
+extern void
+_bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b);
 
-    assert (b < mgr->capacity);
-    assert (mgr->nodes[b].ref_cnt > 0);
-    assert (b > 1 || mgr->nodes[b].ref_cnt > 1);
-    assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
-    assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
-    _bdd_dec_ref (mgr, b);
-    if (mgr->nodes[b].ref_cnt == 0) {
-        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
-        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
-        assert (b > 1);
-        assert (mgr->num_nodes > 0);
-        node_hash_table_delete (mgr, b);
-        mgr->num_nodes -= 1;
-        _bdd_dec_ref_rec (mgr, mgr->nodes[b].low);
-        _bdd_dec_ref_rec (mgr, mgr->nodes[b].high);
-    }
+extern void
+_node_ht_bucket_dump (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx);
+
+static inline void
+_node_ht_bucket_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
+{
+    assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
+    mgr->nodes[node_idx].hash_next = mgr->nodes_hash[bucket_idx];
+    mgr->nodes_hash[bucket_idx] = node_idx + 1;
+}
+
+extern void
+_node_ht_bucket_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx);
+
+static inline unsigned
+_node_hash (bdd_mgr_t *mgr, unsigned lvl, bdd_t low, bdd_t high)
+{
+    unsigned mask = _bdd_mgr_num_hash_buckets (mgr) - 1;
+    return hash_unsigned_pair (lvl, hash_unsigned_pair(low, high)) & mask;
+}
+
+static inline void
+_node_ht_insert (bdd_mgr_t *mgr, unsigned node_idx)
+{
+    _node_ht_bucket_insert (mgr, node_idx,
+                            _node_hash (mgr,
+                                        mgr->nodes[node_idx].lvl,
+                                        mgr->nodes[node_idx].low,
+                                        mgr->nodes[node_idx].high));
+}
+
+static inline void
+_node_ht_delete (bdd_mgr_t *mgr, unsigned node_idx)
+{
+    _node_ht_bucket_delete (mgr, node_idx,
+                            _node_hash (mgr,
+                                        mgr->nodes[node_idx].lvl,
+                                        mgr->nodes[node_idx].low,
+                                        mgr->nodes[node_idx].high));
 }
 
 #ifndef NDEBUG

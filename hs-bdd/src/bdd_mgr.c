@@ -4,12 +4,6 @@
 void
 _bdd_mgr_double_capacity (bdd_mgr_t *mgr);
 
-static inline void
-node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx);
-
-static inline unsigned
-node_hash_bucket (bdd_mgr_t *mgr, unsigned lvl, bdd_t low, bdd_t high);
-
 static void
 _initialize_nodes (node_t *nodes, unsigned start, unsigned stop)
 {
@@ -33,7 +27,7 @@ add_terminal_node (
     mgr->nodes[idx].low = low;
     mgr->nodes[idx].high = high;
     mgr->num_nodes += 1;
-    node_hash_table_insert (mgr, idx, node_hash_bucket (mgr, lvl, low, high));
+    _node_ht_insert (mgr, idx);
     mgr->last_used_alloc_idx = idx;
 }
 
@@ -58,13 +52,6 @@ size_hint_to_size (unsigned hint)
     return 128u > i ? 128u : i;
 }
 
-static inline unsigned
-node_hash_bucket (bdd_mgr_t *mgr, unsigned lvl, bdd_t low, bdd_t high)
-{
-    unsigned mask = _bdd_mgr_num_hash_buckets (mgr) - 1;
-    return hash_unsigned_pair (lvl, hash_unsigned_pair(low, high)) & mask;
-}
-
 static inline boolean
 node_on_hash_chain (
     bdd_mgr_t *mgr,
@@ -87,16 +74,8 @@ node_on_hash_chain (
     return 0;
 }
 
-static inline void
-node_hash_table_insert (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
-{
-    assert (bucket_idx < _bdd_mgr_num_hash_buckets (mgr));
-    mgr->nodes[node_idx].hash_next = mgr->nodes_hash[bucket_idx];
-    mgr->nodes_hash[bucket_idx] = node_idx + 1;
-}
-
-static void
-dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
+void
+_node_ht_bucket_dump (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
 {
     unsigned idx = mgr->nodes_hash[bucket_idx];
     fprintf (stderr, "    %s hash chain at bucket %u:  ",
@@ -109,17 +88,12 @@ dump_hash_bucket (bdd_mgr_t *mgr, char *prefix, unsigned bucket_idx)
 }
 
 void
-node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx)
+_node_ht_bucket_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
 {
-    unsigned bucket_idx = node_hash_bucket (mgr,
-                                            mgr->nodes[node_idx].lvl,
-                                            mgr->nodes[node_idx].low,
-                                            mgr->nodes[node_idx].high);
     unsigned prev = 0;  /* 0 is the sentinel value for the table */
     unsigned cur = mgr->nodes_hash[bucket_idx];
     assert (mgr->num_nodes > 0);
     assert (cur != 0);
-    /* dump_hash_bucket (mgr, "before,", bucket_idx); */
     while (cur - 1 != node_idx) {
         prev = cur;
         cur = mgr->nodes[cur - 1].hash_next;
@@ -129,7 +103,27 @@ node_hash_table_delete (bdd_mgr_t *mgr, unsigned node_idx)
         mgr->nodes[prev - 1].hash_next = mgr->nodes[cur - 1].hash_next;
     else
         mgr->nodes_hash[bucket_idx] = mgr->nodes[cur - 1].hash_next;
-    /* dump_hash_bucket (mgr, "after, ", bucket_idx); */
+}
+
+void
+_bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
+{
+    assert (b < mgr->capacity);
+    assert (mgr->nodes[b].ref_cnt > 0);
+    assert (b > 1 || mgr->nodes[b].ref_cnt > 1);
+    assert (mgr->nodes[mgr->nodes[b].low].ref_cnt > 0);
+    assert (mgr->nodes[mgr->nodes[b].high].ref_cnt > 0);
+    _bdd_dec_ref (mgr, b);
+    if (mgr->nodes[b].ref_cnt == 0) {
+        /* fprintf (stderr, "!!! deleting bdd at index %u (%u %u %u)\n", */
+        /*          b, mgr->nodes[b].lvl, mgr->nodes[b].low, mgr->nodes[b].high); */
+        assert (b > 1);
+        assert (mgr->num_nodes > 0);
+        _node_ht_delete (mgr, b);
+        mgr->num_nodes -= 1;
+        _bdd_dec_ref_rec (mgr, mgr->nodes[b].low);
+        _bdd_dec_ref_rec (mgr, mgr->nodes[b].high);
+    }
 }
 
 static unsigned
@@ -164,14 +158,14 @@ _bdd_make_node (
         return low;
     else {
         unsigned node_idx;
-        unsigned bucket_idx = node_hash_bucket (mgr, lvl, low, high);
+        unsigned bucket_idx = _node_hash (mgr, lvl, low, high);
         if (node_on_hash_chain (mgr, lvl, low, high, bucket_idx, &node_idx))
             return node_idx;    /* existing node found */
 
         if (mgr->num_nodes == mgr->capacity - 1) {
             _bdd_mgr_double_capacity (mgr);
             /* need to recompute bucket since size is changed */
-            bucket_idx = node_hash_bucket (mgr, lvl, low, high);
+            bucket_idx = _node_hash (mgr, lvl, low, high);
         }
 
         /* create a new node */
@@ -184,7 +178,7 @@ _bdd_make_node (
         mgr->nodes[node_idx].low = low;
         _bdd_inc_ref (mgr, high);
         mgr->nodes[node_idx].high = high;
-        node_hash_table_insert (mgr, node_idx, bucket_idx);
+        _node_ht_bucket_insert (mgr, node_idx, bucket_idx);
         /* _bdd_mgr_check_invariants (mgr); */
         return node_idx;
     }
@@ -196,13 +190,9 @@ _bdd_mgr_rehash (bdd_mgr_t *mgr)
     unsigned i;
     memset (mgr->nodes_hash, 0,
             _bdd_mgr_num_hash_buckets (mgr) * sizeof (unsigned));
-    for (i = 0; i < mgr->capacity; i += 1) {
+    for (i = 0; i < mgr->capacity; i += 1)
         if (node_is_live (mgr->nodes[i]))
-            node_hash_table_insert (mgr, i, node_hash_bucket (mgr,
-                                                              mgr->nodes[i].lvl,
-                                                              mgr->nodes[i].low,
-                                                              mgr->nodes[i].high));
-    }
+            _node_ht_insert (mgr, i);
 }
 
 void

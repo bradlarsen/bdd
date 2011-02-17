@@ -240,7 +240,7 @@ int main(int ac, char **av)
         {
             fprintf (stderr, "Adding position %d, %d\n", i, j);
             build(i,j);
-            /* bdd_mgr_swap_variables (mgr, 0); */
+            bdd_mgr_swap_variables (mgr, 0);
         }
     }
 
