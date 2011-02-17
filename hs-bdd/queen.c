@@ -219,7 +219,7 @@ int main(int ac, char **av)
         return 1;
     }
 
-    mgr = bdd_mgr_create_with_hint(N*N, 1024);
+    mgr = bdd_mgr_create_with_hint(N*N, 1024 * 128);
 
     fprintf (stderr, "initialized manager\n");
 
