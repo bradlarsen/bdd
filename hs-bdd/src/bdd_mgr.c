@@ -105,6 +105,32 @@ _node_ht_bucket_delete (bdd_mgr_t *mgr, unsigned node_idx, unsigned bucket_idx)
         mgr->nodes_hash[bucket_idx] = mgr->nodes[cur - 1].hash_next;
 }
 
+static void
+_lvl_list_insert (bdd_mgr_t *mgr, bdd_t node_idx)
+{
+    node_t *n = &mgr->nodes[node_idx];
+    n->lvl_prev = 0;
+    n->lvl_next = mgr->lvl_chain_roots[n->lvl];
+    if (mgr->lvl_chain_roots[n->lvl] != 0)
+        mgr->nodes[mgr->lvl_chain_roots[n->lvl] - 1].lvl_prev = node_idx + 1;
+    mgr->lvl_chain_roots[n->lvl] = node_idx + 1;
+    mgr->nodes_at_level[n->lvl] += 1;
+}
+
+static void
+_lvl_list_delete (bdd_mgr_t *mgr, bdd_t node_idx)
+{
+    node_t *n = &mgr->nodes[node_idx];
+    if (n->lvl_prev != 0)
+        mgr->nodes[n->lvl_prev - 1].lvl_next = n->lvl_next;
+    else
+        mgr->lvl_chain_roots[n->lvl] = n->lvl_next;
+    if (n->lvl_next != 0)
+        mgr->nodes[n->lvl_next - 1].lvl_prev = n->lvl_prev;
+    assert (mgr->nodes_at_level[n->lvl] > 0);
+    mgr->nodes_at_level[n->lvl] -= 1;
+}
+
 void
 _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
 {
@@ -120,6 +146,7 @@ _bdd_dec_ref_rec (bdd_mgr_t *mgr, bdd_t b)
         assert (b > 1);
         assert (mgr->num_nodes > 0);
         _node_ht_delete (mgr, b);
+        _lvl_list_delete (mgr, b);
         mgr->num_nodes -= 1;
         _bdd_dec_ref_rec (mgr, mgr->nodes[b].low);
         _bdd_dec_ref_rec (mgr, mgr->nodes[b].high);
@@ -179,6 +206,7 @@ _bdd_make_node (
         _bdd_inc_ref (mgr, high);
         mgr->nodes[node_idx].high = high;
         _node_ht_bucket_insert (mgr, node_idx, bucket_idx);
+        _lvl_list_insert (mgr, node_idx);
         return node_idx;
     }
 }
@@ -254,6 +282,11 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     create_nodes_hash_table (mgr);
     create_lvl_var_mapping (mgr);
 
+    mgr->lvl_chain_roots = (unsigned *)
+        checked_calloc (num_vars, sizeof(unsigned));
+    mgr->nodes_at_level = (unsigned *)
+        checked_calloc (num_vars, sizeof(unsigned));
+
     /* FIXME: use a more reasonable cache size */
     bdd_ite_cache_create_with_hint (&mgr->ite_cache, 1024 * 32);
     mgr->ite_cache_stats = make_cache_stats ();
@@ -278,6 +311,8 @@ bdd_mgr_destroy (bdd_mgr_t *mgr)
     bdd_ite_cache_destroy (&mgr->ite_cache);
     checked_free (mgr->nodes_hash);
     checked_free (mgr->nodes);
+    checked_free (mgr->nodes_at_level);
+    checked_free (mgr->lvl_chain_roots);
     checked_free (mgr->lvl_to_var);
     checked_free (mgr->var_to_lvl);
     checked_free (mgr);
@@ -293,6 +328,13 @@ unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr)
 {
     return mgr->num_nodes;
+}
+
+unsigned
+bdd_mgr_get_num_nodes_at_level (bdd_mgr_t *mgr, unsigned lvl)
+{
+    assert (lvl < mgr->num_vars);
+    return mgr->nodes_at_level[lvl];
 }
 
 unsigned

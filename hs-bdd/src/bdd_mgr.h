@@ -26,6 +26,10 @@ typedef struct
     bdd_t high;           /* value if the variable is true */
     unsigned hash_next;   /* one plus index of next node on hash
                            * chain, 0 means end-of-chain */
+    unsigned lvl_prev;    /* one plus index of previous node on level
+                           * chain, 0 means end-of-chain */
+    unsigned lvl_next;    /* one plus index of next node on level
+                           * chain, 0 means end-of-chain */
 } node_t;
 
 struct bdd_mgr
@@ -46,6 +50,12 @@ struct bdd_mgr
     unsigned *var_to_lvl;              /* mapping from var to var index */
     /* lvl_to_var and var_to_lvl are permutations of [0..num_vars) and
      * are inverses of each other. */
+
+    unsigned *lvl_chain_roots;         /* list of nodes, 1 per level,
+                                        * lvl_chain_roots[i] is one
+                                        * plus index of first node on
+                                        * list for level i */
+    unsigned *nodes_at_level;          /* count of nodes at each level */
 
     unsigned capacity;                 /* number of allocated nodes, a
                                         * power of 2 */

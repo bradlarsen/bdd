@@ -23,6 +23,16 @@ _check_reference_counts (bdd_mgr_t *mgr)
 }
 
 static void
+_check_node_counts (bdd_mgr_t *mgr)
+{
+    unsigned i;
+    unsigned sum = 0;
+    for (i = 0; i < mgr->num_vars; i += 1)
+        sum += mgr->nodes_at_level[i];
+    assert (sum + 2 == mgr->num_nodes);
+}
+
+static void
 _check_num_live (bdd_mgr_t *mgr)
 {
     unsigned num_live = 0;
@@ -96,8 +106,9 @@ _bdd_mgr_check_invariants(bdd_mgr_t *mgr)
     assert (mgr->num_vars > 0);
     assert (mgr->capacity >= 2);
     assert (_is_power_of_two (mgr->capacity));
-    /* _check_num_live (mgr); */
+    _check_num_live (mgr);
     _check_node_values (mgr);
+    _check_node_counts (mgr);
     _check_reference_counts (mgr);
     _check_proper_lvl_var_mapping (mgr);
     _check_no_duplicate_nodes (mgr);

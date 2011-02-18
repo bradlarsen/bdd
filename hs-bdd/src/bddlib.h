@@ -32,18 +32,21 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint);
 extern void
 bdd_mgr_destroy (bdd_mgr_t *mgr);
 
-/* Returns the number of variables in the manager.  O(1) time
- * and space. */
+/* Returns the number of variables in the manager.  O(1) time and space. */
 extern unsigned
 bdd_mgr_get_num_vars (bdd_mgr_t *mgr);
 
-/* Returns the number of BDD nodes in the manager.  O(1) time
- * and space. */
+/* Returns the number of BDD nodes in the manager.  O(1) time and space. */
 extern unsigned
 bdd_mgr_get_num_nodes (bdd_mgr_t *mgr);
 
-/* Returns the number of allocated nodes in the manager.  O(1)
- * time and space. */
+/* Returns the number of BDD nodes at the given level in the manager.
+ * O(1) time and space. */
+extern unsigned
+bdd_mgr_get_num_nodes_at_level (bdd_mgr_t *mgr, unsigned lvl);
+
+/* Returns the number of allocated nodes in the manager.  O(1) time
+ * and space. */
 extern unsigned
 bdd_mgr_get_num_allocated (bdd_mgr_t *mgr);
 

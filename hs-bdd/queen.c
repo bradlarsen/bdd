@@ -172,9 +172,14 @@ static void build(int i, int j)
 static void
 print_results ()
 {
+    void _bdd_mgr_var_order_fprint (bdd_mgr_t *mgr, FILE *handle);
+    unsigned i;
     _bdd_mgr_var_order_fprint (mgr, stderr);
     fprintf (stderr, "There are %.0f solutions\n", bdd_sat_count(mgr, queen));
     fprintf (stderr, "%u nodes in use\n", bdd_mgr_get_num_nodes(mgr));
+    for (i = 0; i < bdd_mgr_get_num_vars (mgr); i += 1)
+        fprintf (stderr, "    %u nodes at level %u\n",
+                 bdd_mgr_get_num_nodes_at_level (mgr, i), i);
     fprintf (stderr, "%u nodes currently allocated\n",
              bdd_mgr_get_num_allocated(mgr));
 }
@@ -220,7 +225,7 @@ int main(int ac, char **av)
         return 1;
     }
 
-    mgr = bdd_mgr_create_with_hint(N*N, 128);
+    mgr = bdd_mgr_create_with_hint(N*N, 1024 * 1024 * 16);
 
     fprintf (stderr, "initialized manager\n");
 
@@ -280,7 +285,7 @@ int main(int ac, char **av)
 
     print_results ();
 
-    random_test_var_swapping ();
+    /* random_test_var_swapping (); */
 
     fprintf (stderr, "result cache: ");
     bdd_cache_stats_fprint (stderr, bdd_mgr_get_cache_stats (mgr));

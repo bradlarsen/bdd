@@ -103,29 +103,31 @@ _clear_ite_cache (bdd_mgr_t *mgr)
 void
 bdd_mgr_swap_variables (bdd_mgr_t *mgr, unsigned idx)
 {
-    unsigned i;
     /* _clear_ite_cache (mgr); */
     assert (idx < mgr->num_vars - 1);
     /* fprintf (stderr, "*** begin swap %u ***\n", idx); */
     /* _bdd_mgr_var_order_fprint (mgr, stderr); */
 
-    for (i = 0; i < mgr->capacity; i += 1)
-        if (node_is_live (mgr->nodes[i]) && mgr->nodes[i].lvl == idx) {
-            /* fprintf (stderr, "!!! swapping node %u:\n", i); */
-            /* print_node (mgr, i, "    ", "\n"); */
-            /* print_node (mgr, mgr->nodes[i].low, "        ", "\n"); */
-            /* print_node (mgr, mgr->nodes[i].high, "        ", "\n"); */
-            _swap_node_in_place (mgr, idx, i);
-            /* print_node (mgr, i, "    ", "\n"); */
-            /* print_node (mgr, mgr->nodes[i].low, "        ", "\n"); */
-            /* print_node (mgr, mgr->nodes[i].high, "        ", "\n"); */
-        }
-
+#ifndef NDEBUG
+    unsigned num_to_visit = mgr->nodes_at_level[idx];
+    unsigned num_visited = 0;
+#endif
+    unsigned i = mgr->lvl_chain_roots[idx];
+    while (i != 0) {
+#ifndef NDEBUG
+        num_visited += 1;
+#endif
+        assert (node_is_live (mgr->nodes[i - 1]));
+        assert (mgr->nodes[i - 1].lvl == idx);
+        _swap_node_in_place (mgr, idx, i - 1);
+        i = mgr->nodes[i - 1].lvl_next;
+    }
+    assert (num_visited == num_to_visit);
     _swap_unsigned (&mgr->var_to_lvl[mgr->lvl_to_var[idx]],
                     &mgr->var_to_lvl[mgr->lvl_to_var[idx + 1]]);
     _swap_unsigned (&mgr->lvl_to_var[idx], &mgr->lvl_to_var[idx + 1]);
 
     /* _bdd_mgr_var_order_fprint (mgr, stderr); */
-    /* _bdd_mgr_check_invariants (mgr); */
+    _bdd_mgr_check_invariants (mgr);
     /* fprintf (stderr, "*** end swap %u ***\n", idx); */
 }
