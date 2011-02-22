@@ -3,13 +3,23 @@
 void
 bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b)
 {
+    fprintf (stderr, "!!! bdd_inc_ref %p %u\n", (void *) mgr, b);
     _bdd_inc_ref (mgr, b);
 }
 
 void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b)
 {
+    fprintf (stderr, "!!! bdd_dec_ref %p %u\n", (void *) mgr, b);
     _bdd_dec_ref_rec (mgr, b);
+}
+
+void
+bdd_ptr_dec_ref (bdd_mgr_t *mgr, bdd_t *b)
+{
+    fprintf (stderr, "!!! bdd_ptr_dec_ref %p %p (%u)\n", (void *) mgr,
+             (void *) b, *b);
+    _bdd_dec_ref_rec (mgr, *b);
 }
 
 unsigned
@@ -291,11 +301,11 @@ bdd_sat_count (bdd_mgr_t *mgr, bdd_t b)
     return count * pow (2, bdd_to_node(mgr, b).lvl);
 }
 
-unsigned
-bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b)
-{
-    /* FIXME: reimplement */
-    (void) mgr;
-    (void) b;
-    abort ();
-}
+/* unsigned */
+/* bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b) */
+/* { */
+/*     /\* FIXME: reimplement *\/ */
+/*     (void) mgr; */
+/*     (void) b; */
+/*     abort (); */
+/* } */

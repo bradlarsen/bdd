@@ -107,6 +107,9 @@ bdd_inc_ref (bdd_mgr_t *mgr, bdd_t b);
 extern void
 bdd_dec_ref (bdd_mgr_t *mgr, bdd_t b);
 
+extern void
+bdd_ptr_dec_ref (bdd_mgr_t *mgr, bdd_t *b);
+
 /**********************************************************************/
 /* BDD operations                                                     */
 /**********************************************************************/
@@ -179,8 +182,8 @@ bdd_compose (bdd_mgr_t *mgr, bdd_t f, unsigned x, bdd_t g);
 extern double
 bdd_sat_count (bdd_mgr_t *mgr, bdd_t b);
 
-/* Returns the number of nodes that appear within the given BDD. */
-unsigned
-bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b);
+/* /\* Returns the number of nodes that appear within the given BDD. *\/ */
+/* unsigned */
+/* bdd_get_num_nodes (bdd_mgr_t *mgr, bdd_t b); */
 
 #endif  /* BDDLIB_INCLUDED */

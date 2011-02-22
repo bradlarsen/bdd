@@ -51,9 +51,10 @@ Flag Debug
 Library
   -- Modules exported by the library.
   Exposed-modules:
-                     BDD.Raw
-                     BDD.Util
-  
+                        BDD
+                        BDD.Raw
+                        BDD.Util
+
   -- Packages needed in order to build this package.
   Build-depends:
                      base >= 3.0 && <= 4.2
@@ -74,17 +75,13 @@ Library
   -- I really don't know what is required to get Haskell + C bits
   -- linking together properly.  This seems to work.
   c-sources:
-                     src/bdd_double_ht.c
-                     src/bdd_ht.c
-                     src/bdd_rtu_ht.c
-                     src/bdd_mgr.c
-                     src/bdd_mgr_perform_gc.c
-                     src/bdd_ops.c
-                     src/bdd_ite_cache.c
-                     src/memory.c
-                     src/node_ht.c
-                     src/node_vec.c
-                     src/usr_bdd_ht.c
+                        src/bdd_ite_cache.c
+                        src/bdd_mgr.c
+                        src/bdd_mgr_invariants.c
+                        src/bdd_mgr_swap_variables.c
+                        src/bdd_ops.c
+                        src/memory.c
+                        src/node_ht.c
 
   include-dirs:      src
   includes:          bddlib.h

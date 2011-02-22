@@ -1,9 +1,11 @@
 {-# LANGUAGE ForeignFunctionInterface,
-             GeneralizedNewtypeDeriving
+             GeneralizedNewtypeDeriving,
+             EmptyDataDecls
              #-}
 module BDD.Raw where
 
-import Foreign (Ptr)
+import Foreign.Storable (Storable)
+import Foreign (Ptr, FunPtr, FinalizerPtr, FinalizerEnvPtr)
 import Foreign.C.Types (CInt, CUInt, CDouble)
 
 #include "bddlib.h"
@@ -23,7 +25,8 @@ toCBoolean False = cfalse
 
 -- * BDD manager type and operations
 
-newtype BddMgr = BddMgr (Ptr BddMgr)
+data Mgr
+type BddMgr = Ptr Mgr
 
 foreign import ccall "bddlib.h bdd_mgr_create"
     bdd_mgr_create :: CUInt -> IO BddMgr
@@ -34,39 +37,48 @@ foreign import ccall "bddlib.h bdd_mgr_create_with_hint"
 foreign import ccall "bddlib.h bdd_mgr_destroy"
     bdd_mgr_destroy :: BddMgr -> IO ()
 
+foreign import ccall "bddlib.h &bdd_mgr_destroy"
+    p_bdd_mgr_destroy :: FinalizerPtr Mgr
+
 foreign import ccall "bddlib.h bdd_mgr_get_num_vars"
     bdd_mgr_get_num_vars :: BddMgr -> IO CUInt
 
 foreign import ccall "bddlib.h bdd_mgr_get_num_nodes"
     bdd_mgr_get_num_nodes :: BddMgr -> IO CUInt
 
+foreign import ccall "bddlib.h bdd_mgr_get_num_nodes_at_level"
+    bdd_mgr_get_num_nodes_at_level :: BddMgr -> CUInt -> IO CUInt
+
 foreign import ccall "bddlib.h bdd_mgr_get_num_allocated"
     bdd_mgr_get_num_allocated :: BddMgr -> IO CUInt
 
--- * Garbage collection-related types and functions
+-- * Variable reordering
 
-foreign import ccall "bddlib.h bdd_mgr_perform_gc"
-    bdd_mgr_perform_gc :: BddMgr -> IO ()
+foreign import ccall "bddlib.h bdd_mgr_swap_variables"
+    bdd_mgr_swap_variables :: BddMgr -> CUInt -> IO ()
 
 -- * BDD type, constants, and accessors
 
-newtype Bdd = Bdd (Ptr Bdd)
-    deriving (Eq, Ord, Show)
+newtype Bdd = Bdd CUInt
+    deriving (Eq, Ord, Show, Storable)
+
+bdd_false :: Bdd
+bdd_false = Bdd 0
+
+bdd_true :: Bdd
+bdd_true = Bdd 1
 
 foreign import ccall "bddlib.h bdd_var"
     bdd_var :: BddMgr -> Bdd -> IO CUInt
+
+foreign import ccall "bddlib.h bdd_level"
+    bdd_level :: BddMgr -> Bdd -> IO CUInt
 
 foreign import ccall "bddlib.h bdd_low"
     bdd_low :: BddMgr -> Bdd -> IO Bdd
 
 foreign import ccall "bddlib.h bdd_high"
     bdd_high :: BddMgr -> Bdd -> IO Bdd
-
-foreign import ccall "bddlib.h bdd_false"
-    bdd_false :: BddMgr -> IO Bdd
-
-foreign import ccall "bddlib.h bdd_true"
-    bdd_true :: BddMgr -> IO Bdd
 
 -- * BDD reference counting operations
 
@@ -75,6 +87,9 @@ foreign import ccall "bddlib.h bdd_inc_ref"
 
 foreign import ccall "bddlib.h bdd_dec_ref"
     bdd_dec_ref :: BddMgr -> Bdd -> IO ()
+
+foreign import ccall "bddlib.h &bdd_ptr_dec_ref"
+    bdd_ptr_dec_ref :: FinalizerEnvPtr Mgr Bdd
 
 -- * BDD operations
 
@@ -120,5 +135,5 @@ foreign import ccall "bddlib.h bdd_compose"
 foreign import ccall "bddlib.h bdd_sat_count"
     bdd_sat_count :: BddMgr -> Bdd -> IO CDouble
 
-foreign import ccall "bddlib.h bdd_get_num_nodes"
-    bdd_get_num_nodes :: BddMgr -> Bdd -> IO CUInt
+-- foreign import ccall "bddlib.h bdd_get_num_nodes"
+--     bdd_get_num_nodes :: BddMgr -> Bdd -> IO CUInt

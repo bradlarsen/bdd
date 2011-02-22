@@ -269,7 +269,8 @@ bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
-
+    fprintf (stderr, "!!! creating a manager at %p with %u vars and %u capacity hint\n",
+             (void *) mgr, num_vars, capacity_hint);
     assert (num_vars > 0);
     assert (num_vars <= _BDD_MAX_NUM_VARS);
     mgr->num_vars = num_vars;
@@ -297,13 +298,14 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
     add_terminal_node (mgr, 1, num_vars, 0, 1); /* true terminal */
 
     _bdd_mgr_check_invariants (mgr);
-
     return mgr;
 }
 
 void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
+    fprintf (stderr, "!!! destroying manager at %p\n", (void *) mgr);
+
     if (mgr == NULL) return;
 
     _bdd_mgr_check_invariants (mgr);
