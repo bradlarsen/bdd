@@ -23,21 +23,25 @@ data BoolExpr
     | Implies BoolExpr BoolExpr
     deriving (Eq, Show)
 
+-- How many variables are in the expression?  This always returns at least 1.
+numVars :: BoolExpr -> Int
+numVars expr = max 1 (numVars' expr)
+
 -- | Returns the number of variables in the Boolean expression, which
 -- is defined as the maximum variable index in the expression plus one.
-numVars :: BoolExpr -> Int
-numVars expr =
+numVars' :: BoolExpr -> Int
+numVars' expr =
     case expr of
         BFalse -> 0
         BTrue -> 0
         Var i -> i + 1
-        Not e -> numVars e
-        And l r -> max (numVars l) (numVars r)
-        Or l r -> max (numVars l) (numVars r)
-        Xor l r -> max (numVars l) (numVars r)
-        Equiv l r -> max (numVars l) (numVars r)
-        Nand l r -> max (numVars l) (numVars r)
-        Implies l r -> max (numVars l) (numVars r)
+        Not e -> numVars' e
+        And l r -> max (numVars' l) (numVars' r)
+        Or l r -> max (numVars' l) (numVars' r)
+        Xor l r -> max (numVars' l) (numVars' r)
+        Equiv l r -> max (numVars' l) (numVars' r)
+        Nand l r -> max (numVars' l) (numVars' r)
+        Implies l r -> max (numVars' l) (numVars' r)
 
 arbitraryBoolExpr :: Int -> Int -> Gen BoolExpr
 arbitraryBoolExpr nVars = go
@@ -110,11 +114,9 @@ evalBdd ::  [Bool] -> BddMgr -> Bdd -> IO Bool
 evalBdd varAssigns mgr bdd = do
     let assigns = zip [0..] varAssigns
     res <- foldM (\b (i, v) -> bdd_restrict mgr b i (toCBoolean v)) bdd assigns
-    true_bdd <- bdd_true mgr
-    false_bdd <- bdd_false mgr
     case res of
-        _ | res == true_bdd -> return True
-          | res == false_bdd -> return False
+        _ | res == bdd_true -> return True
+          | res == bdd_false -> return False
           | otherwise -> error ("evalBdd: non-terminal result '" ++ show res ++ "'")
 
 -- | Symbolically evaluates the given Boolean expression with the
@@ -124,8 +126,8 @@ buildBdd mgr expr = do
     let bin f l r = do { l' <- go l; r' <- go r; f mgr l' r' }
         go e =
           case e of
-              BFalse      -> bdd_false mgr
-              BTrue       -> bdd_true mgr
+              BFalse      -> return bdd_false
+              BTrue       -> return bdd_true
               Var i       -> bdd_ith_var mgr (fromIntegral i)
               Not e'      -> bdd_not mgr =<< go e'
               And l r     -> bin bdd_and l r

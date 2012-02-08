@@ -40,17 +40,14 @@ Build-type:          Simple
 -- Extra-source-files:  
 
 -- Constraint on the version of Cabal needed to build this package.
-Cabal-version:       >=1.2
+Cabal-version:       >= 1.2
 
 
 Executable test-hs-bdd
   Main-is:           Test.hs
 
   Build-depends:
-                     array >= 0.2 && < 0.4,
-                     base >= 3.0 && < 4.3,
-                     QuickCheck >= 2.4 && < 2.5,
-                     hs-bdd >= 0.0 && < 0.1
+                     array, base, QuickCheck, hs-bdd
 
   Other-modules:
                      BoolExpr
@@ -64,9 +61,7 @@ Executable test-hs-bdd-nqueens
   Main-is:           TestNQueens.hs
 
   Build-depends:
-                     array >= 0.2 && < 0.4,
-                     base >= 3.0 && < 4.3,
-                     hs-bdd >= 0.0 && < 0.1
+                     array, base, hs-bdd
 
   Other-modules:
                      BoolExpr

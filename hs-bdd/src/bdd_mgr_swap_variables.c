@@ -31,9 +31,10 @@ _swap_node_in_place (bdd_mgr_t *mgr, unsigned idx0, bdd_t f)
         bdd_t f01 = mgr->nodes[f0].high;
         bdd_t f10 = mgr->nodes[f1].low;
         bdd_t f11 = mgr->nodes[f1].high;
-        bdd_t new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
+        bdd_t new_f0, new_f1;
+        new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
         _bdd_inc_ref (mgr, new_f0);
-        bdd_t new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
+        new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
         _bdd_inc_ref (mgr, new_f1);
         _node_ht_delete (mgr, f);
         mgr->nodes[f].low = new_f0;
@@ -46,9 +47,10 @@ _swap_node_in_place (bdd_mgr_t *mgr, unsigned idx0, bdd_t f)
         bdd_t f01 = mgr->nodes[f0].high;
         bdd_t f10 = f1;
         bdd_t f11 = f1;
-        bdd_t new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
+        bdd_t new_f0, new_f1;
+        new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
         _bdd_inc_ref (mgr, new_f0);
-        bdd_t new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
+        new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
         _bdd_inc_ref (mgr, new_f1);
         _node_ht_delete (mgr, f);
         mgr->nodes[f].low = new_f0;
@@ -61,9 +63,10 @@ _swap_node_in_place (bdd_mgr_t *mgr, unsigned idx0, bdd_t f)
         bdd_t f01 = f0;
         bdd_t f10 = mgr->nodes[f1].low;
         bdd_t f11 = mgr->nodes[f1].high;
-        bdd_t new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
+        bdd_t new_f0, new_f1;
+        new_f0 = _bdd_make_node (mgr, idx1, f00, f10);
         _bdd_inc_ref (mgr, new_f0);
-        bdd_t new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
+        new_f1 = _bdd_make_node (mgr, idx1, f01, f11);
         _bdd_inc_ref (mgr, new_f1);
         _node_ht_delete (mgr, f);
         mgr->nodes[f].low = new_f0;

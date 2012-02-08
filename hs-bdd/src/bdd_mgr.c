@@ -269,8 +269,9 @@ bdd_mgr_t *
 bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 {
     bdd_mgr_t *mgr = (bdd_mgr_t *) checked_malloc (sizeof(bdd_mgr_t));
-    fprintf (stderr, "!!! creating a manager at %p with %u vars and %u capacity hint\n",
+    /* fprintf (stderr, "!!! creating a manager at %p with %u vars and %u capacity hint\n",
              (void *) mgr, num_vars, capacity_hint);
+    */
     assert (num_vars > 0);
     assert (num_vars <= _BDD_MAX_NUM_VARS);
     mgr->num_vars = num_vars;
@@ -304,7 +305,9 @@ bdd_mgr_create_with_hint (unsigned num_vars, unsigned capacity_hint)
 void
 bdd_mgr_destroy (bdd_mgr_t *mgr)
 {
+/*
     fprintf (stderr, "!!! destroying manager at %p\n", (void *) mgr);
+*/
 
     if (mgr == NULL) return;
 

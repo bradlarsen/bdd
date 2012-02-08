@@ -7,7 +7,7 @@ import TestSuite
 
 import Control.Monad (liftM)
 import Test.QuickCheck.Monadic (monadicIO, assert, run)
-import Test.QuickCheck (Property)
+import Test.QuickCheck (Property, Gen, forAll, choose)
 
 -- | Converts the given IO Boolean action into a QuickCheck property.
 ioProperty :: IO Bool -> Property
@@ -66,29 +66,31 @@ idempotent2 op = exprBddProperty $ \mgr _expr bddExpr -> do
     return (bddExpr == bddExpr')
 
 
+varRange :: Gen Int
+varRange = choose (1, 1000000)
 
-prop_initialNumNodes :: Int -> Property
-prop_initialNumNodes nVars =
+prop_initialNumNodes :: Property
+prop_initialNumNodes = forAll varRange $ \nVars ->
     bddProperty nVars (liftM (2 ==) . bdd_mgr_get_num_nodes)
 
-prop_correctNumVars :: Int -> Property
-prop_correctNumVars nVars =
+prop_correctNumVars :: Property
+prop_correctNumVars = forAll varRange $ \nVars ->
     bddProperty nVars (liftM (fromIntegral nVars ==) . bdd_mgr_get_num_vars)
 
 prop_selfImplies :: BoolExpr -> Property
 prop_selfImplies = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_implies mgr bddExpr bddExpr
-    liftM (bddExpr' ==) (bdd_true mgr)
+    return (bddExpr' == bdd_true)
 
 prop_selfEquiv :: BoolExpr -> Property
 prop_selfEquiv = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_equiv mgr bddExpr bddExpr
-    liftM (bddExpr' ==) (bdd_true mgr)
+    return (bddExpr' == bdd_true)
 
 prop_selfXOr :: BoolExpr -> Property
 prop_selfXOr = exprBddProperty $ \mgr _expr bddExpr -> do
     bddExpr' <- bdd_xor mgr bddExpr bddExpr
-    liftM (bddExpr' ==) (bdd_false mgr)
+    return (bddExpr' == bdd_false)
 
 prop_not :: BoolExpr -> Property
 prop_not = exprBddProperty $ \mgr _expr bddExpr -> do

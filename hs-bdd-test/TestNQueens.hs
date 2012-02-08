@@ -75,11 +75,11 @@ buildQueens nVars mgr = do
     let n = fromIntegral nVars
         loc i j = bdd_ith_var mgr (i * n + j)
 
-    queen <- newIORef =<< bdd_true mgr
+    queen <- newIORef bdd_true
 
     -- place a queen in each row
     forM_ [0..n-1] $ \i -> do
-        e <- newIORef =<< bdd_false mgr
+        e <- newIORef bdd_false
         forM_ [0..n-1] $ \j -> do
             eVal <- readIORef e
             writeIORef e =<< bdd_or mgr eVal =<< loc i j
@@ -91,10 +91,10 @@ buildQueens nVars mgr = do
         forM_ [0..n-1] $ \j -> do
             hPrintf stderr "Adding position %s,%s\n" (show i) (show j)
 
-            a <- newIORef =<< bdd_true mgr
-            b <- newIORef =<< bdd_true mgr
-            c <- newIORef =<< bdd_true mgr
-            d <- newIORef =<< bdd_true mgr
+            a <- newIORef bdd_true
+            b <- newIORef bdd_true
+            c <- newIORef bdd_true
+            d <- newIORef bdd_true
 
             forM_ [0..n-1] $ \k -> do
                 when (k /= j) $ do
