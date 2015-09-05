@@ -1,6 +1,6 @@
 # bdd
-Binary decision diagrams in C, with an emphasis on correctness,
-clarity, and performance
+
+## Binary decision diagrams in C, with an emphasis on correctness, clarity, and performance
 
 This library also includes Haskell bindings in the `hs-bdd`
 directory.  In fact, the C library is built as part of building the
@@ -15,7 +15,7 @@ collection data structures in C that are used within the BDD
 library.  (If I were doing this again, I'd use C++ from the outset
 in the BDD library code, but expose a C API.)
 
-# Future Work
+## Future Work
 
 - Improve the test coverage
 - Add support for automated testing using Travis CI
